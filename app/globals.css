@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0b1330;
+  --color-ink-2: #131c3f;
+  --color-parchment: #faf6ec;
+  --color-parchment-dim: #f1ead6;
+  --color-gold: #c9a227;
+  --color-gold-light: #e6c860;
+  --color-saffron: #d9622b;
+  --color-vermillion: #b3341a;
+}
+
+:root {
+  --bg: var(--color-parchment);
+  --bg-2: var(--color-parchment-dim);
+  --fg: var(--color-ink);
+  --fg-muted: #4a4f6b;
+  --accent: var(--color-gold);
+  --border: #e2d6ae;
+}
+
+.dark {
+  --bg: var(--color-ink);
+  --bg-2: var(--color-ink-2);
+  --fg: #f1ead6;
+  --fg-muted: #b9bcd6;
+  --accent: var(--color-gold-light);
+  --border: #29305a;
+}
+
+* { border-color: var(--border); }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.font-devanagari { font-family: var(--font-serif); }
+
+.sutra-number {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/*
+ * Content pulled live from a Google Doc (sūtra notes, Miscellaneous page).
+ * The doc's own colors/fonts/alignment come from a scoped <style> block
+ * rendered alongside this content (see lib/googleDocs.ts) and are NOT
+ * overridden here. These rules only add sane defaults/safety nets: images
+ * that don't blow out their container, wide tables that scroll instead of
+ * overflowing, and a little breathing room between paragraphs.
+ */
+.gdoc-content img {
+  max-width: 100%;
+  height: auto;
+}
+.gdoc-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.gdoc-content p {
+  margin-bottom: 0.75em;
+}
+.gdoc-content a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

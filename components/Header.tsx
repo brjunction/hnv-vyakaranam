@@ -18,7 +18,7 @@ export default function Header() {
         <Link href="/" className="flex items-baseline gap-2 group">
           <span className="font-devanagari text-xl text-[var(--accent)]">हरि</span>
           <span className="hidden sm:inline text-sm tracking-wide uppercase text-[var(--fg-muted)] group-hover:text-[var(--fg)] transition-colors">
-            Hari-nāmāmṛta Vyākaraṇa
+            Harināmāmṛta Vyākaraṇa
           </span>
         </Link>
         <nav className="flex items-center gap-4 sm:gap-6">

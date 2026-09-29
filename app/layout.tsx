@@ -7,13 +7,13 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Hari-nāmāmṛta Vyākaraṇa — The Masterpiece of Sanskrit Grammar",
-    template: "%s | Hari-nāmāmṛta Vyākaraṇa",
+    default: "Harināmāmṛta Vyākaraṇa — The Masterpiece of Sanskrit Grammar",
+    template: "%s | Harināmāmṛta Vyākaraṇa",
   },
   description:
-    "The complete sūtras, vṛtti, and translation of Śrīla Jīva Gosvāmī's Hari-nāmāmṛta Vyākaraṇa — the most relishable grammar in the Sanskrit language.",
+    "The complete sūtras, vṛtti, and translation of Śrīla Jīva Gosvāmī's Harināmāmṛta Vyākaraṇa — the most relishable grammar in the Sanskrit language.",
   keywords: [
-    "Hari-namamrta Vyakarana",
+    "Harinamamrta Vyakarana",
     "Jiva Gosvami grammar",
     "Sanskrit grammar",
     "Vaishnava vyakarana",
@@ -21,9 +21,9 @@ export const metadata: Metadata = {
     "Panini grammar alternative",
   ],
   openGraph: {
-    title: "Hari-nāmāmṛta Vyākaraṇa — The Masterpiece of Sanskrit Grammar",
+    title: "Harināmāmṛta Vyākaraṇa — The Masterpiece of Sanskrit Grammar",
     description:
-      "Explore the sūtras, vṛtti, and translations of Śrīla Jīva Gosvāmī's Hari-nāmāmṛta Vyākaraṇa.",
+      "Explore the sūtras, vṛtti, and translations of Śrīla Jīva Gosvāmī's Harināmāmṛta Vyākaraṇa.",
     type: "website",
   },
 };

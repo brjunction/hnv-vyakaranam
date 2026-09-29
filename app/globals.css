@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0b1330;
+  --color-ink-2: #131c3f;
+  --color-parchment: #faf6ec;
+  --color-parchment-dim: #f1ead6;
+  --color-gold: #c9a227;
+  --color-gold-light: #e6c860;
+  --color-saffron: #d9622b;
+  --color-vermillion: #b3341a;
+}
+
+:root {
+  --bg: var(--color-parchment);
+  --bg-2: var(--color-parchment-dim);
+  --fg: var(--color-ink);
+  --fg-muted: #4a4f6b;
+  --accent: var(--color-gold);
+  --border: #e2d6ae;
+}
+
+.dark {
+  --bg: var(--color-ink);
+  --bg-2: var(--color-ink-2);
+  --fg: #f1ead6;
+  --fg-muted: #b9bcd6;
+  --accent: var(--color-gold-light);
+  --border: #29305a;
+}
+
+* { border-color: var(--border); }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.font-devanagari { font-family: var(--font-serif); }
+
+.sutra-number {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/*
+ * Content pulled live from a Google Doc (sūtra notes, Miscellaneous page).
+ * The doc's own colors/fonts/alignment come from a scoped <style> block
+ * rendered alongside this content (see lib/googleDocs.ts) and are NOT
+ * overridden here. These rules only add sane defaults/safety nets: images
+ * that don't blow out their container, wide tables that scroll instead of
+ * overflowing, and a little breathing room between paragraphs.
+ */
+.gdoc-content img {
+  max-width: 100%;
+  height: auto;
+}
+.gdoc-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.gdoc-content p {
+  margin-bottom: 0.75em;
+}
+.gdoc-content a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* =========================================================================
+ * Scripture Anvyayas — richer styling than the HNV pages
+ * ========================================================================= */
+.anv-hero-bg {
+  background:
+    radial-gradient(60% 90% at 50% -10%, color-mix(in srgb, var(--color-saffron) 20%, transparent), transparent 70%),
+    radial-gradient(45% 70% at 100% 100%, color-mix(in srgb, var(--color-gold) 18%, transparent), transparent 70%),
+    radial-gradient(40% 60% at 0% 100%, color-mix(in srgb, var(--color-vermillion) 10%, transparent), transparent 70%);
+}
+
+/* A thin line with a diamond in the middle */
+.anv-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+.anv-ornament::before,
+.anv-ornament::after {
+  content: "";
+  height: 1px;
+  width: 4.5rem;
+  background: linear-gradient(90deg, transparent, var(--accent));
+}
+.anv-ornament::after { transform: scaleX(-1); }
+
+.anv-card {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: 1.1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.anv-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--color-saffron) 45%, transparent);
+}
+.anv-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-vermillion), var(--color-saffron), var(--color-gold));
+  opacity: 0.85;
+}
+.anv-numeral {
+  font-family: var(--font-serif);
+  line-height: 1;
+  color: color-mix(in srgb, var(--accent) 32%, transparent);
+  transition: color 0.2s ease;
+}
+.anv-card:hover .anv-numeral { color: color-mix(in srgb, var(--accent) 65%, transparent); }
+
+.anv-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+}
+
+/* Verse cards */
+.anv-verse {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--color-vermillion);
+  background: var(--bg-2);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.anv-verse:hover { border-color: var(--accent); border-left-color: var(--color-vermillion); }
+.anv-verse[data-open="true"] {
+  border-left-color: var(--accent);
+  box-shadow: 0 10px 28px -16px color-mix(in srgb, var(--color-saffron) 40%, transparent);
+}
+.anv-deva {
+  background: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.anv-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--color-saffron);
+}
+
+@keyframes anv-fade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.anv-fade { animation: anv-fade 0.25s ease both; }
+
+@keyframes anv-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.anv-skeleton {
+  height: 4.2rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, var(--bg-2) 25%, color-mix(in srgb, var(--accent) 12%, var(--bg-2)) 50%, var(--bg-2) 75%);
+  background-size: 800px 100%;
+  animation: anv-shimmer 1.4s linear infinite;
+}

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://harinamamrta-vyakaranam.vercel.app/sitemap.xml

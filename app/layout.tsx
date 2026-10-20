@@ -1,0 +1,154 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: {
+   default: "Harinamamrta Vyakaranam: The Masterpiece on Sanskrit Grammar",
+    template: "%s | Harināmāmṛtam Vyākaraṇam",
+  },
+  description:
+    "The complete sūtras, vṛtti, and translation of Śrīla Jīva Gosvāmī's Harināmāmṛta Vyākaraṇa — the most relishable grammar in the Sanskrit language.",
+  description:
+    "An extensive web platform for everything you need to study Srila Jiva Goswami's Harināmāmṛta Vyākaraṇam: all sūtras with vṛtti, Anvaya analysis, Sūtra Notes, multi-script, audio recitations, various tools for research and learning, practice section to practice all 7 chapters, Sanskrit wikipedia, further resources and a growing scripture library.",
+  keywords: [
+    "Harinamamrta Vyakaranam",
+  "Harinamamrita Vyakaranam",
+  "Harinamamrt Vyakaran",
+  "Harinamrita Vyakaranam",
+  "Harinam Amrit Vyakaran",
+  "Hari-namamrta-vyakarana",
+  "HNV grammar",
+  "HNV Vyakaranam",
+  "HNV website",
+  "harinamamrta-vyakaranam.com",
+
+  // Jiva Gosvami & Gaudiya framing
+  "Jiva Goswami grammar",
+  "Jiva Goswami Sanskrit grammar",
+  "Jiva Gosvami Harinamamrta",
+  "Srila Jiva Gosvami grammar",
+  "Gaudiya Vaishnava grammar",
+  "Gaudiya Vaishnava Sanskrit",
+  "Vaishnava Sanskrit grammar",
+  "Sanskrit grammar for Vaishnavas",
+  "Sanskrit grammar for devotees",
+  "grammar where terms are names of Krishna",
+  "grammar of Hari's names",
+  "Sanskrit grammar as bhakti",
+  "Sanskrit grammar as sadhana",
+  "learn Sanskrit and bhakti together",
+  "learn Sanskrit through names of Krishna",
+
+  // Editions
+  "Laghu Harinamamrta Vyakarana",
+  "Madhyama Harinamamrta Vyakarana",
+  "Brhad Harinamamrta Vyakarana",
+  "Laghu HNV",
+  "Madhyama HNV",
+  "Brhad HNV",
+
+  // HNV chapters (Madhyama)
+  "Mangalacarana HNV",
+  "Samjna Sandhi Prakarana",
+  "Nama Prakarana",
+  "Akhyata Prakarana",
+  "Karaka Prakarana",
+  "Krdanta Prakarana",
+  "Samasa Prakarana",
+  "Taddhita Prakarana",
+  "HNV Afterword",
+
+  // Grammatical analysis & features
+  "Harinamamrta Vyakaranam sutras",
+  "Harinamamrta Vyakaranam vritti",
+  "Harinamamrta Vyakaranam translation",
+  "Harinamamrta Vyakaranam Anvaya",
+  "Anvaya grammatical analysis",
+  "Sutra Notes HNV",
+  "HNV sutra notes",
+  "word by word Sanskrit analysis",
+  "Sanskrit grammatical analysis online",
+  "Sanskrit Anvaya analysis",
+  "Harinamamrta Dhatupatha",
+  "HNV dhatu patha",
+
+  // Platform features
+  "multi-script Sanskrit reader",
+  "Devanagari IAST Bengali Odia reader",
+  "Sanskrit reader with audio",
+  "fast static Sanskrit platform",
+  "pre-built Sanskrit study platform",
+  "daily Sanskrit verse",
+  "Verse of the Day Sanskrit",
+  "Daily Subhashita Sanskrit",
+
+  // Scriptures (growing library — generic + current)
+  "Gaudiya Vaishnava scriptures Sanskrit",
+  "Sanskrit scriptures with Anvaya",
+  "Sanskrit scriptures word by word",
+  "read Vaishnava scriptures online",
+  "Bhagavad-gita Sanskrit Anvaya",
+  "Bhagavad-gita word by word",
+  "Srimad-Bhagavatam Sanskrit Anvaya",
+  "Srimad-Bhagavatam word by word",
+  "Bhagavad-gita verse by verse",
+  "Srimad-Bhagavatam verse by verse",
+
+  // Long-tail & questions
+  "what is Harinamamrta Vyakaranam",
+  "who was Jiva Goswami",
+  "Harinamamrta Vyakaranam vs Panini",
+  "Jiva Goswami grammar vs Ashtadhyayi",
+  "Harinamamrta Vyakaranam Amrta commentary",
+  "how to learn Vaishnava Sanskrit",
+  "how to read Sanskrit scriptures",
+  "learn Sanskrit for Bhakti",
+  "Sanskrit grammar for ISKCON devotees",
+  "Harinamamrta Vyakaranam PDF",
+  "Harinamamrta Vyakaranam English translation",
+    "Harinamamrta Vyakaranam",
+    "Harinamamrita Vyakaranam Website",
+    "The website of Harinamamrita Vyakaranam",
+    "HNV website",
+    "Jiva Gosvami grammar",
+    "Sanskrit grammar",
+    "Vaishnava vyakarana",
+    "HNV grammar",
+    "Panini grammar alternative",
+  ],
+  openGraph: {
+    title: "Harinamamrta Vyakaranam: The Masterpiece on Sanskrit Grammar",
+    description:
+      "An extensive web platform for everything you need to study Srila Jiva Goswami's Harināmāmṛta Vyākaraṇam: all sūtras with vṛtti, Anvaya analysis, Sūtra Notes, multi-script, audio, practice sessions, Sanskrit wikipedia, and a growing scripture library.",
+    type: "website",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+  rel="icon"
+  href="/hnvlogo.png"
+  sizes="<generated>"
+/>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
+        <meta name="google-site-verification" content="A0wYp6OHY16TtZb5ua8xmcSaN4D1YiLzLHOfULCdFZw" />
+      </head>
+      <body className="antialiased">
+        <Header />
+        <main className="min-h-[70vh]">{children}</main>
+        <Footer />
+      </body>
+    </html>
+  );
+}

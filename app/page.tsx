@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ScrollText, Dumbbell, BookOpen, ArrowRight, Globe, Leaf, Gauge, Flame } from "lucide-react";
+import { ScrollText, Library, BookOpen, ArrowRight, Globe, Leaf, Gauge, Flame } from "lucide-react";
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -28,7 +28,7 @@ const EXPLORE_CARDS = [
   },
   {
     href: "/practice",
-    icon: Dumbbell,
+    icon: Library,
     label: "Practice",
     title: "Test yourself on Sandhi",
     body: "Pick a topic and a difficulty, then see how well the rules have stuck — instant feedback, a score at the end.",

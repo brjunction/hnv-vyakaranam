@@ -11,8 +11,6 @@ export const metadata: Metadata = {
     template: "%s | Harināmāmṛtam Vyākaraṇam",
   },
   description:
-    "The complete sūtras, vṛtti, and translation of Śrīla Jīva Gosvāmī's Harināmāmṛta Vyākaraṇa — the most relishable grammar in the Sanskrit language.",
-  description:
     "An extensive web platform for everything you need to study Srila Jiva Goswami's Harināmāmṛta Vyākaraṇam: all sūtras with vṛtti, Anvaya analysis, Sūtra Notes, multi-script, audio recitations, various tools for research and learning, practice section to practice all 7 chapters, Sanskrit wikipedia, further resources and a growing scripture library.",
   keywords: [
     "Harinamamrta Vyakaranam",

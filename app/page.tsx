@@ -4,7 +4,7 @@ import { ScrollText, Dumbbell, BookOpen, ArrowRight, Globe, Leaf, Gauge, Flame }
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
   { name: "Prabhupāda Vāṇī", url: "https://prabhupadavani.org", blurb: "Lectures, conversations & recordings" },
-  { name: "Taptajīvanam", url: "https://taptajivanam.com", blurb: "The teachings of Śrīla Gour Govinda Swami" },
+  { name: "Taptajīvanam", url: "https://taptajivanam.com", blurb: "The teachings of Śrī Śrīmad Gour Govinda Swami Maharaja" },
   { name: "Bhaktivedanta Research Center", url: "https://brcglobal.org", blurb: "Gauḍīya Vaiṣṇava manuscripts & research" },
   { name: "Bhaktivinoda Institute", url: "https://bhaktivinodainstitute.org", blurb: "The complete works of Bhaktivinoda Ṭhākura" },
 ];
@@ -135,7 +135,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
+ 
       <section>
         {/* SAD-GOSVĀMĪS — FRAMED IMAGE + AMṚTA'S PRAYERS */}
 <section>
@@ -171,19 +171,28 @@ export default function Home() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-xs tracking-[0.3em] uppercase text-[var(--color-gold-light)]">
+      <p className="mt-6 text-center text-xs tracking-[0.3em] uppercase text-[var(--color-gold-dark)]">
         The Ṣaḍ-Gosvāmīs of Vṛndāvana
       </p>
     </div>
   </div>
 
-  {/* Amṛta's Prayers */}
-  <div className="border-b border-[var(--border)] bg-[var(--bg-2)]">
-    <div className="max-w-3xl mx-auto px-5 py-16">
-      <AmrtaPrayers />
-    </div>
-  </div>
 </section>
+<section className="border-y border-[var(--border)] bg-[var(--bg-7)]">
+        <div className="max-w-5xl mx-auto px-5 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+          {[
+            { n: "1278", label: "sūtras (Madhyama)" },
+            { n: "9", label: "chapters" },
+            { n: "2", label: "scriptures in Anvyaya" },
+            { n: "3", label: "sandhi types to practice" },
+          ].map((s) => (
+            <div key={s.label}>
+              <p className="sutra-number text-3xl sm:text-4xl text-[var(--accent)] mb-1">{s.n}</p>
+              <p className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
         <div className="border-b border-[var(--border)] bg-[var(--bg-2)]">
           <div className="max-w-3xl mx-auto px-5 py-16">
             <AmrtaPrayers />
@@ -230,21 +239,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-[var(--border)] bg-[var(--bg-2)]">
-        <div className="max-w-5xl mx-auto px-5 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-          {[
-            { n: "1278", label: "sūtras (Madhyama)" },
-            { n: "9", label: "chapters" },
-            { n: "2", label: "scriptures in Anvyaya" },
-            { n: "3", label: "sandhi types to practice" },
-          ].map((s) => (
-            <div key={s.label}>
-              <p className="sutra-number text-3xl sm:text-4xl text-[var(--accent)] mb-1">{s.n}</p>
-              <p className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+     
 
       <section className="relative overflow-hidden border-b border-[var(--border)]">
         <div className="anv-hero-bg absolute inset-0" aria-hidden />
@@ -296,33 +291,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
-      <section className="border-b border-[var(--border)]">
-        <div className="max-w-6xl mx-auto px-5 py-14">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-8 text-center">
-            Some Important Websites
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {IMPORTANT_SITES.map((s) => (
-              <a
-                key={s.url}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 hover:border-[var(--accent)] transition-colors"
-              >
-                <span className="w-8 h-8 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center overflow-hidden">
-                  <SiteFavicon url={s.url} size={16} />
-                </span>
-                <span className="text-sm font-medium">{s.name}</span>
-                <span className="text-xs text-[var(--fg-muted)] leading-snug">{s.blurb}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-5 py-20">
+<section className="max-w-6xl mx-auto px-5 py-15 border-b">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">
           Explore
         </p>
@@ -350,6 +319,32 @@ export default function Home() {
           })}
         </div>
       </section>
+      <section className="border-[var(--border)] ">
+        <div className="max-w-6xl mx-auto px-5 py-14">
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-8 text-center">
+            Some Important Websites
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {IMPORTANT_SITES.map((s) => (
+              <a
+                key={s.url}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 hover:border-[var(--accent)] transition-colors"
+              >
+                <span className="w-8 h-8 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center overflow-hidden">
+                  <SiteFavicon url={s.url} size={16} />
+                </span>
+                <span className="text-sm font-medium">{s.name}</span>
+                <span className="text-xs text-[var(--fg-muted)] leading-snug">{s.blurb}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
     </>
   );
 }

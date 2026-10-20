@@ -6,15 +6,15 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeToggle from "./ThemeToggle";
 import Image from "next/image";
-import { BookOpen, ScrollText, BookMarked, Dumbbell, Info, LayoutGrid, Menu, X } from "lucide-react";
+import { BookSearch, ScrollText, SquareLibrary, Dumbbell, Info, LayoutGrid, Menu, X, Goal, Earth, CircleDot, LandPlot } from "lucide-react";
 
 const links = [
-  { href: "/chapters", label: "Chapters", icon: BookOpen },
-  { href: "/anvyaya", label: "Scripture Anvyayas", icon: ScrollText },
-  { href: "/practice", label: "Practice", icon: Dumbbell },
+  { href: "/chapters", label: "Chapters", icon: BookSearch },
+  { href: "/anvyaya", label: "Scripture Anvyayas", icon: SquareLibrary },
+  { href: "/practice", label: "Practice", icon: LandPlot },
   // Served as a raw static HTML page (its own full document), not a Next
   // route — a plain <a> forces a normal browser navigation to it.
-  { href: "/hnv-wiki", label: "HNV-Wiki", icon: BookMarked, external: true },
+  { href: "/hnv-wiki", label: "HNV-Wiki", icon: Earth, external: true },
   { href: "/about", label: "About", icon: Info },
   { href: "/more", label: "More", icon: LayoutGrid },
 ];

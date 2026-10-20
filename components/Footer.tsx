@@ -17,11 +17,11 @@ export default function Footer() {
           <p>Harināmāmṛta Vyākaraṇam — The Masterpiece of Sanskrit Grammar</p>
           <p>@ ISKCON, 2026</p>
         </div>
-        <p className="text-sm">
+        <div className="text-sm">
           <strong> <u> Credits</u></strong> 
-          <p><strong>Source Materials:</strong> HG Matsya Avatāra Prabhu, HG Gaurapada Prabhu, Bhaktivedanta Book Trust (BBT),  Rasvihari Lals and Sons Publications, Gaudiya Grantha Mandira.</p>
-          <p><strong></strong> </p>
-        </p>
+          <div><strong>Source Materials:</strong> HG Matsya Avatāra Prabhu, HG Gaurapada Prabhu, Bhaktivedanta Book Trust (BBT),  Rasvihari Lals and Sons Publications, Gaudiya Grantha Mandira.</div>
+          
+        </div>
       </div>
     </footer>
   );

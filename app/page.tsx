@@ -106,9 +106,10 @@ function AmrtaPrayers({ align = "center" }: { align?: "center" | "left" }) {
 export default function Home() {
   return (
     <>
-      <section className="relative overflow-hidden">
-        <div className="anv-hero-bg absolute inset-0" aria-hidden />
-        <div className="relative max-w-4xl mx-auto px-5 pt-24 pb-20 text-center">
+
+     <section className="relative overflow-hidden">
+        <div className="absolute inset-0" aria-hidden />
+        <div className="relative max-w-4xl mx-auto px-5 pt-15 pb-5 text-center">
           <p className="text-xs tracking-[0.3em] uppercase text-[var(--color-saffron)] mb-5">
             Śrīla Jīva Gosvāmī&apos;s
           </p>
@@ -124,34 +125,40 @@ export default function Home() {
               href="/chapters"
               className="px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity"
             >
-              Explore the Sūtras
+              Explore Chapters
             </Link>
             <Link
               href="/about"
               className="px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
             >
-              About this project
+              About This Treatise
             </Link>
           </div>
         </div>
       </section>
- 
-      <section>
-        {/* SAD-GOSVĀMĪS — FRAMED IMAGE + AMṚTA'S PRAYERS */}
-<section>
+
+     <div class="flex items-center gap-2 w-1/2 max-w-md mx-auto my-10">
+  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div class="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+</div>
+
+    <section>
   {/* Framed image panel */}
-  <div className="relative overflow-hidden py-14 sm:py-20">
+  <div className="relative overflow-hidden py-4 sm:py-5">
     {/* soft background behind the framed image */}
-    <div className="anv-hero-bg absolute inset-0" aria-hidden />
+    <div className="absolute inset-0" aria-hidden />
 
     <div className="relative max-w-3xl mx-auto px-5">
       {/* Outer gradient frame */}
       <div
         className="relative mx-auto rounded-[1.25rem] p-[6px] sm:p-2 shadow-2xl"
         style={{
-          background:
-            "linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-saffron) 45%, var(--color-vermillion) 100%)",
-        }}
+         background: `
+    linear-gradient(var(--gradient-overlay), var(--gradient-overlay)),
+    linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-saffron) 45%, var(--color-vermillion) 100%)
+  `,
+}}
       >
         {/* Inner hairline + clipped image */}
         <div className="rounded-[1rem] overflow-hidden border border-black/25 bg-[var(--bg-2)]">
@@ -171,28 +178,24 @@ export default function Home() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-xs tracking-[0.3em] uppercase text-[var(--color-gold-dark)]">
-        The Ṣaḍ-Gosvāmīs of Vṛndāvana
-      </p>
+ <p className={`text-sm  text-[var(--fg-muted)] mt-4 mb-10 sm:mt-4 sm:mb-4 text-center mb-6 leading-relaxed`}>
+ <br></br>
+  Gopāla Bhaṭṭa Gosvāmī, Raghunātha Bhaṭṭa Gosvāmī, Sanātana Gosvāmī, Rūpa Gosvāmī, Jīva Gosvāmī, and Raghunātha dāsa Gosvāmī<br></br>
+  <b className="font-semibold">~ Art by HG Puṣkara Prabhu</b>
+</p>
     </div>
-  </div>
+    
+  <div class="flex items-center gap-2 sm:w-1/8 w-1/4 max-w-md mx-auto my-10">
+  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div class="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+</div>
 
+  </div>
 </section>
-<section className="border-y border-[var(--border)] bg-[var(--bg-7)]">
-        <div className="max-w-5xl mx-auto px-5 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-          {[
-            { n: "1278", label: "sūtras (Madhyama)" },
-            { n: "9", label: "chapters" },
-            { n: "2", label: "scriptures in Anvyaya" },
-            { n: "3", label: "sandhi types to practice" },
-          ].map((s) => (
-            <div key={s.label}>
-              <p className="sutra-number text-3xl sm:text-4xl text-[var(--accent)] mb-1">{s.n}</p>
-              <p className="text-xs uppercase tracking-wide text-[var(--fg-muted)]">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+     
+ 
+    <section>
         <div className="border-b border-[var(--border)] bg-[var(--bg-2)]">
           <div className="max-w-3xl mx-auto px-5 py-16">
             <AmrtaPrayers />

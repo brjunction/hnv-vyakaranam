@@ -15,7 +15,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-5 py-10 text-sm text-[var(--fg-muted)]">
         <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
           <p>Harināmāmṛta Vyākaraṇam — The Masterpiece of Sanskrit Grammar</p>
-          <p>@ ISKCON, 2026</p>
+          <p>@ISKCON, 2026</p>
         </div>
         <div className="text-sm">
           <strong> <u> Credits</u></strong> 

@@ -82,7 +82,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2 group">
            <Image src="/hnvlogo.png" alt="HNV Logo" width={40} height={40} />
           <span className="hidden sm:inline text-sm tracking-wide uppercase text-[var(--fg-muted)] group-hover:text-[var(--fg)] transition-colors">
-            Harināmāmṛta Vyākaraṇa
+            Harināmāmṛta Vyākaraṇam
           </span>
         </Link>
 

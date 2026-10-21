@@ -180,7 +180,7 @@ export default function Home() {
 
  <p className={`text-sm  text-[var(--fg-muted)] mt-4 mb-10 sm:mt-4 sm:mb-4 text-center mb-6 leading-relaxed`}>
  <br></br>
-  Gopāla Bhaṭṭa Gosvāmī, Raghunātha Bhaṭṭa Gosvāmī, Sanātana Gosvāmī, Rūpa Gosvāmī, Jīva Gosvāmī, and Raghunātha dāsa Gosvāmī<br></br>
+  Gopāla Bhaṭṭa Gosvāmī, Raghunātha Bhaṭṭa Gosvāmī, Sanātana Gosvāmī, Rūpa Gosvāmī, <span className="font-semibold text-[var(--color-saffron)]">Jīva Gosvāmī</span>, and Raghunātha dāsa Gosvāmī<br></br>
   <b className="font-semibold">~ Art by HG Puṣkara Prabhu</b>
 </p>
     </div>

@@ -137,10 +137,10 @@ export default function Home() {
         </div>
       </section>
 
-     <div class="flex items-center gap-2 w-1/2 max-w-md mx-auto my-10">
-  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
-  <div class="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
-  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+     <div className="flex items-center gap-2 w-1/2 max-w-md mx-auto my-10">
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div className="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
 </div>
 
     <section>
@@ -185,10 +185,10 @@ export default function Home() {
 </p>
     </div>
     
-  <div class="flex items-center gap-2 sm:w-1/8 w-1/4 max-w-md mx-auto my-10">
-  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
-  <div class="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
-  <div class="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div className="flex items-center gap-2 sm:w-1/8 w-1/4 max-w-md mx-auto my-10">
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div className="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
 </div>
 
   </div>

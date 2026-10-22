@@ -74,8 +74,8 @@ unchanged. What v7 changes:
 - The browser sends its own local date and gets that date's pick from a
   small cached file, so both change at the visitor's midnight without a
   rebuild.
-- **Motto verse:** Amṛta's first prayer (*svalpāyuṣāṁ kali-yuge 'tra…*) is
-  the site's highlight verse (hero link, admin sign-in), not sūtra 1.
+- No extra ślokas in the hero. Amṛta's prayers appear only in their own
+  section below the painting; the admin sign-in page may show the first one.
 - **Ordered home blocks:** admin-managed blocks (kind, title, body, order,
   visibility). Design of the page itself is owned by the site owner in
   `app/page.tsx`; blocks fill defined slots.

@@ -40,7 +40,8 @@ must never be forgotten.
     new elements inside it; never replace the palette or fonts unless the
     owner explicitly asks — show a preview first.
 12. **Verse of the Day = scripture verses entered in the admin**, never
-    sūtras. The motto verse is Amṛta's *svalpāyuṣāṁ kali-yuge 'tra…*.
+    sūtras. Don't add ślokas to the hero/subtitles; Amṛta's prayers live only
+    in their own section (and on the admin sign-in page).
 
 ## Code rules that have already caused real bugs here
 - A file without `"use client"` is a **Server Component**: no `onClick`,

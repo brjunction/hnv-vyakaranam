@@ -137,14 +137,6 @@ export default function Home() {
               About This Treatise
             </Link>
           </div>
-          <a href="#amrta" className="group inline-block mt-10 max-w-xl">
-            <span className="block font-devanagari text-lg sm:text-xl text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors" lang="sa-Deva">
-              स्वल्पायुषां कलियुगेऽत्र नृणां शमिच्छन्…
-            </span>
-            <span className="block text-sm italic text-[var(--fg-muted)] mt-1">
-              Amṛta&apos;s prayer to Śrīla Jīva Gosvāmī
-            </span>
-          </a>
         </div>
       </section>
 

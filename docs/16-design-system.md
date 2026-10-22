@@ -39,8 +39,7 @@ gradient referenced these but they were never defined).
 
 ## 3. Home page elements (inside the owner's layout)
 
-Order: hero (+ link to Amṛta's first prayer, the site's motto verse
-*svalpāyuṣāṁ kali-yuge 'tra…*) → painting → Amṛta's prayers (`#amrta`) →
+Order: hero → painting → Amṛta's prayers (`#amrta`) →
 **For today** (Verse of the Day + Subhāṣita, `components/home/DailyPanel`)
 → "finest treatise" → **Varṇa-krama board** (`components/home/VarnaBoard`)
 → **seven prakaraṇas** grid → Scriptures → Practice → Explore → websites.
@@ -52,7 +51,9 @@ glow sections, `bg-[var(--bg-2)]` alternate bands, pill buttons
 
 ## 4. Rules
 
-- The motto verse is Amṛta's first prayer (*svalpāyuṣāṁ…*), not sūtra 1.
+- Don't add verses/ślokas to the hero or as subtitles. Amṛta's prayers
+  appear only in their own section below the painting (and on the admin
+  sign-in page).
 - `.anv-card` sets `display:block` (unlayered CSS beats Tailwind's
   `flex`), so put `block` on child spans instead of relying on `flex-col`.
 - One orchestrated motion per page at most (home: the board's ink-in).

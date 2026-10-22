@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeToggle from "./ThemeToggle";
 import Image from "next/image";
-import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot } from "lucide-react";
+import { BookSearch, ScrollText, SquareLibrary, Dumbbell, Info, LayoutGrid, Menu, X, Goal, Earth, CircleDot, LandPlot } from "lucide-react";
 
 const links = [
   { href: "/chapters", label: "Chapters", icon: BookSearch },
@@ -42,7 +42,10 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       <nav className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-1">
         {links.map((l) => {
           const Icon = l.icon;
-          const active = pathname === l.href || (l.href !== "/" && pathname?.startsWith(l.href));
+          const active =
+            pathname === l.href ||
+            (l.href !== "/" && pathname?.startsWith(l.href)) ||
+            (l.href === "/chapters" && /^\/(brhat|laghu)\/chapters/.test(pathname ?? ""));
           const className = `flex items-center gap-4 px-4 py-4 rounded-2xl text-lg transition-colors ${
             active ? "text-[var(--accent)] bg-[var(--bg-2)]" : "text-[var(--fg)] hover:bg-[var(--bg-2)]"
           }`;
@@ -77,12 +80,12 @@ export default function Header() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_82%,transparent)]">
+    <header className="sticky top-0 z-40 backdrop-blur border-b border-[var(--border)] bg-[var(--bg)]/85">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-           <Image src="/hnvlogo.png" alt="" width={36} height={36} priority />
-          <span className="hidden sm:inline font-display text-[1.35rem] leading-none text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors">
-            Harināmāmṛta-vyākaraṇam
+           <Image src="/hnvlogo.png" alt="HNV Logo" width={40} height={40} />
+          <span className="hidden sm:inline text-sm tracking-wide uppercase text-[var(--fg-muted)] group-hover:text-[var(--fg)] transition-colors">
+            Harināmāmṛta Vyākaraṇam
           </span>
         </Link>
 
@@ -90,14 +93,17 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-1">
           {links.map((l) => {
             const Icon = l.icon;
-            const active = pathname === l.href || (l.href !== "/" && pathname?.startsWith(l.href));
+            const active =
+            pathname === l.href ||
+            (l.href !== "/" && pathname?.startsWith(l.href)) ||
+            (l.href === "/chapters" && /^\/(brhat|laghu)\/chapters/.test(pathname ?? ""));
             const className = `group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-              active ? "text-[var(--accent)] bg-[var(--accent-soft)]" : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-2)]"
+              active ? "text-[var(--accent)] bg-[var(--bg-2)]" : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-2)]"
             }`;
             const inner = (
               <>
                 <Icon size={19} strokeWidth={1.75} />
-                <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs px-2 py-1 rounded-md bg-[var(--fg)] text-[var(--bg)] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+                <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs px-2 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-[var(--fg)] opacity-0 group-hover:opacity-100 transition-opacity">
                   {l.label}
                 </span>
               </>

@@ -44,7 +44,9 @@ export type ExtraFields = Record<string, string>;
 // ---------------------------------------------------------------------------
 // Admin users & auth
 // ---------------------------------------------------------------------------
-export const ADMIN_ROLES = ["owner", "editor", "contributor"] as const;
+/** owner: everything incl. users · editor: read & write & publish ·
+ *  contributor: write drafts only · viewer: read-only */
+export const ADMIN_ROLES = ["owner", "editor", "contributor", "viewer"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 export const adminUsers = pgTable(
@@ -377,11 +379,16 @@ export const homeBlocks = pgTable("home_blocks", {
   updatedBy: updatedBy(),
 });
 
-export const DAILY_POOLS = ["subhashita"] as const;
+export const DAILY_POOLS = ["verse_of_day", "subhashita"] as const;
+export type DailyPool = (typeof DAILY_POOLS)[number];
 
 /**
- * Daily Subhāṣita entries (standalone text). Verse of the Day uses
- * `daily_eligible` on sutras/verses plus `daily_pins` below.
+ * Entries for the two daily features, entered in the admin:
+ *   verse_of_day — a scripture verse (Bhagavad-gītā, Śrīmad-Bhāgavatam …);
+ *                  `source` holds the reference, e.g. "Bhagavad-gītā 2.47"
+ *   subhashita   — a subhāṣita (Cāṇakya-nīti, Hitopadeśa …)
+ * Each pool rotates automatically; `daily_pins` schedules an entry on a date.
+ * (sutras.daily_eligible is no longer used: sūtras are not daily verses.)
  */
 export const dailyItems = pgTable("daily_items", {
   id: serial("id").primaryKey(),

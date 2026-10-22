@@ -11,7 +11,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <aside className="hero-night lg:sticky lg:top-0 lg:h-dvh flex lg:flex-col gap-4 px-4 py-3 lg:p-5 items-center lg:items-stretch">
         <Link href="/admin" className="flex items-center gap-2.5 lg:mb-6">
           <Image src="/hnvlogo.png" alt="" width={32} height={32} />
-          <span className="font-display text-lg leading-tight hidden sm:block">HNV Admin</span>
+          <span className="font-semibold text-lg leading-tight hidden sm:block">HNV Admin</span>
         </Link>
         <AdminNav role={user.role} />
         <div className="ml-auto lg:ml-0 lg:mt-auto flex lg:flex-col items-center lg:items-stretch gap-2 text-sm">

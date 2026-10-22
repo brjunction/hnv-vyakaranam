@@ -112,7 +112,6 @@ export async function importHnvFromSpreadsheets(userId: number): Promise<ImportR
         transliteration: su.sutraTransliteration,
         vrtti: su.vrtti,
         translation: su.translation,
-        dailyEligible: true,
         updatedBy: userId,
       }))
     );

@@ -1,41 +1,8 @@
 import Link from "next/link";
-import { BookOpenText, ScrollText, Target } from "lucide-react";
+import { ScrollText, Library, BookOpen, ArrowRight, Leaf, Gauge, Flame } from "lucide-react";
 import VarnaBoard from "@/components/home/VarnaBoard";
 import DailyPanel from "@/components/home/DailyPanel";
 import { chapters } from "@/lib/content";
-
-// Home page. Server Component: everything interactive lives in small client
-// children (VarnaBoard, DailyPanel). No event handlers in this file.
-
-const PRAYERS = [
-  {
-    deva: ["स्वल्पायुषां कलियुगेऽत्र नृणां शमिच्छन्", "शब्दानुशासनमहाजलधिं विमथ्य ।", "नामामृतं समददाद्य इदं कृपालुः", "स श्रीलजीवचरणः शरणं ममास्तु ॥ १ ॥"],
-    iast: ["svalpāyuṣāṁ kali-yuge 'tra nṛṇāṁ śam icchan", "śabdānuśāsana-mahā-jaladhiṁ vimathya", "nāmāmṛtaṁ samadadād ya idaṁ kṛpāluḥ", "sa śrīla-jīva-caraṇaḥ śaraṇaṁ mamāstu"],
-    translation:
-      "Desiring the welfare of the short-lived people in this age of Kali, the compassionate Śrīla Jīva Gosvāmī churned the great ocean of Sanskrit grammar and bestowed upon them this Hari-nāmāmṛta-vyākaraṇa. May he be my shelter.",
-  },
-  {
-    deva: ["नीरसं हि शब्दशास्त्रं", "नामरसविधानतः ।", "योऽमृतयन्नदान्नृभ्यः", "श्रीजीवो विजयतामसौ ॥ २ ॥"],
-    iast: ["nīrasaṁ hi śabda-śāstraṁ", "nāma-rasa-vidhānataḥ", "yo 'mṛtayan adān nṛbhyaḥ", "śrī-jīvo vijayatām asau"],
-    translation:
-      "Glory to Śrī Jīva. He converted dry grammar into nectar by adding the rasa of the holy names, and then distributed this nectar to everyone.",
-  },
-];
-
-const QUALITIES = [
-  {
-    title: "Unparalleled clarity",
-    body: "Every sūtra is composed so its meaning is immediate and unambiguous — no chain of commentaries required.",
-  },
-  {
-    title: "The ocean, churned",
-    body: "Jīva Gosvāmī churned the entire ocean of Sanskrit grammar and distilled only its essence into this one work.",
-  },
-  {
-    title: "Grammar as nectar",
-    body: "Every example is drawn from the names and pastimes of Kṛṣṇa, turning dry rules of language into rasa.",
-  },
-];
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -45,234 +12,410 @@ const IMPORTANT_SITES = [
   { name: "Bhaktivinoda Institute", url: "https://bhaktivinodainstitute.org", blurb: "The complete works of Bhaktivinoda Ṭhākura" },
 ];
 
-const PATHS = [
+const EXPLORE_CARDS = [
   {
     href: "/chapters",
-    icon: BookOpenText,
-    deva: "सूत्राणि",
-    title: "Read the sūtras",
-    body: "Every prakaraṇa of the Madhyama edition, sūtra by sūtra, with notes on the ones that need them.",
-    color: "var(--accent)",
+    icon: BookOpen,
+    label: "Chapters",
+    title: "Start with the sūtras",
+    body: "Every chapter, section, and sūtra of the Madhyama edition, organized for online study.",
+    cta: "View the table of contents",
   },
   {
     href: "/anvyaya",
     icon: ScrollText,
-    deva: "श्रीमद्भागवतम् · गीता",
-    title: "Read the scriptures",
-    body: "Śrīmad-Bhāgavatam and Bhagavad-gītā, verse by verse, with anvaya and translation.",
-    color: "var(--scripture)",
+    label: "Scriptures",
+    title: "Śrīmad-Bhāgavatam & Bhagavad-gītā",
+    body: "Every verse with its anvaya and translation, with Devanagari and a link to Śrīla Prabhupāda's purport.",
+    cta: "Explore the Scriptures",
   },
   {
     href: "/practice",
-    icon: Target,
-    deva: "अभ्यासः",
-    title: "Practice Sandhi",
-    body: "Join and split words by the rules of Sarveśvara, Viṣṇujana and Viṣṇusarga sandhi, with the sūtra behind every answer.",
-    color: "var(--practice)",
+    icon: Library,
+    label: "Practice",
+    title: "Test yourself on Sandhi",
+    body: "Pick a topic and a difficulty, then see how well the rules have stuck — instant feedback, a score at the end.",
+    cta: "Start practicing",
   },
 ];
 
-export default function Home() {
-  const prakaranas = chapters.filter((c) => c.slug !== "mangalacarana" && c.slug !== "afterword");
+function SiteFavicon({ url, size }: { url: string; size: number }) {
+  return (
+    <img
+      src={`https://www.google.com/s2/favicons?sz=${size * 2}&domain_url=${encodeURIComponent(url)}`}
+      alt=""
+      width={size}
+      height={size}
+      className="block"
+    />
+  );
+}
+
+function AmrtaPrayers({ align = "center" }: { align?: "center" | "left" }) {
+  const alignCls = align === "left" ? "text-left" : "text-center";
+  const mxCls = align === "left" ? "" : "mx-auto";
 
   return (
-    <>
-      {/* ------------------------------------------------------------ hero */}
-      <section className="hero-night relative overflow-hidden">
-        <div className="relative max-w-6xl mx-auto px-5 pt-14 pb-16 sm:pt-20 sm:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
-          <div>
-            <p className="text-[var(--color-haridra)] font-semibold mb-6">Śrīla Jīva Gosvāmī&apos;s</p>
-            <h1 className="font-devanagari text-white text-[clamp(2.7rem,7.5vw,5.4rem)] !leading-[1.15] mb-5" lang="sa-Deva">
-              श्रीहरिनामामृत<span className="block">व्याकरणम्</span>
-            </h1>
-            <p className="font-display text-2xl sm:text-3xl text-white mb-2">Śrī Harināmāmṛta-vyākaraṇam</p>
-            <p className="text-lg text-[var(--hero-muted)] max-w-md mb-9">
-              The grammar of the holy names of Lord Hari, where every technical term is a name of Kṛṣṇa.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/chapters" className="btn bg-[var(--color-haridra)] text-[var(--color-syama-900)] hover:bg-[#f2c56d]">
-                Read the sūtras
-              </Link>
-              <Link href="/practice" className="btn btn-on-dark">
-                Practice Sandhi
-              </Link>
-            </div>
-            <p className="text-sm text-[var(--hero-muted)] mt-10 max-w-sm">
-              Tap any letter on the board. Each group of the alphabet carries one of Hari&apos;s names, defined in the
-              first sūtras of the grammar.
-            </p>
-          </div>
+    <div className={alignCls}>
+      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-10">
+        Amṛta&apos;s Prayers to Jīva Gosvāmī
+      </p>
 
-          <div className="rounded-3xl border border-[var(--hero-line)] bg-white/[0.02] p-4 sm:p-6 backdrop-blur-[2px]">
+      <div className="mb-12">
+        <p className={`font-devanagari text-xl sm:text-2xl leading-relaxed ${mxCls} mb-4`}>
+          स्वल्पायुषां कलियुगेऽत्र नृणां शमिच्छन्<br />
+          शब्दानुशासनमहाजलधिं विमथ्य ।<br />
+          नामामृतं समददाद्य इदं कृपालुः<br />
+          स श्रीलजीवचरणः शरणं ममास्तु ॥ १ ॥
+        </p>
+        <p className={`text-sm italic text-[var(--fg-muted)] ${mxCls} mb-6 leading-relaxed`}>
+          svalpāyuṣāṁ kali-yuge &apos;tra nṛṇāṁ śam icchan<br />
+          śabdānuśāsana-mahā-jaladhiṁ vimathya<br />
+          nāmāmṛtaṁ samadadād ya idaṁ kṛpāluḥ<br />
+          sa śrīla-jīva-caraṇaḥ śaraṇaṁ mamāstu
+        </p>
+        <blockquote className={`text-base sm:text-lg leading-relaxed max-w-2xl ${mxCls} text-[var(--fg)] border-l-2 border-[var(--color-vermillion)] pl-5`}>
+          Desiring the welfare of the short-lived people in this age of Kali, the compassionate
+          Śrīla Jīva Gosvāmī churned the great ocean of Sanskrit grammar and bestowed upon them
+          this <em>Hari-nāmāmṛta-vyākaraṇa</em>. May he be my shelter.
+        </blockquote>
+      </div>
+
+      <div className={`h-px bg-[var(--border)] max-w-xs ${mxCls} mb-12`} />
+
+      <div>
+        <p className={`font-devanagari text-xl sm:text-2xl leading-relaxed ${mxCls} mb-4`}>
+          नीरसं हि शब्दशास्त्रं<br />
+          नामरसविधानतः ।<br />
+          योऽमृतयन्नदान्नृभ्यः<br />
+          श्रीजीवो विजयतामसौ ॥ २ ॥
+        </p>
+        <p className={`text-sm italic text-[var(--fg-muted)] ${mxCls} mb-6 leading-relaxed`}>
+          nīrasaṁ hi śabda-śāstraṁ<br />
+          nāma-rasa-vidhānataḥ<br />
+          yo &apos;mṛtayan adān nṛbhyaḥ<br />
+          śrī-jīvo vijayatām asau
+        </p>
+        <blockquote className={`text-base sm:text-lg leading-relaxed max-w-2xl ${mxCls} text-[var(--fg)] border-l-2 border-[var(--color-gold)] pl-5`}>
+          Glory to Śrī Jīva. He converted dry grammar into nectar by adding the <em>rasa</em> of
+          the holy names, and then distributed this nectar to everyone.
+        </blockquote>
+      </div>
+
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+
+     <section className="relative overflow-hidden">
+        <div className="absolute inset-0" aria-hidden />
+        <div className="relative max-w-4xl mx-auto px-5 pt-15 pb-5 text-center">
+          <p className="text-xs tracking-[0.3em] uppercase text-[var(--color-saffron)] mb-5">
+            Śrīla Jīva Gosvāmī&apos;s
+          </p>
+          <h1 className="font-devanagari text-4xl sm:text-6xl leading-tight mb-3">
+            श्री हरिनामामृत व्याकरणम्
+          </h1>
+          <p className="text-xl sm:text-2xl mb-2">Śrī Harināmāmṛta Vyākaraṇam</p>
+          <p className="text-base italic text-[var(--fg-muted)] mb-10">
+            (The Grammar of the Holy Names of Lord Hari)
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/chapters"
+              className="px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity"
+            >
+              Explore Chapters
+            </Link>
+            <Link
+              href="/about"
+              className="px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+            >
+              About This Treatise
+            </Link>
+          </div>
+          <a href="#amrta" className="group inline-block mt-10 max-w-xl">
+            <span className="block font-devanagari text-lg sm:text-xl text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors" lang="sa-Deva">
+              स्वल्पायुषां कलियुगेऽत्र नृणां शमिच्छन्…
+            </span>
+            <span className="block text-sm italic text-[var(--fg-muted)] mt-1">
+              Amṛta&apos;s prayer to Śrīla Jīva Gosvāmī
+            </span>
+          </a>
+        </div>
+      </section>
+
+     <div className="flex items-center gap-2 w-1/2 max-w-md mx-auto my-10">
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div className="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+</div>
+
+    <section>
+  {/* Framed image panel */}
+  <div className="relative overflow-hidden py-4 sm:py-5">
+    {/* soft background behind the framed image */}
+    <div className="absolute inset-0" aria-hidden />
+
+    <div className="relative max-w-3xl mx-auto px-5">
+      {/* Outer gradient frame */}
+      <div
+        className="relative mx-auto rounded-[1.25rem] p-[6px] sm:p-2 shadow-2xl"
+        style={{
+         background: `
+    linear-gradient(var(--gradient-overlay), var(--gradient-overlay)),
+    linear-gradient(135deg, var(--color-blue-light) 0%, var(--color-saffron) 45%, var(--color-vermillion) 100%)
+  `,
+}}
+      >
+        {/* Inner hairline + clipped image */}
+        <div className="rounded-[1rem] overflow-hidden border border-black/25 bg-[var(--bg-2)]">
+          {/*
+            Using an <img> instead of background-image so the
+            whole photo is shown (no cropping). If the file is
+            missing, the browser falls back to the alt text — if
+            you'd rather keep the gradient fallback, see the
+            <picture> variant below.
+          */}
+          <img
+            src="/hero-cover.jpg"
+            alt="The Ṣaḍ-Gosvāmīs of Vṛndāvana"
+            className="block w-full h-auto"
+            loading="lazy"
+          />
+        </div>
+      </div>
+
+ <p className={`text-sm  text-[var(--fg-muted)] mt-4 mb-10 sm:mt-4 sm:mb-4 text-center mb-6 leading-relaxed`}>
+ <br></br>
+  Gopāla Bhaṭṭa Gosvāmī, Raghunātha Bhaṭṭa Gosvāmī, Sanātana Gosvāmī, Rūpa Gosvāmī, <span className="font-semibold text-[var(--color-saffron)]">Jīva Gosvāmī</span>, and Raghunātha dāsa Gosvāmī<br></br>
+  <b className="font-semibold">~ Art by HG Puṣkara Prabhu</b>
+</p>
+    </div>
+    
+  <div className="flex items-center gap-2 sm:w-1/8 w-1/4 max-w-md mx-auto my-10">
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+  <div className="flex-1 h-px bg-gradient-to-r from-[var(--color-saffron)]/60 via-[var(--color-saffron)]/30 to-[var(--color-saffron)]/60"></div>
+  <div className="w-2.5 h-1 rounded-full bg-[var(--color-saffron)] shrink-0"></div>
+</div>
+
+  </div>
+</section>
+     
+ 
+    <section id="amrta" className="scroll-mt-20">
+        <div className="border-b border-[var(--border)] bg-[var(--bg-2)]">
+          <div className="max-w-3xl mx-auto px-5 py-16">
+            <AmrtaPrayers />
+          </div>
+        </div>
+      </section>
+
+      <DailyPanel />
+
+      <section className="max-w-5xl mx-auto px-5 py-20">
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-center">
+          The finest treatise of Sanskrit grammar ever composed
+        </h2>
+        <p className="text-[var(--fg-muted)] max-w-2xl mx-auto text-center mb-12 leading-relaxed">
+          Śrīla Jīva Gosvāmī studied virtually every major Sanskrit grammar in existence —
+          Pāṇini&apos;s Aṣṭādhyāyī with the Vārttikas, Mahā-bhāṣya, and Kāśikā; Śarvavarmā&apos;s
+          Kātantra; Vopadeva&apos;s Mugdha-bodha; Kramadīśvara&apos;s Saṅkṣipta-sāra; Candra
+          Gomī&apos;s Cāndra-vyākaraṇa; Padmanābha Datta&apos;s Supadma; Anubhūti
+          Svarūpāchārya&apos;s Sārasvata; and Rāmacandra Āchārya&apos;s Prakriyā-kaumudī. Having weighed
+          them all, he found each one either incomplete, riddled with errors, or so terse it was
+          unusable without a chain of commentaries.
+        </p>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {[
+            {
+              title: "Unparalleled clarity",
+              body: "Every sūtra is composed so its meaning is immediate and unambiguous — no chain of commentaries required.",
+            },
+            {
+              title: "The ocean, churned",
+              body: "Jīva Gosvāmī churned the entire ocean of Sanskrit grammar and distilled only its essence into this one work.",
+            },
+            {
+              title: "Grammar as nectar",
+              body: "Every example is drawn from the names and pastimes of Kṛṣṇa, turning dry rules of language into rasa.",
+            },
+          ].map((f) => (
+            <div
+              key={f.title}
+              className="rounded-xl border border-[var(--border)] p-6 hover:border-[var(--color-vermillion)] transition-colors"
+            >
+              <h3 className="font-medium mb-2 text-[var(--color-vermillion)]">{f.title}</h3>
+              <p className="text-sm text-[var(--fg-muted)] leading-relaxed">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+     
+
+      <section className="relative overflow-hidden border-y border-[var(--border)] bg-[var(--bg-2)]">
+        <div className="max-w-6xl mx-auto px-5 py-20 grid lg:grid-cols-[1fr_1.1fr] gap-12 items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-4">Varṇa-krama</p>
+            <h2 className="text-2xl sm:text-4xl font-semibold mb-5 leading-tight">An alphabet named for Hari</h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-4">
+              In Harināmāmṛta-vyākaraṇa every technical term is a name of Kṛṣṇa. The fourteen vowels are{" "}
+              <em>sarveśvaras</em>, the consonants are <em>viṣṇujanas</em>, and the five columns of stops are Hari&apos;s
+              lotus, sword, club, conchshell and flute.
+            </p>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-8">
+              Tap any letter to see its name and the sūtra that defines it.
+            </p>
+            <Link
+              href="/chapters/samjna-sandhi-prakarana"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors"
+            >
+              Read the Saṁjñā sūtras <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 sm:p-6 shadow-sm">
             <VarnaBoard />
           </div>
         </div>
       </section>
 
-      {/* ----------------------------------------------- verse of the day */}
-      <DailyPanel />
-
-      {/* --------------------------------- Ṣaḍ-Gosvāmīs + Amṛta's prayers */}
-      <section className="bg-[var(--bg-2)] border-y border-[var(--border)]">
-        <div className="max-w-6xl mx-auto px-5 py-16 sm:py-24 grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-12 lg:gap-16 items-start">
-          <figure className="lg:sticky lg:top-24">
-            <div className="painting-frame">
-              <div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/hero-cover.jpg"
-                  alt="The six Gosvāmīs of Vṛndāvana"
-                  width={1984}
-                  height={1298}
-                  className="block w-full h-auto rounded-[2px]"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-            </div>
-            <figcaption className="mt-5 text-sm text-[var(--fg-muted)] leading-relaxed text-center">
-              Gopāla Bhaṭṭa Gosvāmī, Raghunātha Bhaṭṭa Gosvāmī, Sanātana Gosvāmī, Rūpa Gosvāmī,{" "}
-              <span className="font-semibold text-[var(--accent)]">Jīva Gosvāmī</span>, and Raghunātha dāsa Gosvāmī
-              <span className="block mt-1">Art by HG Puṣkara Prabhu</span>
-            </figcaption>
-          </figure>
-
-          <div>
-            <h2 className="font-display text-4xl sm:text-5xl mb-10">Amṛta&apos;s prayers to Śrīla Jīva Gosvāmī</h2>
-            <div className="space-y-12">
-              {PRAYERS.map((p, i) => (
-                <div key={i}>
-                  <p className="font-devanagari text-[1.45rem] sm:text-[1.65rem] leading-[1.75] mb-4" lang="sa-Deva">
-                    {p.deva.map((l) => (
-                      <span key={l} className="block">
-                        {l}
-                      </span>
-                    ))}
-                  </p>
-                  <p className="italic text-[var(--fg-muted)] leading-relaxed mb-5" lang="sa-Latn">
-                    {p.iast.map((l) => (
-                      <span key={l} className="block">
-                        {l}
-                      </span>
-                    ))}
-                  </p>
-                  <blockquote
-                    className="text-lg leading-relaxed border-l-2 pl-5"
-                    style={{ borderColor: i === 0 ? "var(--accent)" : "var(--highlight)" }}
-                  >
-                    {p.translation}
-                  </blockquote>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ----------------------------------------------------- the treatise */}
-      <section className="max-w-6xl mx-auto px-5 py-16 sm:py-24">
-        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20">
-          <div>
-            <h2 className="font-display text-4xl sm:text-5xl mb-6 max-w-xl">
-              The finest treatise of Sanskrit grammar ever composed
-            </h2>
-            <p className="text-[var(--fg-muted)] text-lg leading-relaxed max-w-xl">
-              Śrīla Jīva Gosvāmī studied virtually every major Sanskrit grammar in existence — Pāṇini&apos;s
-              Aṣṭādhyāyī with the Vārttikas, Mahā-bhāṣya, and Kāśikā; Śarvavarmā&apos;s Kātantra; Vopadeva&apos;s
-              Mugdha-bodha; Kramadīśvara&apos;s Saṅkṣipta-sāra; Candra Gomī&apos;s Cāndra-vyākaraṇa; Padmanābha
-              Datta&apos;s Supadma; Anubhūti Svarūpāchārya&apos;s Sārasvata; and Rāmacandra Āchārya&apos;s
-              Prakriyā-kaumudī. Having weighed them all, he found each one either incomplete, riddled with errors, or
-              so terse it was unusable without a chain of commentaries.
-            </p>
-          </div>
-          <dl className="divide-y divide-[var(--border)] border-y border-[var(--border)] self-start">
-            {QUALITIES.map((q) => (
-              <div key={q.title} className="py-6">
-                <dt className="font-display text-2xl mb-1">{q.title}</dt>
-                <dd className="text-[var(--fg-muted)] leading-relaxed">{q.body}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        {/* the seven prakaraṇas, in order */}
-        <div className="mt-20">
-          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-6">
-            <h3 className="font-display text-3xl">Seven prakaraṇas, 1,278 sūtras</h3>
-            <Link href="/chapters" className="font-semibold text-[var(--accent)] hover:underline">
-              Table of contents
-            </Link>
-          </div>
-          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--border)] border border-[var(--border)] rounded-2xl overflow-hidden">
-            {prakaranas.map((c) => (
-              <li key={c.slug} className="bg-[var(--surface)]">
-                <Link href={`/chapters/${c.slug}`} className="group flex h-full flex-col p-5 hover:bg-[var(--accent-soft)] transition-colors">
-                  <span className="font-display text-4xl text-[var(--accent)] leading-none mb-4 sutra-number">{c.number}</span>
-                  <span className="font-devanagari text-lg leading-snug group-hover:text-[var(--accent)]">{c.title}</span>
-                  <span className="text-sm text-[var(--fg-muted)]">{c.titleEnglish}</span>
-                  <span className="mt-auto pt-4 text-xs text-[var(--fg-faint)] sutra-number">Sūtras {c.sutraRange}</span>
+      <section className="max-w-6xl mx-auto px-5 py-20">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">The treatise</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-10 text-center">Seven prakaraṇas, sūtra by sūtra</h2>
+        <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {chapters
+            .filter((c) => c.slug !== "mangalacarana" && c.slug !== "afterword")
+            .map((c) => (
+              <li key={c.slug}>
+                <Link href={`/chapters/${c.slug}`} className="anv-card p-5 h-full group">
+                  <span className="anv-numeral absolute -right-1 -top-2 text-[4.5rem] sutra-number select-none">{c.number}</span>
+                  <span className="block text-xs text-[var(--color-saffron)] mb-2">Chapter {c.number}</span>
+                  <span className="block font-devanagari text-lg leading-snug pr-10 group-hover:text-[var(--accent)] transition-colors">{c.title}</span>
+                  <span className="block text-sm text-[var(--fg-muted)] mb-4">{c.titleEnglish}</span>
+                  <span className="block text-xs text-[var(--fg-muted)] sutra-number">Sūtras {c.sutraRange}</span>
                 </Link>
               </li>
             ))}
-            <li className="bg-[var(--surface)] p-5 flex flex-col justify-center">
-              <span className="text-sm text-[var(--fg-muted)] leading-relaxed">
-                Opened by the{" "}
-                <Link href="/chapters/mangalacarana" className="underline">Maṅgalācaraṇa</Link> and closed by the{" "}
-                <Link href="/chapters/afterword" className="underline">Afterword</Link>.
+          <li>
+            <Link href="/chapters" className="anv-card p-5 h-full group">
+              <span className="block text-sm text-[var(--fg-muted)] mb-2">Also the Maṅgalācaraṇa and the Afterword</span>
+              <span className="inline-flex items-center gap-1.5 font-medium text-[var(--accent)]">
+                Full table of contents <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </span>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------- ways into the text */}
-      <section className="bg-[var(--bg-2)] border-y border-[var(--border)]">
-        <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20 grid md:grid-cols-3 gap-6">
-          {PATHS.map(({ href, icon: Icon, deva, title, body, color }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group relative flex flex-col rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-7 overflow-hidden hover:shadow-[var(--shadow-lift)] transition-shadow"
-            >
-              <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
-              <Icon size={22} strokeWidth={1.75} style={{ color }} className="mb-6" />
-              <span className="font-devanagari text-2xl mb-1" lang="sa-Deva">
-                {deva}
-              </span>
-              <span className="font-display text-2xl mb-3" style={{ color }}>
-                {title}
-              </span>
-              <span className="text-[var(--fg-muted)] leading-relaxed">{body}</span>
             </Link>
-          ))}
+          </li>
+        </ol>
+      </section>
+
+      <section className="relative overflow-hidden border-b border-[var(--border)]">
+        <div className="anv-hero-bg absolute inset-0" aria-hidden />
+        <div className="relative max-w-4xl mx-auto px-5 py-20 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-4">
+            Scriptures
+          </p>
+          <h2 className="font-devanagari text-3xl sm:text-5xl mb-4">अन्वयाः</h2>
+          <div className="anv-ornament mb-6" aria-hidden>
+            ◆
+          </div>
+          <p className="text-[var(--fg-muted)] max-w-2xl mx-auto mb-8 leading-relaxed">
+            Śrīmad-Bhāgavatam &amp; Bhagavad-gītā, every verse with its anvaya and translation, with
+            Devanagari and a link to Śrīla Prabhupāda&apos;s purport.
+          </p>
+          <Link
+            href="/anvyaya"
+            className="inline-block px-8 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors"
+          >
+            Explore the Scriptures
+          </Link>
         </div>
       </section>
 
-      {/* ---------------------------------------------- important websites */}
-      <section className="max-w-6xl mx-auto px-5 py-14">
-        <h2 className="font-display text-3xl mb-6">Important websites</h2>
-        <ul className="grid sm:grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-5">
-          {IMPORTANT_SITES.map((s) => (
-            <li key={s.url}>
-              <a href={s.url} target="_blank" rel="noopener noreferrer" className="group flex gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(s.url)}`}
-                  alt=""
-                  width={20}
-                  height={20}
-                  loading="lazy"
-                  className="mt-0.5 h-5 w-5 rounded-sm shrink-0"
-                />
-                <span>
-                  <span className="block font-semibold group-hover:text-[var(--accent)]">{s.name}</span>
-                  <span className="block text-sm text-[var(--fg-muted)] leading-snug">{s.blurb}</span>
-                </span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      <section className="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg-2)]">
+        <div className="max-w-4xl mx-auto px-5 py-20 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-4">Practice</p>
+          <h2 className="font-devanagari text-3xl sm:text-5xl mb-4">अभ्यासः</h2>
+          <p className="text-[var(--fg-muted)] max-w-xl mx-auto mb-8 leading-relaxed">
+            Test yourself on Vowel, Consonant, and Visarga Sandhi — instant feedback, your score at
+            the end.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] text-sm">
+              <Leaf size={16} className="text-[#4caf7d]" /> Easy
+            </span>
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] text-sm">
+              <Gauge size={16} className="text-[var(--color-saffron)]" /> Medium
+            </span>
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] text-sm">
+              <Flame size={16} className="text-[var(--color-vermillion)]" /> Hard
+            </span>
+          </div>
+          <Link
+            href="/practice"
+            className="inline-block px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity"
+          >
+            Start practicing
+          </Link>
+        </div>
       </section>
+<section className="max-w-6xl mx-auto px-5 py-15 border-b">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">
+          Explore
+        </p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-12 text-center">Three ways into the text</h2>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {EXPLORE_CARDS.map((c) => {
+            const Icon = c.icon;
+            return (
+              <Link
+                key={c.href}
+                href={c.href}
+                className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-7 flex flex-col hover:border-[var(--accent)] transition-colors"
+              >
+                <div className="w-11 h-11 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center mb-5 text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-[var(--color-ink)] transition-colors">
+                  <Icon size={20} strokeWidth={1.75} />
+                </div>
+                <p className="text-xs uppercase tracking-wide text-[var(--color-saffron)] mb-2">{c.label}</p>
+                <h3 className="text-lg font-medium mb-2">{c.title}</h3>
+                <p className="text-sm text-[var(--fg-muted)] leading-relaxed mb-6 flex-1">{c.body}</p>
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)]">
+                  {c.cta} <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+      <section className="border-[var(--border)] ">
+        <div className="max-w-6xl mx-auto px-5 py-14">
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-8 text-center">
+            Some Important Websites
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {IMPORTANT_SITES.map((s) => (
+              <a
+                key={s.url}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] p-4 hover:border-[var(--accent)] transition-colors"
+              >
+                <span className="w-8 h-8 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center overflow-hidden">
+                  <SiteFavicon url={s.url} size={16} />
+                </span>
+                <span className="text-sm font-medium">{s.name}</span>
+                <span className="text-xs text-[var(--fg-muted)] leading-snug">{s.blurb}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
     </>
   );
 }
+

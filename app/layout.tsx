@@ -1,15 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource/cormorant/500.css";
-import "@fontsource/cormorant/600.css";
-import "@fontsource/cormorant/700.css";
-import "@fontsource/cormorant/500-italic.css";
-import "@fontsource/ysabeau-office/400.css";
-import "@fontsource/ysabeau-office/400-italic.css";
-import "@fontsource/ysabeau-office/500.css";
-import "@fontsource/ysabeau-office/600.css";
-import "@fontsource/ysabeau-office/700.css";
-import "@fontsource/tiro-devanagari-sanskrit/400.css";
-import "@fontsource/tiro-devanagari-sanskrit/400-italic.css";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -140,8 +129,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f1" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e1531" },
+    { media: "(prefers-color-scheme: light)", color: "#faf6ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1e19" },
   ],
 };
 

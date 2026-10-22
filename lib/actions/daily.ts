@@ -1,139 +1,53 @@
 "use server";
 
 import { z } from "zod";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { dailyItems, dailyPins, revisions, sutras } from "@/lib/db/schema";
+import { dailyItems, dailyPins, revisions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
-import { revalidateDaily } from "@/lib/actions/revalidate";
+import { revalidateDaily, revalidateEverything, revalidateHnv } from "@/lib/actions/revalidate";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 import { importHnvFromSpreadsheets } from "@/lib/import/hnvSpreadsheets";
-import { revalidateEverything, revalidateHnv } from "@/lib/actions/revalidate";
 
+const Pool = z.enum(["verse_of_day", "subhashita"]);
 const DateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.");
+const POOL_NAME = { verse_of_day: "verse", subhashita: "Subhāṣita" } as const;
 
-// --------------------------------------------------------------- pool ----
-export async function setChapterDaily(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireUser("editor");
-  const parsed = z
-    .object({ chapterId: z.coerce.number().int().positive(), eligible: z.enum(["true", "false"]) })
-    .safeParse({ chapterId: form.get("chapterId"), eligible: form.get("eligible") });
-  if (!parsed.success) return fail("Invalid request.");
-  const eligible = parsed.data.eligible === "true";
-  const db = getDb();
-  const changed = await db
-    .update(sutras)
-    .set({ dailyEligible: eligible, updatedBy: user.id })
-    .where(and(eq(sutras.chapterId, parsed.data.chapterId), sql`${sutras.dailyEligible} <> ${eligible}`))
-    .returning({ id: sutras.id });
-  await db.insert(revisions).values({
-    entityTable: "chapters",
-    entityId: parsed.data.chapterId,
-    action: "update",
-    after: { dailyEligible: eligible, rows: changed.length },
-    userId: user.id,
-    note: `Verse of the Day: ${eligible ? "included" : "excluded"} ${changed.length} sūtras`,
-  });
-  revalidateDaily();
-  return ok(`${changed.length} sūtras ${eligible ? "added to" : "removed from"} the Verse of the Day pool.`);
-}
-
-export async function setSutraDaily(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireUser("editor");
-  const parsed = z
-    .object({ number: z.string().trim().min(1).max(20), eligible: z.enum(["true", "false"]) })
-    .safeParse({ number: form.get("number"), eligible: form.get("eligible") });
-  if (!parsed.success) return fail("Enter a sūtra number.");
-  const eligible = parsed.data.eligible === "true";
-  const db = getDb();
-  const rows = await db
-    .update(sutras)
-    .set({ dailyEligible: eligible, updatedBy: user.id })
-    .where(eq(sutras.number, parsed.data.number))
-    .returning({ id: sutras.id });
-  if (rows.length === 0) return fail(`No sūtra numbered ${parsed.data.number}.`);
-  revalidateDaily();
-  return ok(`Sūtra ${parsed.data.number} ${eligible ? "is in" : "is out of"} the pool.`);
-}
-
-// --------------------------------------------------------------- pins ----
-export async function addPin(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireUser("editor");
-  const parsed = z
-    .object({
-      pool: z.enum(["verse_of_day", "subhashita"]),
-      date: DateStr,
-      ref: z.string().trim().min(1, "Enter a sūtra number or Subhāṣita id.").max(20),
-    })
-    .safeParse({ pool: form.get("pool"), date: form.get("date"), ref: form.get("ref") });
-  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form.");
-  const { pool, date, ref } = parsed.data;
-  const db = getDb();
-
-  let entityType: "sutra" | "daily_item";
-  let entityId: number;
-  if (pool === "verse_of_day") {
-    const [s] = await db.select({ id: sutras.id }).from(sutras).where(eq(sutras.number, ref)).limit(1);
-    if (!s) return fail(`No sūtra numbered ${ref}.`);
-    entityType = "sutra";
-    entityId = s.id;
-  } else {
-    const id = Number(ref);
-    if (!Number.isInteger(id)) return fail("Use the Subhāṣita's number from the list.");
-    const [d] = await db.select({ id: dailyItems.id }).from(dailyItems).where(eq(dailyItems.id, id)).limit(1);
-    if (!d) return fail(`No Subhāṣita #${ref}.`);
-    entityType = "daily_item";
-    entityId = d.id;
-  }
-
-  await db
-    .insert(dailyPins)
-    .values({ pool, date, entityType, entityId, updatedBy: user.id })
-    .onConflictDoUpdate({
-      target: [dailyPins.pool, dailyPins.date],
-      set: { entityType, entityId, updatedBy: user.id },
-    });
-  revalidateDaily();
-  return ok(`Pinned for ${date}.`);
-}
-
-export async function removePin(_prev: ActionState, form: FormData): Promise<ActionState> {
-  await requireUser("editor");
-  const id = Number(form.get("id"));
-  if (!Number.isInteger(id)) return fail("Invalid pin.");
-  await getDb().delete(dailyPins).where(eq(dailyPins.id, id));
-  revalidateDaily();
-  return ok("Pin removed.");
-}
-
-// --------------------------------------------------------- subhāṣita ----
-const SubhashitaInput = z.object({
+// ------------------------------------------------- daily entries (both) --
+const ItemInput = z.object({
   id: z.coerce.number().int().positive().optional(),
+  pool: Pool,
   sanskrit: z.string().trim().min(1, "The Sanskrit text is required.").max(4000),
   iast: z.string().trim().max(4000),
   translation: z.string().trim().max(8000),
   source: z.string().trim().max(300),
   status: z.enum(["draft", "published", "archived"]),
+  /** Optional: also schedule this entry on a date. */
+  scheduleOn: z.union([DateStr, z.literal("")]).optional(),
 });
 
-export async function saveSubhashita(_prev: ActionState, form: FormData): Promise<ActionState> {
+export async function saveDailyItem(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser("contributor");
-  const parsed = SubhashitaInput.safeParse({
+  const parsed = ItemInput.safeParse({
     id: form.get("id") || undefined,
+    pool: form.get("pool"),
     sanskrit: form.get("sanskrit"),
     iast: form.get("iast") ?? "",
     translation: form.get("translation") ?? "",
     source: form.get("source") ?? "",
     status: form.get("status") ?? "draft",
+    scheduleOn: form.get("scheduleOn") ?? "",
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form.");
-  const { id, ...fields } = parsed.data;
+  const { id, scheduleOn, ...fields } = parsed.data;
   if (user.role === "contributor" && fields.status === "published") return fail("Contributors can save drafts only.");
+  if (scheduleOn && user.role === "contributor") return fail("Contributors can't schedule entries.");
   const db = getDb();
+  let itemId: number;
 
   if (id) {
     const [before] = await db.select().from(dailyItems).where(eq(dailyItems.id, id)).limit(1);
-    if (!before) return fail("That Subhāṣita no longer exists.");
+    if (!before) return fail("That entry no longer exists.");
     await db.batch([
       db.update(dailyItems).set({ ...fields, updatedBy: user.id }).where(eq(dailyItems.id, id)),
       db.insert(revisions).values({
@@ -145,29 +59,31 @@ export async function saveSubhashita(_prev: ActionState, form: FormData): Promis
         userId: user.id,
       }),
     ]);
-    revalidateDaily();
-    return ok("Saved.");
+    itemId = id;
+  } else {
+    const [created] = await db.insert(dailyItems).values({ ...fields, updatedBy: user.id }).returning();
+    await db.insert(revisions).values({ entityTable: "daily_items", entityId: created.id, action: "create", after: created, userId: user.id });
+    itemId = created.id;
   }
 
-  const [created] = await db
-    .insert(dailyItems)
-    .values({ pool: "subhashita", ...fields, updatedBy: user.id })
-    .returning();
-  await db.insert(revisions).values({
-    entityTable: "daily_items",
-    entityId: created.id,
-    action: "create",
-    after: created,
-    userId: user.id,
-  });
+  if (scheduleOn) {
+    await db
+      .insert(dailyPins)
+      .values({ pool: fields.pool, date: scheduleOn, entityType: "daily_item", entityId: itemId, updatedBy: user.id })
+      .onConflictDoUpdate({ target: [dailyPins.pool, dailyPins.date], set: { entityId: itemId, updatedBy: user.id } });
+  }
   revalidateDaily();
-  return ok(`Added Subhāṣita #${created.id}.`);
+  const what = POOL_NAME[fields.pool];
+  return ok(
+    `${id ? "Saved" : `Added ${what} #${itemId}`}${scheduleOn ? ` and scheduled for ${scheduleOn}` : ""}.` +
+      (fields.status !== "published" ? " It's not published yet, so it won't appear on the site." : "")
+  );
 }
 
-export async function deleteSubhashita(_prev: ActionState, form: FormData): Promise<ActionState> {
+export async function deleteDailyItem(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser("editor");
   const id = Number(form.get("id"));
-  if (!Number.isInteger(id)) return fail("Invalid item.");
+  if (!Number.isInteger(id)) return fail("Invalid entry.");
   const db = getDb();
   const [before] = await db.select().from(dailyItems).where(eq(dailyItems.id, id)).limit(1);
   if (!before) return fail("Already deleted.");
@@ -177,10 +93,38 @@ export async function deleteSubhashita(_prev: ActionState, form: FormData): Prom
     db.insert(revisions).values({ entityTable: "daily_items", entityId: id, action: "delete", before, userId: user.id }),
   ]);
   revalidateDaily();
-  return ok(`Deleted Subhāṣita #${id}. It can be restored from history.`);
+  return ok(`Deleted #${id}. A copy is kept in the revision history.`);
 }
 
-// -------------------------------------------------------------- tools ----
+// ----------------------------------------------------------- schedule --
+export async function addPin(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser("editor");
+  const parsed = z
+    .object({ pool: Pool, date: DateStr, itemId: z.coerce.number().int().positive("Choose an entry.") })
+    .safeParse({ pool: form.get("pool"), date: form.get("date"), itemId: form.get("itemId") });
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form.");
+  const { pool, date, itemId } = parsed.data;
+  const db = getDb();
+  const [item] = await db.select({ id: dailyItems.id, pool: dailyItems.pool }).from(dailyItems).where(eq(dailyItems.id, itemId)).limit(1);
+  if (!item || item.pool !== pool) return fail(`No ${POOL_NAME[pool]} #${itemId}.`);
+  await db
+    .insert(dailyPins)
+    .values({ pool, date, entityType: "daily_item", entityId: itemId, updatedBy: user.id })
+    .onConflictDoUpdate({ target: [dailyPins.pool, dailyPins.date], set: { entityId: itemId, updatedBy: user.id } });
+  revalidateDaily();
+  return ok(`Scheduled #${itemId} for ${date}.`);
+}
+
+export async function removePin(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireUser("editor");
+  const id = Number(form.get("id"));
+  if (!Number.isInteger(id)) return fail("Invalid schedule entry.");
+  await getDb().delete(dailyPins).where(eq(dailyPins.id, id));
+  revalidateDaily();
+  return ok("Removed from the schedule. That date goes back to automatic rotation.");
+}
+
+// -------------------------------------------------------------- tools --
 export async function runHnvImport(_prev: ActionState): Promise<ActionState> {
   const user = await requireUser("owner");
   try {

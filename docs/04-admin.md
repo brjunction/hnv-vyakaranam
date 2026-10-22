@@ -57,16 +57,23 @@ Own implementation, deliberately small (no third-party auth beta packages):
 
 ## 3. Roles
 
-| Action | contributor | editor | owner |
-|---|---|---|---|
-| Create/edit drafts | ✓ | ✓ | ✓ |
-| Publish / unpublish | — | ✓ | ✓ |
-| Delete (soft: `archived`) | — | ✓ | ✓ |
-| Hard delete | — | — | ✓ |
-| Import / export | — | ✓ | ✓ |
-| Custom fields, home, posts, practice | — | ✓ | ✓ |
-| Restore a revision | — | ✓ | ✓ |
-| Users, settings, tools | — | — | ✓ |
+| Action | viewer | contributor | editor | owner |
+|---|---|---|---|---|
+| Read the dashboard | ✓ | ✓ | ✓ | ✓ |
+| Create/edit drafts | — | ✓ | ✓ | ✓ |
+| Publish / unpublish, schedule | — | — | ✓ | ✓ |
+| Delete | — | — | ✓ | ✓ |
+| Import / export | — | — | ✓ | ✓ |
+| Custom fields, home, posts, practice | — | — | ✓ | ✓ |
+| Restore a revision | — | — | ✓ | ✓ |
+| Admins (add, roles, on/off, reset password), tools | — | — | — | ✓ |
+
+**Built 2026-10-22:** `/admin` dashboard, `/admin/verses` (Verse of the
+Day), `/admin/subhashita`, `/admin/schedule` (14-day preview + scheduled
+dates), `/admin/users` (owner: add admins with a password and role, turn
+on/off, set a new password; the last active owner can't be demoted or
+turned off; changes sign the person out immediately), `/admin/tools`,
+`/admin/account`.
 
 ## 4. Server action pattern (every write looks like this)
 

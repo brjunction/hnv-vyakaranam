@@ -51,7 +51,7 @@ export default function QuizRunner({
   }
 
   const difficultyColor =
-    q.difficulty === "easy" ? "var(--success)" : q.difficulty === "medium" ? "var(--color-saffron)" : "var(--color-vermillion)";
+    q.difficulty === "easy" ? "var(--color-emerald, #4caf7d)" : q.difficulty === "medium" ? "var(--color-saffron)" : "var(--color-vermillion)";
   const justAnsweredCorrect = chosen !== null && chosen === q.correctIndex;
 
   return (
@@ -81,7 +81,7 @@ export default function QuizRunner({
         {shuffled.map((_, i) => {
           const answered = answers[i];
           let bg = "var(--bg-2)";
-          if (answered) bg = answered.correct ? "var(--success)" : "var(--color-vermillion)";
+          if (answered) bg = answered.correct ? "var(--color-emerald, #4caf7d)" : "var(--color-vermillion)";
           else if (i === index) bg = "var(--accent)";
           return <div key={i} className="h-1.5 flex-1 rounded-full transition-colors duration-300" style={{ background: bg }} />;
         })}
@@ -105,14 +105,14 @@ export default function QuizRunner({
               disabled={chosen !== null}
               className={`flex items-center justify-between gap-3 px-5 py-4 rounded-xl border text-left font-devanagari text-lg transition-all ${
                 showState && isCorrect
-                  ? "border-[var(--success)] bg-[var(--success)]/10 scale-[1.02]"
+                  ? "border-[#4caf7d] bg-[#4caf7d]/10 scale-[1.02]"
                   : showState && isChosen && !isCorrect
                     ? "border-[var(--color-vermillion)] bg-[var(--color-vermillion)]/10"
                     : "border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-2)]"
               }`}
             >
               <span>{opt}</span>
-              {showState && isCorrect && <Check size={20} className="text-[var(--success)] shrink-0" />}
+              {showState && isCorrect && <Check size={20} className="text-[#4caf7d] shrink-0" />}
               {showState && isChosen && !isCorrect && <X size={20} className="text-[var(--color-vermillion)] shrink-0" />}
             </button>
           );
@@ -123,13 +123,13 @@ export default function QuizRunner({
         <div
           className="anv-fade rounded-xl border p-5 mb-6"
           style={{
-            borderColor: justAnsweredCorrect ? "var(--success)" : "var(--color-vermillion)",
-            background: justAnsweredCorrect ? "color-mix(in srgb, var(--success) 10%, transparent)" : "color-mix(in srgb, var(--color-vermillion) 8%, transparent)",
+            borderColor: justAnsweredCorrect ? "#4caf7d" : "var(--color-vermillion)",
+            background: justAnsweredCorrect ? "rgba(76,175,125,0.08)" : "color-mix(in srgb, var(--color-vermillion) 8%, transparent)",
           }}
         >
           <p
             className="text-xs font-semibold uppercase tracking-wide mb-1.5"
-            style={{ color: justAnsweredCorrect ? "var(--success)" : "var(--color-vermillion)" }}
+            style={{ color: justAnsweredCorrect ? "#4caf7d" : "var(--color-vermillion)" }}
           >
             {justAnsweredCorrect ? "Correct!" : "Not quite"}
           </p>
@@ -141,7 +141,7 @@ export default function QuizRunner({
         <button
           onClick={next}
           disabled={chosen === null}
-          className="px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {index + 1 < shuffled.length ? "Next question" : "See results"}
         </button>

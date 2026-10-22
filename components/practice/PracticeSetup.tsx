@@ -30,7 +30,7 @@ type Props = {
 
 const DIFFICULTIES: { key: Difficulty | "all"; label: string; icon: React.ReactNode; color: string }[] = [
   { key: "all", label: "All levels", icon: <Sparkles size={18} />, color: "var(--accent)" },
-  { key: "easy", label: "Easy", icon: <Leaf size={18} />, color: "var(--success)" },
+  { key: "easy", label: "Easy", icon: <Leaf size={18} />, color: "#4caf7d" },
   { key: "medium", label: "Medium", icon: <Gauge size={18} />, color: "var(--color-saffron)" },
   { key: "hard", label: "Hard", icon: <Flame size={18} />, color: "var(--color-vermillion)" },
 ];
@@ -72,7 +72,7 @@ function ChapterCard({
       <div className="flex items-start justify-between gap-3 mb-3">
         <span
           className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-semibold shrink-0 ${
-            chapter.available ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "bg-[var(--bg-2)] text-[var(--fg-muted)]"
+            chapter.available ? "bg-[var(--accent)] text-[var(--color-ink)]" : "bg-[var(--bg-2)] text-[var(--fg-muted)]"
           }`}
         >
           {isMisc ? <Shuffle size={16} /> : chapter.number ?? "—"}
@@ -87,7 +87,7 @@ function ChapterCard({
           </span>
         )}
       </div>
-      <p className="anv-label mb-1">{chapter.titleEn}</p>
+      <p className="text-sm text-[var(--fg-muted)] mb-1">{chapter.titleEn}</p>
       <p className="font-devanagari text-lg leading-snug">{chapter.title}</p>
     </button>
   );
@@ -108,15 +108,23 @@ export default function PracticeSetup({ onStart }: Props) {
   if (!chapter) {
     return (
       <div className="anv-fade">
-        <p className="anv-label mb-4 text-center">Step 1 of 3</p>
+        <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 1 of 3</p>
         <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">Choose a chapter to practice</h2>
         <p className="text-center text-[var(--fg-muted)] mb-8 max-w-md mx-auto">
           The full HNV curriculum is listed below. Locked chapters are coming soon — Sandhi is ready now.
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto mb-14">
+        <p className="text-sm font-semibold text-[var(--fg)] max-w-4xl mx-auto mb-3">Ready now</p>
+        <div className="grid sm:grid-cols-2 gap-4 max-w-4xl mx-auto mb-10">
+          {PRACTICE_CHAPTERS.filter((c) => c.available).map((c) => (
+            <ChapterCard key={c.slug} chapter={c} onSelect={setChapterSlug} />
+          ))}
           <ChapterCard chapter={MISC_CHAPTER} onSelect={setChapterSlug} />
-          {PRACTICE_CHAPTERS.map((c) => (
+        </div>
+
+        <p className="text-sm font-semibold text-[var(--fg-muted)] max-w-4xl mx-auto mb-3">Coming soon</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto mb-14">
+          {PRACTICE_CHAPTERS.filter((c) => !c.available).map((c) => (
             <ChapterCard key={c.slug} chapter={c} onSelect={setChapterSlug} />
           ))}
         </div>
@@ -124,7 +132,7 @@ export default function PracticeSetup({ onStart }: Props) {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <Gamepad2 size={20} className="text-[var(--accent)]" />
-            <p className="anv-label">Games</p>
+            <p className="text-sm font-semibold">Games</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
             {GAME_TEASERS.map((g) => (
@@ -132,7 +140,7 @@ export default function PracticeSetup({ onStart }: Props) {
                 key={g.slug}
                 className="relative rounded-2xl border border-dashed border-[var(--border)] p-5 opacity-70"
               >
-                <span className="absolute top-4 right-4 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[var(--bg-2)] text-[var(--fg-muted)]">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[var(--bg-2)] text-[var(--fg-muted)] mb-3">
                   <Lock size={11} /> Coming soon
                 </span>
                 <p className="font-medium mb-1">{g.title}</p>
@@ -152,7 +160,7 @@ export default function PracticeSetup({ onStart }: Props) {
         ← Choose a different chapter
       </button>
 
-      <p className="anv-label mb-4 text-center">Step 2 of 3</p>
+      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 2 of 3</p>
       <h2 className="text-2xl font-semibold text-center mb-2">Pick a topic</h2>
       <p className="text-center text-[var(--fg-muted)] mb-8 font-devanagari text-lg">{chapter.title}</p>
 
@@ -186,7 +194,7 @@ export default function PracticeSetup({ onStart }: Props) {
         ))}
       </div>
 
-      <p className="anv-label mb-4 text-center">Sandhi or Sandhi-viccheda?</p>
+      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Sandhi or Sandhi-viccheda?</p>
       <div className="flex flex-wrap justify-center gap-3 mb-10">
         {(
           [
@@ -200,7 +208,7 @@ export default function PracticeSetup({ onStart }: Props) {
             onClick={() => setType(opt.key)}
             className={`px-4 py-2 rounded-full border text-sm transition-colors ${
               type === opt.key
-                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]"
+                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--color-ink)]"
                 : "border-[var(--border)] hover:border-[var(--accent)]"
             }`}
           >
@@ -209,7 +217,7 @@ export default function PracticeSetup({ onStart }: Props) {
         ))}
       </div>
 
-      <p className="anv-label mb-4 text-center">Step 3 of 3 — difficulty</p>
+      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 3 of 3 — difficulty</p>
       <div className="flex flex-wrap justify-center gap-3 mb-10">
         {DIFFICULTIES.map((d) => (
           <button
@@ -235,7 +243,7 @@ export default function PracticeSetup({ onStart }: Props) {
         <button
           onClick={() => onStart({ topicSlug, difficulty, type })}
           disabled={questionsFor(topicSlug, difficulty).filter((q) => type === "all" || q.type === type).length === 0}
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           Start practice <ArrowRight size={18} />
         </button>

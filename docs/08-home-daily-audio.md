@@ -2,36 +2,35 @@
 
 ## 1. Home page
 
-- Redesigned on the owner's request on 2026-10-22 (`16-design-system.md`).
-  The owner may still edit `app/page.tsx` directly and push; always `git
-  pull` first and keep their changes.
+- The owner's design is kept (`16-design-system.md`); new elements are
+  added inside it. The owner may edit `app/page.tsx` directly and push;
+  always `git pull` first and keep their changes.
 - `app/page.tsx` stays a **Server Component**. Interactive pieces
   (VarnaBoard, DailyPanel) are small client children.
-- Sections, in order: hero (title + Varṇa-krama board) → For today (Verse
-  of the Day, Subhāṣita) → Ṣaḍ-Gosvāmī painting + Amṛta's prayers → the
-  treatise + the seven prakaraṇas → three ways in (sūtras / scriptures /
-  practice) → important websites.
+- Sections, in order: see `16-design-system.md` §3.
 - Admin-managed `home_blocks` are **not built yet** (Phase 6.1); the table
   exists. When built, blocks fill named slots between those sections.
 - The two Maṅgalācaraṇa verse blocks are removed (v6 §4.1). The Ṣaḍ-Gosvāmī
   painting + Amṛta's two prayers stay (owner's decision).
-- Hero = the **Varṇa-krama board** (`components/home/VarnaBoard.tsx`): HNV's
-  alphabet with each group's name of Hari and sūtra number (sūtras 1–25,
-  data copied from the HNV-Wiki; glosses only where the wiki gives one).
+- The **Varṇa-krama board** (`components/home/VarnaBoard.tsx`) is its own
+  section inside the owner's layout (not the hero): HNV's alphabet with each
+  group's name of Hari and sūtra number (sūtras 1–25, from the HNV-Wiki).
 - Block kinds (renderers in `components/home/blocks/*`): `announcement`,
   `feature-card`, `quote`, `link-list`, `rich-text`. A block with an
   unknown `kind` renders nothing (and logs a warning at build time).
 
 ## 2. Verse of the Day & Daily Subhāṣita (built 2026-10-22)
 
-**Pools (Neon):**
-- Verse of the Day: every published sūtra/verse with `daily_eligible =
-  true` in a published edition, in reading order (edition → chapter →
-  position). The import marks every row eligible; editors narrow it in
-  `/admin/daily` (per chapter or per sūtra).
-- Subhāṣita: every published `daily_items` row (`pool = 'subhashita'`),
-  ordered by id. Entered in `/admin/subhashita`. Empty pool → section hidden.
-- Pins: `daily_pins (pool, date)` → a sūtra or Subhāṣita for that date.
+**Pools (Neon, `daily_items`):**
+- `pool = 'verse_of_day'` — scripture verses (Gītā, Bhāgavatam …) entered
+  in `/admin/verses`. **Not sūtras** (owner's correction, 2026-10-22;
+  `sutras.daily_eligible` is unused).
+- `pool = 'subhashita'` — Subhāṣitas (Cāṇakya-nīti, Hitopadeśa …) entered in
+  `/admin/subhashita`.
+- Each entry: Sanskrit, IAST, translation, reference/source, status. Only
+  `published` entries appear. Empty pool → that card is hidden.
+- Schedule: `daily_pins (pool, date)` → an entry for that date, set from
+  the entry form ("also show on…") or `/admin/schedule`.
 
 **How "today" is chosen** (`lib/daily/pick.ts`, pure and unit-testable):
 

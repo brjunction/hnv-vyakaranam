@@ -11,7 +11,7 @@ import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth/constants";
 
 export type SessionUser = { id: number; email: string; name: string; role: AdminRole };
 
-const RANK: Record<AdminRole, number> = { contributor: 1, editor: 2, owner: 3 };
+const RANK: Record<AdminRole, number> = { viewer: 0, contributor: 1, editor: 2, owner: 3 };
 
 function key() {
   if (!env.AUTH_SECRET) throw new Error("AUTH_SECRET is not configured.");
@@ -61,7 +61,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
  * Call at the top of every admin page and every server action. Redirects to
  * the login page when signed out; to the dashboard when the role is too low.
  */
-export async function requireUser(minRole: AdminRole = "contributor"): Promise<SessionUser> {
+export async function requireUser(minRole: AdminRole = "viewer"): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/admin/login");
   if (RANK[user.role] < RANK[minRole]) redirect("/admin?denied=1");

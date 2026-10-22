@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { chapters } from "@/lib/content";
+import EditionTabs from "@/components/EditionTabs";
 
 export const metadata: Metadata = {
   title: "Table of Contents",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function ChaptersIndex() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-16">
+      <EditionTabs active="madhyama" />
       <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">
         Table of contents
       </p>

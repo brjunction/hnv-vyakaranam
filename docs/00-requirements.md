@@ -53,6 +53,7 @@ unchanged. What v7 changes:
 | Who | What they do | How |
 |---|---|---|
 | Visitor | Reads, practices, (later) saves notes/bookmarks | Public site, no login (accounts optional, Phase 9) |
+| Viewer | Reads the dashboard, changes nothing | `/admin`, read-only |
 | Contributor | Drafts content edits | `/admin`, cannot publish |
 | Editor | Edits and publishes content, imports/exports | `/admin` |
 | Owner | Everything, plus users, settings, destructive actions | `/admin` |
@@ -63,11 +64,18 @@ unchanged. What v7 changes:
 - **Kept (owner's decision, 2026-10-22):** the Ṣaḍ-Gosvāmī painting with
   Amṛta's two prayers to Śrīla Jīva Gosvāmī directly beside/below it, in
   the same section.
-- **Verse of the Day:** pool of eligible sūtras/verses stored in the DB;
-  the browser sends its own local date and receives that date's pick from a
-  small cached file (so it changes at the visitor's midnight without a
-  rebuild). A pinned date wins over rotation.
-- **Daily Subhāṣita:** same mechanism, its own pool.
+- **Verse of the Day = a scripture verse, NOT a sūtra.** Verses from the
+  Bhagavad-gītā, Śrīmad-Bhāgavatam (or other scripture) are entered in the
+  admin (Sanskrit, IAST, translation, reference). Published verses rotate
+  automatically, one per day; any verse can be scheduled for a specific
+  date (schedule wins over rotation).
+- **Daily Subhāṣita:** same mechanism, its own list (Cāṇakya-nīti,
+  Hitopadeśa …), entered in the admin.
+- The browser sends its own local date and gets that date's pick from a
+  small cached file, so both change at the visitor's midnight without a
+  rebuild.
+- **Motto verse:** Amṛta's first prayer (*svalpāyuṣāṁ kali-yuge 'tra…*) is
+  the site's highlight verse (hero link, admin sign-in), not sūtra 1.
 - **Ordered home blocks:** admin-managed blocks (kind, title, body, order,
   visibility). Design of the page itself is owned by the site owner in
   `app/page.tsx`; blocks fill defined slots.
@@ -76,8 +84,11 @@ Details: `08-home-daily-audio.md`.
 
 ## 4. HNV module
 
-- **Editions:** Laghu, Madhyama, Bṛhat — selectable; independent chapters
-  and sūtras; only Madhyama populated now. Madhyama stays at `/chapters`.
+- **Editions:** Madhyama, Bṛhat, Laghu — all three **switched on** and
+  selectable from a switch bar at the top of the chapters page
+  (`/chapters`, `/brhat/chapters`, `/laghu/chapters`). Independent chapters
+  and sūtras per edition; only Madhyama has content now (Bṛhat/Laghu show an
+  honest "being prepared" state until their sūtras are supplied).
 - **Chapters (Madhyama):**
 
 | Order | Slug | No. | Title | English | Kind | Range |
@@ -158,6 +169,18 @@ Chapter → topic → type → difficulty practice flow, available chapter by
 chapter as verified questions are written; "Miscellaneous" mixes all
 available chapters; Games (Sandhi, Nāma, Dhātu) on the roadmap. Details:
 `10-practice-and-games.md`.
+
+## 10b. HNV-Wiki
+
+`/hnv-wiki` renders `public/hnv-wiki.html` (the owner's file — still the
+single source; replace it to update) **inside the site header and footer**,
+with the wiki's CSS scoped so it can't affect the rest of the site, and a
+mobile drawer for its section list. Must stay fully responsive.
+
+## 10c. Design
+
+The owner's original design and fonts are kept (`16-design-system.md`).
+New elements must match it.
 
 ## 11. Further modules (all on the roadmap)
 

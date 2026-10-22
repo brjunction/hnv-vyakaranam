@@ -5,6 +5,25 @@ Never delete an entry; supersede it with a new one.
 
 ---
 
+### D-014 — 2026-10-22 · Verse of the Day is entered scripture verses
+**Decision:** both daily features use admin-entered `daily_items`
+(`verse_of_day`, `subhashita`); sūtras are not daily verses.
+**Why:** owner's correction. **Supersedes** the sūtra-based pool in D-011.
+
+### D-013 — 2026-10-22 · Owner's design and fonts restored (supersedes D-009)
+**Decision:** revert the "Śyāma & Kuṅkuma" redesign and all new fonts;
+keep the owner's palette and font settings; add new elements inside them.
+**Why:** owner: the redesign "destroyed" the site's look; the original was
+professional. Lesson: redesign proposals go to the owner as previews
+before replacing the live design.
+
+### D-012 — 2026-10-22 · Wiki rendered inside the site
+**Decision:** `/hnv-wiki` is a Next page built from `public/hnv-wiki.html`
+(CSS scoped with postcss, markup normalised with node-html-parser, script
+injected once), with the site header/footer and a mobile drawer.
+**Why:** owner wants the same navigation everywhere and proper mobile use,
+while still maintaining the wiki as one HTML file.
+
 ### D-011 — 2026-10-22 · Daily picks served per date, not as a baked pool
 **Decision:** `/api/daily/<date>` (static, on-demand ISR, tag `daily`);
 the browser asks for its own local date.

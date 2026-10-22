@@ -79,7 +79,7 @@ export default function VerseCard({
               href={verse.vedabaseLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] text-[var(--color-ink)] px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
             >
               Śrīla Prabhupāda&apos;s Translation &amp; Purport (Vedabase) <span aria-hidden>↗</span>
             </a>

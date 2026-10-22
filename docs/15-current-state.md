@@ -69,27 +69,23 @@ Practice: 30 verified Sandhi questions in `lib/practiceData.ts`.
 | 11 | `scripts/generate-sitemap.mjs` keeps its own copy of the HNV slug list (drift risk). | 1/4 |
 | 12 | `layout.tsx` description promises "practice section to practice all 7 chapters", "audio recitations", "multi-script" — not yet true. Fine as a roadmap, but keep in mind for honesty of metadata. | 4 |
 
-## 5. Database & admin — what exists now
+## 5. Database & admin — what exists now (2026-10-22, late)
 
-- **Neon** `hnv-vyakaranam`: schema `0000_init` applied to `main` and
-  `dev`. Owner account (bhism108@gmail.com, role owner) exists on both.
-  Editions seeded. **Sūtras are not imported yet** — the owner runs
-  Admin → Dashboard → "Import sūtras from the spreadsheets" once on
-  production (and once on a preview deployment if previews need data).
-- **Vercel** env vars set (Production → `main`, Preview/Dev → `dev`);
-  functions region `sin1`. Production domain is
-  `www.harinamamrta-vyakaranam.com` (apex 308s to www; `site.config.json`
-  updated to the www URL).
-- **Public site still reads sūtras from the xlsx files.** Only the home
-  page's "For today" section reads Neon (via `/api/daily/[date]`). Phase 1.8
-  –1.9 switches the chapter pages.
-- **Admin** (`/admin`): login, dashboard, Verse of the Day (pool per
-  chapter/sūtra, pins), Subhāṣita (add/edit/delete, drafts), Tools (import,
-  refresh caches), Account (change password). Sūtra editing not built yet.
-- **Design**: new system (`16-design-system.md`); home redesigned.
+- **Neon** `hnv-vyakaranam`: schema applied to `main` and `dev`. **Madhyama
+  imported on production** (1,290 rows, 62 subchapters — verified against
+  the xlsx). Editions Madhyama/Bṛhat/Laghu all published; Bṛhat and Laghu
+  have no sūtras yet. `dev` has schema + owner + editions only.
+- **Vercel**: env vars set (Production → `main`, Preview/Dev → `dev`),
+  functions region `sin1`, production domain `www.harinamamrta-vyakaranam.com`.
+- **Public site** still reads chapter pages from the xlsx files (switch to
+  Neon = roadmap 1.8–1.9). The home page's "For today" reads Neon via
+  `/api/daily/[date]`.
+- **Admin**: dashboard, Verse of the Day, Subhāṣita, Schedule, Admins
+  (owner), Tools, Account. Sūtra editing not built yet.
+- **Design**: owner's original design and fonts (`16-design-system.md`).
+- **Wiki**: inside the site layout, mobile drawer (`app/hnv-wiki`).
 
 Note for the AI assistant: this cloud workspace **cannot open network
-connections to Neon or to the live site** (egress policy). Run SQL through
-the Neon connector (`run_sql` / `run_sql_transaction`); never paste large
-content through it (transcription risk) — use the in-app import instead.
-Vercel is reachable through the Vercel connector (team access approved).
+connections to Neon or to the live site** (egress policy). Use the Neon
+connector for SQL and the Vercel connector for deployments/env vars; never
+paste large content through SQL (use the in-app import).

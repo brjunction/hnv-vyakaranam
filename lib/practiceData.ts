@@ -24,7 +24,7 @@ export type Topic = {
 };
 
 export const SANDHI_TOPICS: Topic[] = [
-  { slug: "vowel-sandhi", title: "Sarveśvara-sandhi", subtitle: "Vowel Sandhi — sutras 42-60" },
+  { slug: "vowel-sandhi", title: "Sarveśvara-sandhi", subtitle: "Vowel Sandhi — sutras 41-60" },
   { slug: "consonant-sandhi", title: "Viṣṇujana-sandhi", subtitle: "Consonant Sandhi — sutras 61-78" },
   { slug: "visarga-sandhi", title: "Viṣṇusarga-sandhi", subtitle: "Visarga Sandhi — sutras 79-86" },
 ];

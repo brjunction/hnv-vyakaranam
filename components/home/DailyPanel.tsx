@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BookOpenText, Quote } from "lucide-react";
 import { localDate, type DailyEntry, type DailyPayload } from "@/lib/daily/pick";
 import { splitLines } from "@/lib/text";
 
@@ -9,7 +9,9 @@ type State = { status: "loading" } | { status: "ready"; data: DailyPayload } | {
 
 function prettyDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
-  return new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" }).format(new Date(y, m - 1, d));
+  return new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(y, m - 1, d)
+  );
 }
 
 function Lines({ text, className, lang }: { text: string; className: string; lang: string }) {
@@ -26,50 +28,40 @@ function Lines({ text, className, lang }: { text: string; className: string; lan
   );
 }
 
-function DailyCard({ title, entry, tone }: { title: string; entry: DailyEntry; tone: "kunkuma" | "haridra" }) {
+function DailyCard({ title, entry, icon: Icon }: { title: string; entry: DailyEntry; icon: typeof Quote }) {
   return (
-    <article className="daily-card flex flex-col p-6 sm:p-8 overflow-hidden">
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-1"
-        style={{ background: tone === "kunkuma" ? "var(--accent)" : "var(--highlight)" }}
-      />
-      <header className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-4 mb-5">
-        <h3 className="font-display text-2xl">{title}</h3>
-        <span className="text-sm text-[var(--fg-muted)] sm:text-right">{entry.label}</span>
+    <article className="daily-card flex flex-col p-6 sm:p-8">
+      <header className="flex items-center gap-3 mb-6">
+        <span className="w-10 h-10 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+          <Icon size={18} strokeWidth={1.75} />
+        </span>
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-[var(--color-saffron)]">{title}</p>
+          {entry.source && <p className="text-sm text-[var(--fg-muted)]">{entry.source}</p>}
+        </div>
       </header>
-      <Lines text={entry.sanskrit} lang="sa-Deva" className="font-devanagari text-2xl sm:text-[1.7rem] leading-relaxed mb-3" />
-      <Lines text={entry.iast} lang="sa-Latn" className="italic text-[var(--fg-muted)] leading-relaxed mb-4" />
+      <Lines text={entry.sanskrit} lang="sa-Deva" className="font-devanagari text-xl sm:text-2xl leading-relaxed mb-4" />
+      <Lines text={entry.iast} lang="sa-Latn" className="text-sm italic text-[var(--fg-muted)] leading-relaxed mb-5" />
       {entry.translation && (
-        <p className="border-l-2 pl-4 leading-relaxed" style={{ borderColor: tone === "kunkuma" ? "var(--accent)" : "var(--highlight)" }}>
-          {entry.translation}
-        </p>
+        <blockquote className="mt-auto border-l-2 border-[var(--color-vermillion)] pl-4 leading-relaxed">{entry.translation}</blockquote>
       )}
-      <footer className="mt-auto pt-6 flex items-center justify-between gap-4 text-sm text-[var(--fg-muted)]">
-        <span>{entry.type === "subhashita" ? entry.source : entry.context}</span>
-        {entry.href && (
-          <Link href={entry.href} className="font-semibold text-[var(--accent)] hover:underline shrink-0">
-            Read in context
-          </Link>
-        )}
-      </footer>
     </article>
   );
 }
 
 /**
- * Verse of the Day + Subhāṣita. The browser computes its own local date and
- * fetches the small static file for that date, so the pick changes at the
- * visitor's midnight without any rebuild (docs/08-home-daily-audio.md §2).
- * Hides itself entirely when both pools are empty.
+ * Verse of the Day + Subhāṣita of the day. The browser computes its own
+ * local date and fetches that date's small cached file, so the pick changes
+ * at the visitor's midnight without a rebuild (docs/08 §2). Entries are
+ * managed in /admin (Verse of the Day, Subhāṣita, Schedule). Hides itself
+ * entirely when nothing is published.
  */
 export default function DailyPanel() {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
-    const date = localDate();
     let cancelled = false;
-    fetch(`/api/daily/${date}`)
+    fetch(`/api/daily/${localDate()}`)
       .then((r) => (r.ok ? (r.json() as Promise<DailyPayload>) : Promise.reject(r.status)))
       .then((data) => {
         if (cancelled) return;
@@ -84,29 +76,23 @@ export default function DailyPanel() {
   if (state.status === "empty") return null;
 
   return (
-    <section aria-labelledby="today-heading" className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
-      <div className="flex flex-wrap items-baseline justify-between gap-3 mb-8">
-        <h2 id="today-heading" className="font-display text-4xl sm:text-5xl">
-          For today
+    <section aria-labelledby="today-heading" className="max-w-5xl mx-auto px-5 py-16">
+      <div className="text-center mb-10">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">For today</p>
+        <h2 id="today-heading" className="text-2xl sm:text-3xl font-semibold">
+          {state.status === "ready" ? prettyDate(state.data.date) : " "}
         </h2>
-        {state.status === "ready" && <p className="text-[var(--fg-muted)]">{prettyDate(state.data.date)}</p>}
       </div>
 
       {state.status === "loading" ? (
         <div className="grid md:grid-cols-2 gap-6" aria-hidden>
-          <div className="anv-skeleton !h-72 !rounded-2xl" />
-          <div className="anv-skeleton !h-72 !rounded-2xl" />
+          <div className="anv-skeleton !h-72" />
+          <div className="anv-skeleton !h-72" />
         </div>
       ) : (
-        <div className={`grid gap-6 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : ""}`}>
-          {state.data.verseOfDay && (
-            <DailyCard
-              title={state.data.verseOfDay.type === "verse" ? "Verse of the day" : "Sūtra of the day"}
-              entry={state.data.verseOfDay}
-              tone="kunkuma"
-            />
-          )}
-          {state.data.subhashita && <DailyCard title="Subhāṣita of the day" entry={state.data.subhashita} tone="haridra" />}
+        <div className={`grid gap-6 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : "max-w-2xl mx-auto"}`}>
+          {state.data.verseOfDay && <DailyCard title="Verse of the Day" entry={state.data.verseOfDay} icon={BookOpenText} />}
+          {state.data.subhashita && <DailyCard title="Subhāṣita of the day" entry={state.data.subhashita} icon={Quote} />}
         </div>
       )}
     </section>

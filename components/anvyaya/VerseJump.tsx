@@ -43,7 +43,7 @@ export default function VerseJump({ bookCode, hasChapters }: { bookCode: string;
         />
         <button
           type="submit"
-          className="px-5 text-sm font-medium bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90 transition-opacity"
+          className="px-5 text-sm font-medium bg-[var(--accent)] text-[var(--color-ink)] hover:opacity-90 transition-opacity"
         >
           Go
         </button>

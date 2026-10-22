@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Sun, Quote, Wrench, UserRound } from "lucide-react";
+import { LayoutDashboard, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound } from "lucide-react";
 
 const ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, owner: false },
-  { href: "/admin/daily", label: "Verse of the Day", icon: Sun, owner: false },
+  { href: "/admin/verses", label: "Verse of the Day", icon: BookOpenText, owner: false },
   { href: "/admin/subhashita", label: "Subhāṣita", icon: Quote, owner: false },
+  { href: "/admin/schedule", label: "Schedule", icon: CalendarDays, owner: false },
+  { href: "/admin/users", label: "Admins", icon: Users, owner: true },
   { href: "/admin/tools", label: "Tools", icon: Wrench, owner: true },
   { href: "/admin/account", label: "Account", icon: UserRound, owner: false },
 ];

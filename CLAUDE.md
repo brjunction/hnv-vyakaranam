@@ -36,6 +36,11 @@ must never be forgotten.
 9. **Public pages are static/ISR.** A visitor's request never waits on a
    database query, except the first render of a not-yet-cached page.
 10. **Mobile-first**, especially the Scriptures reader.
+11. **Keep the owner's design and fonts** (`docs/16-design-system.md`). Add
+    new elements inside it; never replace the palette or fonts unless the
+    owner explicitly asks — show a preview first.
+12. **Verse of the Day = scripture verses entered in the admin**, never
+    sūtras. The motto verse is Amṛta's *svalpāyuṣāṁ kali-yuge 'tra…*.
 
 ## Code rules that have already caused real bugs here
 - A file without `"use client"` is a **Server Component**: no `onClick`,

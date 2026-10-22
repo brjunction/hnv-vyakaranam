@@ -115,7 +115,7 @@ export default function VarnaBoard() {
       onMouseEnter={() => setFocus(g.id)}
       onFocus={() => setFocus(g.id)}
       className={`text-left text-[0.8rem] leading-tight transition-colors ${
-        focus === g.id ? "text-[#ffe3a6]" : "text-[var(--hero-muted)] hover:text-white"
+        focus === g.id ? "text-[var(--color-vermillion)] dark:text-[var(--color-gold-light)] font-semibold" : "text-[var(--fg-muted)] hover:text-[var(--fg)]"
       } ${className}`}
     >
       <span className="italic">{g.name}</span>
@@ -132,7 +132,7 @@ export default function VarnaBoard() {
       {/* vowels */}
       <div className="flex items-baseline justify-between mb-2">
         {label(VOWELS)}
-        <span className="text-[0.75rem] text-[var(--hero-muted)]">14</span>
+        <span className="text-[0.75rem] text-[var(--fg-muted)]">14 letters</span>
       </div>
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-4">
         {VOWELS.letters.map((l) => tile(l))}
@@ -171,29 +171,29 @@ export default function VarnaBoard() {
       </div>
 
       {/* explanation of the focused group */}
-      <div className="mt-6 min-h-[5.5rem] rounded-xl border border-[var(--hero-line)] bg-white/[0.03] p-4" aria-live="polite">
+      <div className="mt-6 min-h-[5.5rem] rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4" aria-live="polite">
         {group ? (
           <>
-            <p className="font-display text-2xl text-white leading-tight">
+            <p className="font-semibold text-xl font-semibold leading-tight">
               <span className="italic">{group.name}</span>
-              {group.gloss && <span className="text-[var(--hero-muted)] text-lg"> — {group.gloss}</span>}
+              {group.gloss && <span className="text-[var(--fg-muted)] font-normal"> — {group.gloss}</span>}
             </p>
-            <p className="text-sm text-[var(--hero-muted)] mt-1">
+            <p className="text-sm text-[var(--fg-muted)] mt-1">
               In Pāṇini&apos;s terms: {group.paninian}.{" "}
-              <Link href={sutraHref(group.sutra)} className="text-[#ffe3a6] underline underline-offset-2">
+              <Link href={sutraHref(group.sutra)} className="text-[var(--color-vermillion)] dark:text-[var(--color-gold-light)] underline underline-offset-2">
                 Read sūtra {group.sutra}
               </Link>
             </p>
           </>
         ) : (
           <>
-            <p className="font-devanagari text-xl text-white" lang="sa-Deva">
+            <p className="font-devanagari text-xl" lang="sa-Deva">
               नारायणादुद्भूतोऽयं वर्णक्रमः
             </p>
-            <p className="text-sm text-[var(--hero-muted)] mt-1">
+            <p className="text-sm text-[var(--fg-muted)] mt-1">
               <span className="italic">nārāyaṇād udbhūto &apos;yaṁ varṇa-kramaḥ</span> — this series of letters appeared
               from Nārāyaṇa.{" "}
-              <Link href={sutraHref(1)} className="text-[#ffe3a6] underline underline-offset-2">
+              <Link href={sutraHref(1)} className="text-[var(--color-vermillion)] dark:text-[var(--color-gold-light)] underline underline-offset-2">
                 Sūtra 1
               </Link>
             </p>

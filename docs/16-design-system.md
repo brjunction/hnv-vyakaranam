@@ -1,90 +1,58 @@
-# 16 — Design system: "Śyāma & Kuṅkuma"
+# 16 — Design system (the owner's original design)
 
-Introduced 2026-10-22 with the home redesign. Defined in `app/globals.css`.
-**Components use semantic tokens only** (`--bg`, `--fg`, `--accent` …), so
-light/dark and any future re-theme happen in one file.
+**Decision (2026-10-22, owner):** the site keeps the owner's own design —
+parchment / gold / saffron / vermillion in light mode, deep forest green in
+dark mode — and the owner's original fonts. A full redesign ("Śyāma &
+Kuṅkuma", Cormorant/Ysabeau, and later Montserrat/Inter) was tried the same
+day and **rejected**; do not reintroduce a new palette or new fonts without
+the owner asking for it explicitly.
 
-## 1. Palette (raw)
+## 1. Fonts — exactly as the owner set them (`app/globals.css` `@theme`)
 
-| Name | Hex | Meaning / use |
-|---|---|---|
-| śyāma 900 | `#111a3a` | Kṛṣṇa's complexion. Hero and footer ground, dark-mode base, ink. |
-| śyāma 950 | `#0b1129` | Deepest night (hero gradient end). |
-| kuṅkuma | `#b42e2e` | Tilaka red. **Light-mode accent**: buttons, links, active nav. |
-| haridrā | `#e8b04a` | Turmeric gold. **Dark-mode accent**, highlights, hero CTA, painting frame. |
-| yamunā | `#2f58a8` / light `#7ea3e8` | Scriptures section, focus ring (light). |
-| tulasī | `#2d7a55` / light `#6cc39a` | Practice section, success states. |
-| śaṅkha | `#f5f5f1` | Conch white. Light-mode ground. |
+```css
+--font-serif: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", Georgia, serif;  /* .font-devanagari */
+--font-body:  "Inter", ui-sans-serif, system-ui, sans-serif;                          /* body */
+```
 
-## 2. Semantic tokens
+No font files are downloaded (no @fontsource, no next/font): visitors see
+Inter if installed, otherwise their system UI font; Devanagari falls back
+to the system's Devanagari font. Headings use the body font
+(`font-semibold`). Keep it that way.
 
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `--bg` | `#f5f5f1` | `#0e1531` | page |
-| `--bg-2` | `#ebece9` | `#162042` | alternate section band |
-| `--surface` | `#ffffff` | `#1a2549` | cards, panels, inputs |
-| `--fg` / `--fg-muted` / `--fg-faint` | ink / `#535a72` / `#7a8098` | `#eef0f7` / `#a8b0cc` / `#7a84a8` | text |
-| `--border` / `--border-strong` | `#d9dbe2` / `#b9bdca` | `#283358` / `#3a4775` | lines |
-| `--accent` / `--accent-fg` | kuṅkuma / white | haridrā / śyāma | primary action; text placed ON accent |
-| `--accent-soft` | 9 % kuṅkuma | 12 % haridrā | active/hover tint |
-| `--highlight` | `#c8901f` | haridrā | gold details, ornaments |
-| `--scripture` / `--practice` | yamunā / tulasī | light variants | section identity |
-| `--success` / `--danger` | tulasī / kuṅkuma | light variants | feedback |
-| `--ring` | yamunā | haridrā | focus outline |
+## 2. Colors — owner's tokens (unchanged)
 
-Rules:
-- Text on an accent background **always** uses `--accent-fg` (never a fixed
-  color — the accent changes between themes).
-- Hard-coded hex values are not allowed in components. Add a token.
-- `.hero-night` is the one place a section is dark in both themes (hero,
-  footer, admin sidebar, login panel). Inside it use `--hero-fg`,
-  `--hero-muted`, `--hero-line`.
-- Legacy names (`--color-saffron`, `--color-vermillion`, `--color-gold`,
-  `--color-ink`) still exist and point into this palette so older pages keep
-  working; new code uses semantic tokens.
+`--color-ink #0d1a16`, `--color-parchment #faf6ec`, `--color-parchment-dim
+#f1ead6`, `--color-gold #c9a227`, `--color-gold-light #e8c766`,
+`--color-saffron #d9622b`, `--color-vermillion #b3341a`; semantic `--bg`,
+`--bg-2`, `--fg`, `--fg-muted`, `--accent` (gold), `--border`; `.dark`
+overrides to forest green.
 
-## 3. Type
+**Additive tokens** (appended at the end of globals.css, used by the admin
+and new elements — they don't change any existing color): `--surface`,
+`--accent-fg`, `--accent-soft`, `--border-strong`, `--fg-faint`,
+`--success`, `--danger`, `--ring`, `--highlight`, `--shadow-lift`,
+`--color-blue-light` and `--gradient-overlay` (the painting frame's
+gradient referenced these but they were never defined).
 
-| Role | Face | Notes |
-|---|---|---|
-| Display: h1–h3, wordmark, numerals | **Cormorant** 500–700 (+500 italic) | `font-display`. High-contrast Garamond; large sizes only (≥ 1.25 rem). |
-| Body & UI | **Ysabeau Office** 400–700 (+400 italic) | Same designer as Cormorant's Garamond lineage (Christian Thalmann); humanist sans, very legible. |
-| Sanskrit (Devanagari) | **Tiro Devanagari Sanskrit** 400 (+italic) | `font-devanagari`. Designed for Sanskrit; full conjunct support. |
+`dark:` Tailwind utilities follow the site's theme toggle (`.dark` on
+`<html>`) via `@custom-variant dark`.
 
-All three are self-hosted from `@fontsource/*` (imported in
-`app/layout.tsx`; browsers download only the unicode ranges they need).
+## 3. Home page elements (inside the owner's layout)
 
-**Why these:** checked with fontTools on 2026-10-22 — they cover every IAST
-character the content uses, including **ṁ** (Bhaktivedanta-style anusvāra),
-ṝ, ḹ. Inter, Figtree, Hanken Grotesk, Instrument Sans, Manrope, IBM Plex Sans,
-Newsreader and many others **miss** ṛ/ṃ/ḥ/ṭ etc. and must not be used for
-text that may contain IAST. Before adding any font, run the coverage check
-in `docs/13-engineering-standards.md` §11 (pitfalls) — or simply don't.
+Order: hero (+ link to Amṛta's first prayer, the site's motto verse
+*svalpāyuṣāṁ kali-yuge 'tra…*) → painting → Amṛta's prayers (`#amrta`) →
+**For today** (Verse of the Day + Subhāṣita, `components/home/DailyPanel`)
+→ "finest treatise" → **Varṇa-krama board** (`components/home/VarnaBoard`)
+→ **seven prakaraṇas** grid → Scriptures → Practice → Explore → websites.
 
-Type rules:
-- Sentence case everywhere. No tracked all-caps labels in new UI
-  (`.anv-label` was converted to sentence case).
-- Sanskrit always carries `lang="sa-Deva"` (Devanagari) or `lang="sa-Latn"`
-  (IAST); IAST is set in italic.
-- Measure ≤ 75 characters for reading text.
+Visual vocabulary to reuse for new elements: small saffron tracked label +
+`font-semibold` heading, `anv-card` cards (gold top rule), `anv-hero-bg`
+glow sections, `bg-[var(--bg-2)]` alternate bands, pill buttons
+(`rounded-full`, gold fill or gold outline).
 
-## 4. Components & primitives
+## 4. Rules
 
-| Class / component | What |
-|---|---|
-| `.btn` + `.btn-primary` / `.btn-ghost` / `.btn-on-dark` | Pill buttons, min height 44 px. |
-| `.hero-night` | Dark śyāma band with blue/red glows. |
-| `.varna-tile`, `.varna-board`, `.varna-wide`, `.varna-ink` | Varṇa-krama board (home hero). The ink-in animation is the page's single orchestrated motion. |
-| `.painting-frame` | Gilded frame around the Ṣaḍ-Gosvāmī painting. |
-| `.daily-card` | Verse of the Day / Subhāṣita cards (colored top rule = section color). |
-| `.anv-card`, `.anv-verse`, `.anv-pill`, `.anv-label`, `.anv-skeleton` | Shared cards/labels used by Scriptures, Practice, HNV. |
-| `components/admin/ActionForm.tsx` | `ActionForm`, `SubmitButton`, `Field`, `inputCls` for every admin form. |
-| `components/admin/ui.tsx` | `PageHeader`, `Panel`, `Stat`. |
-
-## 5. Motion & accessibility
-
+- The motto verse is Amṛta's first prayer (*svalpāyuṣāṁ…*), not sūtra 1.
+- `.anv-card` sets `display:block` (unlayered CSS beats Tailwind's
+  `flex`), so put `block` on child spans instead of relying on `flex-col`.
 - One orchestrated motion per page at most (home: the board's ink-in).
-  Everything else moves only in response to the reader.
-- `prefers-reduced-motion: reduce` disables all animation (global rule).
-- Visible focus: 2 px `--ring` outline on `:focus-visible`.
-- Tap targets ≥ 44 px on touch layouts.

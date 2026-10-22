@@ -15,18 +15,24 @@ const nextConfig: NextConfig = {
 
   // /Anvyaya/SB/1/12/1 (capital A) keeps working — it is served by the same
   // pages as /anvyaya/SB/1/12/1, without changing the address in the browser.
-  // /hnv-wiki serves the static file public/hnv-wiki.html directly (it's a
-  // full self-contained HTML document, so it bypasses Next's own layout).
+  // /hnv-wiki is a normal page (app/hnv-wiki) built from public/hnv-wiki.html.
+  // Other spellings of the wiki address → the wiki page (inside the site layout).
+  async redirects() {
+    return [
+      { source: "/hnvwiki", destination: "/hnv-wiki", permanent: true },
+      { source: "/wiki", destination: "/hnv-wiki", permanent: true },
+    ];
+  },
+
   async rewrites() {
     return [
+      // Path matching is case-insensitive, so this also matches /hnv-wiki
+      // itself — harmless for a rewrite (a redirect here would loop).
+      { source: "/HNV-Wiki", destination: "/hnv-wiki" },
       { source: "/Anvyaya", destination: "/anvyaya" },
       { source: "/Anvyaya/:path*", destination: "/anvyaya/:path*" },
       { source: "/ANVYAYA", destination: "/anvyaya" },
       { source: "/ANVYAYA/:path*", destination: "/anvyaya/:path*" },
-      { source: "/hnv-wiki", destination: "/hnv-wiki.html" },
-      { source: "/HNV-Wiki", destination: "/hnv-wiki.html" },
-      { source: "/hnvwiki", destination: "/hnv-wiki.html" },
-      { source: "/wiki", destination: "/hnv-wiki.html" },
     ];
   },
 };

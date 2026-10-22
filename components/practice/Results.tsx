@@ -1,14 +1,70 @@
 "use client";
 
 import type { AnsweredQuestion } from "@/components/practice/QuizRunner";
-import { Download, RotateCcw, Trophy } from "lucide-react";
+import { Download, RotateCcw, Trophy, Medal, Award, Gem } from "lucide-react";
 
-function commentFor(pct: number): string {
-  if (pct === 100) return "Perfect score! Every sandhi rule applied correctly.";
-  if (pct >= 80) return "Excellent work — you clearly know these rules well.";
-  if (pct >= 60) return "Good effort. A little more review and this will stick.";
-  if (pct >= 40) return "A fair start — go back over the explanations and try again.";
-  return "Worth another pass — review each explanation below, then retry.";
+type Tier = {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  comment: string;
+};
+
+function tierFor(pct: number): Tier {
+  if (pct === 100) {
+    return {
+      key: "perfect",
+      label: "Perfect score",
+      icon: <Gem size={40} />,
+      color: "var(--color-gold)",
+      comment: "Every sandhi rule applied correctly. Flawless.",
+    };
+  }
+  if (pct >= 80) {
+    return {
+      key: "gold",
+      label: "Gold tier",
+      icon: <Trophy size={40} />,
+      color: "var(--color-gold)",
+      comment: "Excellent work — you clearly know these rules well.",
+    };
+  }
+  if (pct >= 60) {
+    return {
+      key: "silver",
+      label: "Silver tier",
+      icon: <Medal size={40} />,
+      color: "#9aa5b1",
+      comment: "Good effort. A little more review and this will stick.",
+    };
+  }
+  if (pct >= 40) {
+    return {
+      key: "bronze",
+      label: "Bronze tier",
+      icon: <Award size={40} />,
+      color: "var(--color-saffron)",
+      comment: "A fair start — go back over the explanations and try again.",
+    };
+  }
+  return {
+    key: "practice",
+    label: "Keep practicing",
+    icon: <Award size={40} />,
+    color: "var(--color-vermillion)",
+    comment: "Worth another pass — review each explanation below, then retry.",
+  };
+}
+
+function bestStreak(answers: AnsweredQuestion[]): number {
+  let best = 0;
+  let cur = 0;
+  for (const a of answers) {
+    cur = a.correct ? cur + 1 : 0;
+    if (cur > best) best = cur;
+  }
+  return best;
 }
 
 function toCsv(answers: AnsweredQuestion[]): string {
@@ -36,6 +92,8 @@ export default function Results({
 }) {
   const correct = answers.filter((a) => a.correct).length;
   const pct = Math.round((correct / answers.length) * 100);
+  const tier = tierFor(pct);
+  const streak = bestStreak(answers);
 
   function download() {
     const blob = new Blob([toCsv(answers)], { type: "text/csv;charset=utf-8;" });
@@ -49,18 +107,39 @@ export default function Results({
 
   return (
     <div className="anv-fade max-w-2xl mx-auto text-center">
-      <Trophy size={40} className="mx-auto mb-4 text-[var(--accent)]" />
+      <div
+        className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 anv-fade"
+        style={{
+          color: tier.color,
+          background: `radial-gradient(circle, color-mix(in srgb, ${tier.color} 18%, transparent), transparent 75%)`,
+          border: `2px solid color-mix(in srgb, ${tier.color} 45%, transparent)`,
+        }}
+      >
+        {tier.icon}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: tier.color }}>
+        {tier.label}
+      </p>
       <p className="anv-label mb-2">Practice complete</p>
       <p className="text-5xl font-semibold mb-2 sutra-number">
         {correct} / {answers.length}
       </p>
-      <p className="text-2xl text-[var(--accent)] font-medium mb-4">{pct}%</p>
-      <p className="text-[var(--fg-muted)] mb-10 max-w-md mx-auto">{commentFor(pct)}</p>
+      <p className="text-2xl font-medium mb-4" style={{ color: tier.color }}>
+        {pct}%
+      </p>
+      <p className="text-[var(--fg-muted)] mb-2 max-w-md mx-auto">{tier.comment}</p>
+      {streak >= 3 && (
+        <p className="text-sm text-[var(--fg-muted)] mb-8">
+          Best streak this round: <span className="font-semibold text-[var(--accent)]">{streak} in a row</span>
+        </p>
+      )}
+      {streak < 3 && <div className="mb-8" />}
 
       <div className="flex flex-wrap justify-center gap-3 mb-12">
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all"
         >
           <RotateCcw size={18} /> Practice again
         </button>

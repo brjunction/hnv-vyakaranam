@@ -292,34 +292,41 @@ export const QUESTIONS: Question[] = [
 
 export type PracticeChapter = {
   slug: string;
+  number: number | null;
   title: string;
   titleEn: string;
   topics: Topic[];
   available: boolean;
+  isMisc?: boolean;
 };
 
 export const PRACTICE_CHAPTERS: PracticeChapter[] = [
-  {
-    slug: "sandhi",
-    title: "Sandhi (Sūtras 41-86)",
-    titleEn: "Sandhi practice",
-    topics: SANDHI_TOPICS,
-    available: true,
-  },
-  {
-    slug: "nama-prakarana",
-    title: "Nāma-prakaraṇa",
-    titleEn: "Noun declension practice",
-    topics: [],
-    available: false,
-  },
-  {
-    slug: "akhyata-prakarana",
-    title: "Ākhyāta-prakaraṇa",
-    titleEn: "Verb conjugation practice",
-    topics: [],
-    available: false,
-  },
+  { slug: "mangalacarana", number: null, title: "Maṅgalācaraṇa", titleEn: "Invocation", topics: [], available: false },
+  { slug: "samjna-sandhi-prakarana", number: 1, title: "Saṁjñā-sandhi-prakaraṇa", titleEn: "Sandhi practice", topics: SANDHI_TOPICS, available: true },
+  { slug: "nama-prakarana", number: 2, title: "Nāma-prakaraṇa", titleEn: "Noun declension practice", topics: [], available: false },
+  { slug: "akhyata-prakarana", number: 3, title: "Ākhyāta-prakaraṇa", titleEn: "Verb conjugation practice", topics: [], available: false },
+  { slug: "karaka-prakarana", number: 4, title: "Kāraka-prakaraṇa", titleEn: "Case-meaning practice", topics: [], available: false },
+  { slug: "krdanta-prakarana", number: 5, title: "Kṛdanta-prakaraṇa", titleEn: "Participle practice", topics: [], available: false },
+  { slug: "samasa-prakarana", number: 6, title: "Samāsa-prakaraṇa", titleEn: "Compound practice", topics: [], available: false },
+  { slug: "taddhita-prakarana", number: 7, title: "Taddhita-prakaraṇa", titleEn: "Taddhita practice", topics: [], available: false },
+  { slug: "afterword", number: null, title: "Afterword", titleEn: "Afterword", topics: [], available: false },
+];
+
+export const MISC_CHAPTER: PracticeChapter = {
+  slug: "miscellaneous",
+  number: null,
+  title: "Miscellaneous",
+  titleEn: "All available chapters, mixed together",
+  topics: PRACTICE_CHAPTERS.filter((c) => c.available).flatMap((c) => c.topics),
+  available: true,
+  isMisc: true,
+};
+
+export type GameTeaser = { slug: string; title: string; titleEn: string };
+export const GAME_TEASERS: GameTeaser[] = [
+  { slug: "sandhi-games", title: "Sandhi Games", titleEn: "Match, race, and build words" },
+  { slug: "nama-games", title: "Nāma Games", titleEn: "Declension drills, gamified" },
+  { slug: "dhatu-games", title: "Dhātu Games", titleEn: "Root & conjugation challenges" },
 ];
 
 export function questionsFor(topicSlug: string | "all", difficulty: Difficulty | "all"): Question[] {

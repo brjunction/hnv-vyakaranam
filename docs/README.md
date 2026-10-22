@@ -38,6 +38,7 @@ conflict should be fixed here, in writing, before code changes.
 | `13-engineering-standards.md` | Conventions, folder layout, QA gates, definition of done, known pitfalls. |
 | `14-operations.md` | Environments, env vars, deploys, Neon branches, backups, incident runbooks. |
 | `15-current-state.md` | Audit of the codebase as it is today, and known content/code issues. |
+| `16-design-system.md` | Colors, type, components, and the rules that keep every page consistent. |
 | `DECISIONS.md` | Architecture decision log (why we chose what we chose). |
 
 ## Glossary

@@ -1,0 +1,44 @@
+import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+import { isAuthConfigured, isDbConfigured } from "@/lib/env";
+import LoginForm from "./LoginForm";
+
+export const metadata = { title: "Sign in" };
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  if (await getCurrentUser()) redirect("/admin");
+  const { next } = await searchParams;
+  const missing = [!isDbConfigured && "DATABASE_URL", !isAuthConfigured && "AUTH_SECRET"].filter(Boolean);
+
+  return (
+    <div className="min-h-dvh grid lg:grid-cols-[1.1fr_1fr]">
+      <aside className="hero-night hidden lg:flex flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <Image src="/hnvlogo.png" alt="" width={40} height={40} />
+          <span className="font-display text-xl">Harināmāmṛta-Vyākaraṇam</span>
+        </div>
+        <div>
+          <p className="font-devanagari text-5xl leading-snug mb-4">नारायणादुद्भूतोऽयं वर्णक्रमः</p>
+          <p className="text-[var(--hero-muted)] italic">nārāyaṇād udbhūto &apos;yaṁ varṇa-kramaḥ — sūtra 1</p>
+        </div>
+        <p className="text-sm text-[var(--hero-muted)]">Editors&apos; dashboard</p>
+      </aside>
+
+      <main className="flex items-center justify-center px-5 py-16">
+        <div className="w-full max-w-sm">
+          <h1 className="font-display text-4xl mb-2">Sign in</h1>
+          <p className="text-[var(--fg-muted)] mb-8">Manage the sūtras, daily verses and Subhāṣitas.</p>
+          {missing.length > 0 ? (
+            <div className="rounded-xl border border-[var(--danger)]/40 bg-[var(--danger)]/5 p-4 text-sm">
+              This deployment is missing {missing.join(" and ")}. Add {missing.length > 1 ? "them" : "it"} in
+              Vercel → Settings → Environment Variables, then redeploy.
+            </div>
+          ) : (
+            <LoginForm next={next} />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}

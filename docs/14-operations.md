@@ -4,7 +4,7 @@
 
 | Environment | Code | Database (Neon branch) | URL |
 |---|---|---|---|
-| Production | `main` branch on GitHub | `main` (`br-calm-smoke-a1hu3mn2`) | `https://harinamamrta-vyakaranam.com` |
+| Production | `main` branch on GitHub | `main` (`br-calm-smoke-a1hu3mn2`) | `https://www.harinamamrta-vyakaranam.com` (apex and `harinamamrta-vyakaranam.vercel.app` also attached; apex 308 → www) |
 | Preview | any PR / other branch | `dev` (`br-crimson-leaf-a18n6gn6`) | Vercel preview URL |
 | Local | developer machine | `dev` | `http://localhost:3000` |
 
@@ -18,8 +18,8 @@ Vercel project: **`hnv`** (`prj_bQUwmKeeD7YGlP6IOqOSo0kE2EiL`), GitHub repo
 
 ## 2. One-time platform settings
 
-- [ ] Vercel → Settings → Functions → Region: **`sin1`** (Singapore).
-- [ ] Vercel → Settings → Environment Variables (§3).
+- [x] Vercel → Settings → Functions → Region: **`sin1`** (Singapore). *(set 2026-10-22)*
+- [x] Vercel → Settings → Environment Variables (§3). *(set 2026-10-22: DATABASE_URL, DATABASE_URL_UNPOOLED, AUTH_SECRET, CRON_SECRET)*
 - [ ] Vercel → Settings → Git → Deploy Hooks → create hook "admin-rebuild"
       on `main` → store URL as `VERCEL_DEPLOY_HOOK_URL`.
 - [ ] GitHub → repo → Settings → Secrets: `NEON_DEV_URL`,
@@ -38,7 +38,7 @@ Vercel project: **`hnv`** (`prj_bQUwmKeeD7YGlP6IOqOSo0kE2EiL`), GitHub repo
 | `VERCEL_DEPLOY_HOOK_URL` | hook URL | — | — |
 | `REVALIDATE_SECRET` | random | random | any |
 | `VERCEL_API_TOKEN` (optional) | read-only token | — | — |
-| `SITE_URL` | `https://harinamamrta-vyakaranam.com` | preview URL (optional) | `http://localhost:3000` |
+| `SITE_URL` | `https://www.harinamamrta-vyakaranam.com` | preview URL (optional) | `http://localhost:3000` |
 
 Generate secrets with `openssl rand -base64 32`. Connection strings come
 from Neon console → Connect (or the Neon connector). **Never** put them in

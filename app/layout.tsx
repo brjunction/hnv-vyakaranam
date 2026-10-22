@@ -1,7 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import "@fontsource/cormorant/500.css";
+import "@fontsource/cormorant/600.css";
+import "@fontsource/cormorant/700.css";
+import "@fontsource/cormorant/500-italic.css";
+import "@fontsource/ysabeau-office/400.css";
+import "@fontsource/ysabeau-office/400-italic.css";
+import "@fontsource/ysabeau-office/500.css";
+import "@fontsource/ysabeau-office/600.css";
+import "@fontsource/ysabeau-office/700.css";
+import "@fontsource/tiro-devanagari-sanskrit/400.css";
+import "@fontsource/tiro-devanagari-sanskrit/400-italic.css";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SiteChrome from "@/components/SiteChrome";
 import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -126,15 +138,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1531" },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link
-  rel="icon"
-  href="/hnvlogo.png"
-  sizes="<generated>"
-/>
+        <link rel="icon" href="/hnvlogo.png" type="image/png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`,
@@ -143,9 +158,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="google-site-verification" content="A0wYp6OHY16TtZb5ua8xmcSaN4D1YiLzLHOfULCdFZw" />
       </head>
       <body className="antialiased">
-        <Header />
-        <main className="min-h-[70vh]">{children}</main>
-        <Footer />
+        <SiteChrome header={<Header />} footer={<Footer />}>
+          {children}
+        </SiteChrome>
       </body>
     </html>
   );

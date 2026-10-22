@@ -30,7 +30,7 @@ type Props = {
 
 const DIFFICULTIES: { key: Difficulty | "all"; label: string; icon: React.ReactNode; color: string }[] = [
   { key: "all", label: "All levels", icon: <Sparkles size={18} />, color: "var(--accent)" },
-  { key: "easy", label: "Easy", icon: <Leaf size={18} />, color: "#4caf7d" },
+  { key: "easy", label: "Easy", icon: <Leaf size={18} />, color: "var(--success)" },
   { key: "medium", label: "Medium", icon: <Gauge size={18} />, color: "var(--color-saffron)" },
   { key: "hard", label: "Hard", icon: <Flame size={18} />, color: "var(--color-vermillion)" },
 ];
@@ -72,7 +72,7 @@ function ChapterCard({
       <div className="flex items-start justify-between gap-3 mb-3">
         <span
           className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-semibold shrink-0 ${
-            chapter.available ? "bg-[var(--accent)] text-[var(--color-ink)]" : "bg-[var(--bg-2)] text-[var(--fg-muted)]"
+            chapter.available ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "bg-[var(--bg-2)] text-[var(--fg-muted)]"
           }`}
         >
           {isMisc ? <Shuffle size={16} /> : chapter.number ?? "—"}
@@ -200,7 +200,7 @@ export default function PracticeSetup({ onStart }: Props) {
             onClick={() => setType(opt.key)}
             className={`px-4 py-2 rounded-full border text-sm transition-colors ${
               type === opt.key
-                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--color-ink)]"
+                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]"
                 : "border-[var(--border)] hover:border-[var(--accent)]"
             }`}
           >
@@ -235,7 +235,7 @@ export default function PracticeSetup({ onStart }: Props) {
         <button
           onClick={() => onStart({ topicSlug, difficulty, type })}
           disabled={questionsFor(topicSlug, difficulty).filter((q) => type === "all" || q.type === type).length === 0}
-          className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           Start practice <ArrowRight size={18} />
         </button>

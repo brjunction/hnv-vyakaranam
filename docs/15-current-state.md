@@ -1,8 +1,7 @@
 # 15 — Current state (audit)
 
-**Last audited:** 2026-10-22, at commit `4f73365` + uncommitted Phase 1
-foundation (schema, config, dependencies). Update this file whenever
-reality changes.
+**Last updated:** 2026-10-22 (evening), after the home redesign + admin
+foundation. Update this file whenever reality changes.
 
 ## 1. Stack in use today
 
@@ -59,7 +58,7 @@ Practice: 30 verified Sandhi questions in `lib/practiceData.ts`.
 |---|---|---|
 | 1 | **Kṛdanta range mismatch:** metadata says 728–913, file starts at 729 (sūtra 728 missing, or range label wrong). Needs the owner's answer. | 1 |
 | 2 | Practice `SANDHI_TOPICS` says vowel sandhi "42–60"; source subchapter starts at **41**. | 7 (or 1 if touching the file) |
-| 3 | `public/robots.txt` (committed) points to `harinamamrta-vyakaranam.vercel.app`, while `site.config.json` says `.com`. It's regenerated at build, but the committed copy is stale and misleading. | 0 |
+| 3 | `public/robots.txt` (committed) points to `harinamamrta-vyakaranam.vercel.app`; `site.config.json` now says `https://www.harinamamrta-vyakaranam.com` (the real canonical host). It's regenerated at build, but the committed copy is stale and misleading. | 0 |
 | 4 | `googled9095024fc228c9a.html` sits at the **repo root**, so it is not served. Move to `public/`. (The meta-tag verification in `layout.tsx` still works.) | 0 |
 | 5 | `public/hero-cover.jpg` is 1.1 MB; `hnvlogo.png` 441 kB used as favicon with an invalid `sizes="<generated>"` attribute. | 0 |
 | 6 | Vedabase links (auto-generated) and `CreditBox` credit paragraphs violate rule 4. | 3 |
@@ -70,18 +69,27 @@ Practice: 30 verified Sandhi questions in `lib/practiceData.ts`.
 | 11 | `scripts/generate-sitemap.mjs` keeps its own copy of the HNV slug list (drift risk). | 1/4 |
 | 12 | `layout.tsx` description promises "practice section to practice all 7 chapters", "audio recitations", "multi-script" — not yet true. Fine as a roadmap, but keep in mind for honesty of metadata. | 4 |
 
-## 5. Phase 1 foundation already in the working tree
+## 5. Database & admin — what exists now
 
-- `lib/db/schema.ts` — 22 tables (`02-data-model.md`).
-- `drizzle.config.ts` — `dialect: "postgresql"`, reads `.env.local`.
-- `drizzle/0000_init.sql` + `drizzle/meta/*` — generated, **not yet
-  applied** to any branch.
-- New dependencies: `drizzle-orm`, `@neondatabase/serverless`,
-  `server-only`, `zod`; dev: `drizzle-kit`, `tsx`, `dotenv`. Nothing in
-  `app/` imports them yet, so the live site is unchanged.
-- `.env.local` (gitignored) holds the Neon URLs for `dev` and `main`.
+- **Neon** `hnv-vyakaranam`: schema `0000_init` applied to `main` and
+  `dev`. Owner account (bhism108@gmail.com, role owner) exists on both.
+  Editions seeded. **Sūtras are not imported yet** — the owner runs
+  Admin → Dashboard → "Import sūtras from the spreadsheets" once on
+  production (and once on a preview deployment if previews need data).
+- **Vercel** env vars set (Production → `main`, Preview/Dev → `dev`);
+  functions region `sin1`. Production domain is
+  `www.harinamamrta-vyakaranam.com` (apex 308s to www; `site.config.json`
+  updated to the www URL).
+- **Public site still reads sūtras from the xlsx files.** Only the home
+  page's "For today" section reads Neon (via `/api/daily/[date]`). Phase 1.8
+  –1.9 switches the chapter pages.
+- **Admin** (`/admin`): login, dashboard, Verse of the Day (pool per
+  chapter/sūtra, pins), Subhāṣita (add/edit/delete, drafts), Tools (import,
+  refresh caches), Account (change password). Sūtra editing not built yet.
+- **Design**: new system (`16-design-system.md`); home redesigned.
 
 Note for the AI assistant: this cloud workspace **cannot open network
-connections to Neon** (allowlisted network). Run SQL through the Neon
-connector (MCP `run_sql`), and leave scripts that need a live connection to
-the owner's machine, CI, or Vercel.
+connections to Neon or to the live site** (egress policy). Run SQL through
+the Neon connector (`run_sql` / `run_sql_transaction`); never paste large
+content through it (transcription risk) — use the in-app import instead.
+Vercel is reachable through the Vercel connector (team access approved).

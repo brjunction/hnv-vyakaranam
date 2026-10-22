@@ -2,53 +2,61 @@
 
 ## 1. Home page
 
-- `app/page.tsx` design is **owned by the site owner** (they edit it
-  directly and push). Code changes there must preserve their layout; add
-  data slots, don't redesign without being asked.
+- Redesigned on the owner's request on 2026-10-22 (`16-design-system.md`).
+  The owner may still edit `app/page.tsx` directly and push; always `git
+  pull` first and keep their changes.
 - `app/page.tsx` stays a **Server Component**. Interactive pieces
-  (Verse of the Day, Subhāṣita) are small client children.
-- Data: `getHomeData()` (`lib/data/home.ts`, tag `home` + `daily`) returns
-  visible `home_blocks` in order, the Verse-of-the-Day pool, the Subhāṣita
-  pool, and the pins for the next 400 days.
-- The two Maṅgalācaraṇa verse blocks are removed (v6 §4.1).
+  (VarnaBoard, DailyPanel) are small client children.
+- Sections, in order: hero (title + Varṇa-krama board) → For today (Verse
+  of the Day, Subhāṣita) → Ṣaḍ-Gosvāmī painting + Amṛta's prayers → the
+  treatise + the seven prakaraṇas → three ways in (sūtras / scriptures /
+  practice) → important websites.
+- Admin-managed `home_blocks` are **not built yet** (Phase 6.1); the table
+  exists. When built, blocks fill named slots between those sections.
+- The two Maṅgalācaraṇa verse blocks are removed (v6 §4.1). The Ṣaḍ-Gosvāmī
+  painting + Amṛta's two prayers stay (owner's decision).
+- Hero = the **Varṇa-krama board** (`components/home/VarnaBoard.tsx`): HNV's
+  alphabet with each group's name of Hari and sūtra number (sūtras 1–25,
+  data copied from the HNV-Wiki; glosses only where the wiki gives one).
 - Block kinds (renderers in `components/home/blocks/*`): `announcement`,
   `feature-card`, `quote`, `link-list`, `rich-text`. A block with an
   unknown `kind` renders nothing (and logs a warning at build time).
 
-## 2. Verse of the Day & Daily Subhāṣita
+## 2. Verse of the Day & Daily Subhāṣita (built 2026-10-22)
 
-**Pool** (baked into the static home page):
+**Pools (Neon):**
 - Verse of the Day: every published sūtra/verse with `daily_eligible =
-  true`, as compact objects `{ id, type, ref, deva, iast, translation, href }`.
-- Subhāṣita: every published `daily_items` row with `pool = 'subhashita'`.
+  true` in a published edition, in reading order (edition → chapter →
+  position). The import marks every row eligible; editors narrow it in
+  `/admin/daily` (per chapter or per sūtra).
+- Subhāṣita: every published `daily_items` row (`pool = 'subhashita'`),
+  ordered by id. Entered in `/admin/subhashita`. Empty pool → section hidden.
+- Pins: `daily_pins (pool, date)` → a sūtra or Subhāṣita for that date.
 
-**Pick (in the browser, `components/home/DailyPick.tsx`):**
+**How "today" is chosen** (`lib/daily/pick.ts`, pure and unit-testable):
 
 ```ts
-function pickForToday<T extends { id: number; type: string }>(
-  pool: T[], pins: Record<string, { type: string; id: number }>, today: string /* YYYY-MM-DD */
-): T | null {
-  if (pool.length === 0) return null;
-  const pin = pins[today];
-  if (pin) {
-    const hit = pool.find((p) => p.id === pin.id && p.type === pin.type);
-    if (hit) return hit;                      // pinned item wins
-  }
-  const sorted = [...pool].sort((a, b) => a.type.localeCompare(b.type) || a.id - b.id);
-  const [y, m, d] = today.split("-").map(Number);
-  const dayNumber = Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
-  return sorted[dayNumber % sorted.length];
-}
+idx = ((dayNumber(date) % n) * strideFor(n)) % n   // n = pool size
 ```
 
-- `today` = the **visitor's local date** (`Intl.DateTimeFormat("en-CA")`
-  → `YYYY-MM-DD`). Changes at the visitor's midnight, no rebuild needed.
-- To avoid a hydration mismatch, the server renders a fixed-height
-  skeleton; the pick renders after mount (`useEffect`). Reserve height so
-  there is no layout shift.
-- Adding/removing items from a pool changes which item later dates get;
-  that's acceptable (documented, not a bug).
-- Admin "Pins" calendar writes `daily_pins` (unique per pool per date).
+`dayNumber` = days since 1970-01-01 for the calendar date; `strideFor(n)`
+is a prime (7919, 7907 …) coprime with `n`, so consecutive days jump
+around the pool and every item appears once per `n` days. A pin for the
+date wins if its item is still in the pool. Adding/removing items shifts
+later picks — expected.
+
+**Delivery** (changed from "bake the whole pool into the page", which would
+have sent ~1,290 entries to every visitor):
+1. `components/home/DailyPanel.tsx` (client) computes the visitor's local
+   date (`localDate()`), fetches `/api/daily/<YYYY-MM-DD>`.
+2. `app/api/daily/[date]/route.ts` is a static, on-demand route: built on
+   first request per date, cached (ISR, `revalidate = 86400`), purged by
+   `revalidateTag("daily")` whenever the admin changes pools or pins.
+3. Database errors throw → 500, never cached; the panel hides itself on
+   any non-OK response. Not configured (no `DATABASE_URL`) → empty payload.
+4. Server renders a fixed-height skeleton; the cards render after the
+   fetch (no hydration mismatch). If both pools are empty the whole section
+   disappears.
 
 ## 3. Audio
 

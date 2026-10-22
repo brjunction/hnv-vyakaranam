@@ -5,6 +5,26 @@ Never delete an entry; supersede it with a new one.
 
 ---
 
+### D-011 — 2026-10-22 · Daily picks served per date, not as a baked pool
+**Decision:** `/api/daily/<date>` (static, on-demand ISR, tag `daily`);
+the browser asks for its own local date.
+**Why:** baking ~1,290 entries into the home page would add hundreds of KB
+for every visitor; per-date files are ~1 KB and still change at the
+visitor's midnight without a rebuild.
+
+### D-010 — 2026-10-22 · Content import runs inside the deployment
+**Decision:** owner-only admin action imports the bundled xlsx files.
+**Why:** the AI workspace can't reach Neon directly, and pasting ~170 KB of
+Devanagari SQL through a connector risks silent transcription errors in
+sacred text. The deployed app reads the files byte-for-byte.
+
+### D-009 — 2026-10-22 · Design system "Śyāma & Kuṅkuma"
+**Decision:** indigo/kuṅkuma/haridrā palette; Cormorant + Ysabeau Office +
+Tiro Devanagari Sanskrit, self-hosted.
+**Why:** owner asked for a full redesign; colors drawn from the subject
+(Kṛṣṇa's complexion, tilaka, turmeric, Yamunā, tulasī); fonts chosen
+because they're among the few that render every IAST diacritic incl. ṁ.
+
 ### D-008 — 2026-10-22 · Own minimal admin auth, not a third-party auth library
 **Decision:** bcrypt + signed JWT cookie (`jose`) + `admin_users` table.
 **Why:** a handful of admin users, no social login needed; Auth.js v5 is

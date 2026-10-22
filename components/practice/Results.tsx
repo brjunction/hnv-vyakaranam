@@ -139,7 +139,7 @@ export default function Results({
       <div className="flex flex-wrap justify-center gap-3 mb-12">
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--accent-fg)] font-medium hover:opacity-90 hover:scale-105 transition-all"
         >
           <RotateCcw size={18} /> Practice again
         </button>
@@ -158,7 +158,7 @@ export default function Results({
             <div
               key={a.question.id}
               className={`rounded-xl border px-4 py-3 flex items-center justify-between gap-4 ${
-                a.correct ? "border-[#4caf7d]/40" : "border-[var(--color-vermillion)]/40"
+                a.correct ? "border-[var(--success)]/40" : "border-[var(--color-vermillion)]/40"
               }`}
             >
               <div className="min-w-0">
@@ -170,7 +170,7 @@ export default function Results({
               </div>
               <span
                 className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${
-                  a.correct ? "bg-[#4caf7d]/15 text-[#4caf7d]" : "bg-[var(--color-vermillion)]/15 text-[var(--color-vermillion)]"
+                  a.correct ? "bg-[var(--success)]/15 text-[var(--success)]" : "bg-[var(--color-vermillion)]/15 text-[var(--color-vermillion)]"
                 }`}
               >
                 {a.correct ? "Correct" : "Incorrect"}

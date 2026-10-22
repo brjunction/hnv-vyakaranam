@@ -59,11 +59,14 @@ unchanged. What v7 changes:
 
 ## 3. Home page
 
-- **Removed:** the two Maṅgalācaraṇa verse display blocks.
-- **Verse of the Day:** pool of eligible sūtras/verses stored in the DB and
-  baked into the home page; today's pick is computed in the browser from
-  the date (so it changes daily without a rebuild). A pinned date wins over
-  rotation.
+- **Removed:** the two Maṅgalācaraṇa verse display blocks (done before v7).
+- **Kept (owner's decision, 2026-10-22):** the Ṣaḍ-Gosvāmī painting with
+  Amṛta's two prayers to Śrīla Jīva Gosvāmī directly beside/below it, in
+  the same section.
+- **Verse of the Day:** pool of eligible sūtras/verses stored in the DB;
+  the browser sends its own local date and receives that date's pick from a
+  small cached file (so it changes at the visitor's midnight without a
+  rebuild). A pinned date wins over rotation.
 - **Daily Subhāṣita:** same mechanism, its own pool.
 - **Ordered home blocks:** admin-managed blocks (kind, title, body, order,
   visibility). Design of the page itself is owned by the site owner in

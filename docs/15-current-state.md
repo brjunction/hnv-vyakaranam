@@ -121,3 +121,20 @@ paste large content through SQL (use the in-app import).
 - Not done yet: per-sūtra pages (`05` §4), script switcher, revision
   history UI (revisions are recorded), practice references don't follow
   renumbering automatically (`lib/practiceData.ts` cites numbers).
+
+## 7. Update 2026-10-23 (later) — spreadsheet, practice, wiki
+
+- **Spreadsheet bulk edit:** Admin › Chapters & sūtras › Spreadsheet.
+  Download `/api/admin/hnv-template?edition=…` (sheets: Sutras, Chapters,
+  Read me), upload back. Matched by Number; empty cells never erase; never
+  deletes; any row error → nothing saved; dry run by default.
+  Code: `lib/hnv/spreadsheet.ts`, `lib/actions/spreadsheet.ts`.
+- **Practice** lives in Neon (`practice_topics`, `practice_questions`;
+  30 questions migrated from `lib/practiceData.ts`, which now holds only
+  types/helpers). Admin › Practice edits topics/questions; questions must
+  cite real Madhyama sūtra numbers. The quiz shuffles questions and
+  options (`shuffleOptions`).
+- **Editions order:** Laghu → Madhyama → Bṛhat (`lib/editions.ts`, `editions.sort`).
+- **Data fixes:** sūtra 728 added (start of Kṛdanta), 729 corrected
+  (owner-supplied text). Google-Doc notes code removed.
+- **Wiki:** sūtras 53–60 added; example rows for 54/55 corrected.

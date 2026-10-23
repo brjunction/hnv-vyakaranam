@@ -16,7 +16,9 @@ import {
   deletePrefix,
   ensureCors,
   fromRef,
+  getObject,
   isStorageConfigured,
+  listKeys,
   presignPart,
   presignPut,
   putObject,
@@ -24,6 +26,8 @@ import {
 } from "@/lib/storage/neon";
 import { DICT_TAG } from "@/lib/dict/engine";
 import { slugifyTitle } from "@/lib/hnv/slug";
+import { cleanStoragePath, guessScheme, isJunkPath, sampleIdxBytes } from "@/lib/dict/guess";
+import { parseIfo } from "@/lib/dict/stardict";
 
 // Admin › Dictionaries. The browser uploads dictionary files straight to
 // Neon Object Storage with presigned URLs (startUploads / finishMultipart);
@@ -49,12 +53,7 @@ export async function startUploads(batch: string, files: { path: string; size: n
   );
   const plans: UploadPlan[] = [];
   for (const f of files) {
-    const clean = f.path
-      .split("/")
-      .map((seg) => seg.normalize("NFC").replace(/[^\p{L}\p{N}._ -]+/gu, "_").slice(0, 120))
-      .filter(Boolean)
-      .join("/");
-    const key = `dict/${batch}/${clean}`;
+    const key = `dict/${batch}/${cleanStoragePath(f.path)}`;
     if (f.size <= SINGLE_MAX) plans.push({ path: f.path, key, mode: "single", url: await presignPut(key) });
     else {
       const uploadId = await createMultipart(key);
@@ -84,8 +83,8 @@ const indexPrefixFor = (ifoRef: string) => {
 
 async function writeShards(prefix: string, shards: Record<string, Buffer>) {
   const entries = Object.entries(shards);
-  for (let i = 0; i < entries.length; i += 10) {
-    await Promise.all(entries.slice(i, i + 10).map(([c, buf]) => putObject(`${prefix}${c}.json.gz`, buf, "application/gzip")));
+  for (let i = 0; i < entries.length; i += 4) {
+    await Promise.all(entries.slice(i, i + 4).map(([c, buf]) => putObject(`${prefix}${c}.json.gz`, buf, "application/gzip")));
   }
 }
 const Scheme = z.enum(DICT_SCHEMES);
@@ -110,7 +109,6 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Invalid upload." };
   const { name, scheme, files, totalBytes } = p.data;
   const db = getDb();
-  const dropFiles = () => Promise.all(Object.values(files).map((r) => r && deleteObject(fromRef(r)!).catch(() => {})));
   try {
     const prepared = await prepareIndex(files, scheme);
     // Same dictionary already installed? (same title and word count)
@@ -119,7 +117,9 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
       (d) => (d.info as Record<string, string>).bookname === prepared.info.bookname && d.wordCount === prepared.wordCount
     );
     if (dup) {
-      await dropFiles();
+      // Delete only the new copies — never files an installed dictionary uses.
+      const inUse = new Set(existing.flatMap((d) => [d.files.ifo, d.files.idx, d.files.dict, d.files.syn]).filter(Boolean));
+      await Promise.all(Object.values(files).filter((r) => r && !inUse.has(r)).map((r) => deleteObject(fromRef(r!)!).catch(() => {})));
       return { ok: true, duplicate: true, message: `Already installed as “${dup.name}” — skipped.` };
     }
     const taken = new Set(existing.map((r) => r.slug));
@@ -257,4 +257,123 @@ export async function discardUploads(refs: string[]): Promise<void> {
       .filter((k): k is string => Boolean(k && k.startsWith("dict/")))
       .map((k) => deleteObject(k).catch(() => {}))
   );
+}
+
+// ------------------------------------------------- recovery & clean-up ---
+const DICT_FILE = /\.(ifo|idx|idx\.gz|idx\.dz|dict|dict\.dz|syn|syn\.dz)$/i;
+type Part = "ifo" | "idx" | "dict" | "syn";
+export type PendingGroup = { key: string; dir: string; base: string; refs: Partial<Record<Part, string>>; bytes: number };
+export type StorageScan = {
+  pending: PendingGroup[];
+  incomplete: PendingGroup[];
+  junk: { count: number; bytes: number };
+  usedBytes: number;
+};
+
+/** Uploaded files that are not (yet) part of an installed dictionary. */
+export async function scanStorage(): Promise<StorageScan> {
+  await requireUser("editor");
+  const db = getDb();
+  const [objects, rows] = await Promise.all([listKeys("dict/"), db.select().from(dictionaries)]);
+  const used = new Set<string>();
+  const indexPrefixes = new Set<string>();
+  for (const d of rows) {
+    for (const r of [d.files.ifo, d.files.idx, d.files.dict, d.files.syn]) if (r) used.add(fromRef(r) ?? r);
+    const ip = fromRef(d.indexUrl);
+    if (ip) indexPrefixes.add(ip);
+  }
+  const groups = new Map<string, PendingGroup>();
+  const junk = { count: 0, bytes: 0 };
+  for (const o of objects) {
+    if (used.has(o.key)) continue;
+    if ([...indexPrefixes].some((p) => o.key.startsWith(p))) continue;
+    const m = o.key.match(DICT_FILE);
+    if (isJunkPath(o.key) || /\/index-[a-z0-9]+\//.test(o.key) || !m) {
+      junk.count++;
+      junk.bytes += o.size;
+      continue;
+    }
+    const slash = o.key.lastIndexOf("/");
+    const dir = o.key.slice(0, slash);
+    const base = o.key.slice(slash + 1, -m[0].length);
+    const ext = m[1].toLowerCase();
+    const part: Part = ext === "ifo" ? "ifo" : ext.startsWith("idx") ? "idx" : ext.startsWith("dict") ? "dict" : "syn";
+    const gk = `${dir}/${base}`;
+    const g = groups.get(gk) ?? { key: gk, dir: dir.replace(/^dict\/[^/]+\/?/, ""), base, refs: {}, bytes: 0 };
+    g.refs[part] = toRef(o.key);
+    g.bytes += o.size;
+    groups.set(gk, g);
+  }
+  const all = [...groups.values()];
+  return {
+    pending: all.filter((g) => g.refs.ifo && g.refs.idx && g.refs.dict),
+    incomplete: all.filter((g) => !(g.refs.ifo && g.refs.idx && g.refs.dict)),
+    junk,
+    usedBytes: objects.reduce((n, o) => n + o.size, 0),
+  };
+}
+
+/** Add one dictionary whose files are already in storage (no re-upload). */
+export async function addUploaded(group: PendingGroup): Promise<AddResult> {
+  await requireUser("editor");
+  const refs = group.refs;
+  if (!refs.ifo || !refs.idx || !refs.dict) return { ok: false, message: "Incomplete dictionary." };
+  try {
+    const info = parseIfo((await getObject(fromRef(refs.ifo)!)).buf.toString("utf8"));
+    const head = (await getObject(fromRef(refs.idx)!, 0, 16383)).buf;
+    const scheme = guessScheme(`${group.dir} ${group.base} ${info.bookname ?? ""}`, sampleIdxBytes(new Uint8Array(head)));
+    return await addDictionary({
+      name: info.bookname || group.base,
+      scheme,
+      files: { ifo: refs.ifo, idx: refs.idx, dict: refs.dict, ...(refs.syn ? { syn: refs.syn } : {}) },
+      totalBytes: group.bytes,
+    });
+  } catch (err) {
+    return { ok: false, message: (err as Error).message };
+  }
+}
+
+/** Delete leftovers: macOS metadata, incomplete sets, unused index pieces. */
+export async function cleanStorage(): Promise<{ ok: boolean; message: string }> {
+  await requireUser("editor");
+  const scan = await scanStorage();
+  const db = getDb();
+  const rows = await db.select().from(dictionaries);
+  const keep = new Set<string>();
+  const keepPrefixes: string[] = [];
+  for (const d of rows) {
+    for (const r of [d.files.ifo, d.files.idx, d.files.dict, d.files.syn]) if (r) keep.add(fromRef(r) ?? r);
+    const ip = fromRef(d.indexUrl);
+    if (ip) keepPrefixes.push(ip);
+  }
+  const pendingKeys = new Set(scan.pending.flatMap((g) => Object.values(g.refs).map((r) => fromRef(r!)!)));
+  const objects = await listKeys("dict/");
+  const doomed = objects.filter((o) => !keep.has(o.key) && !pendingKeys.has(o.key) && !keepPrefixes.some((p) => o.key.startsWith(p)));
+  for (let i = 0; i < doomed.length; i += 20) await Promise.all(doomed.slice(i, i + 20).map((o) => deleteObject(o.key).catch(() => {})));
+  const mb = doomed.reduce((n, o) => n + o.size, 0) / 1048576;
+  return { ok: true, message: `Removed ${doomed.length} leftover files (${mb.toFixed(1)} MB).` };
+}
+
+export type ExistingUploads = {
+  /** cleaned relative path → stored file */
+  files: Record<string, { ref: string; size: number }>;
+  /** .ifo refs of installed dictionaries */
+  installed: string[];
+};
+
+/** Files already in storage, so a re-run of the same folder doesn't upload them again. */
+export async function existingUploads(): Promise<ExistingUploads> {
+  await requireUser("editor");
+  const [objects, rows] = await Promise.all([listKeys("dict/"), getDb().select().from(dictionaries)]);
+  const inUse = new Set(rows.flatMap((d) => [d.files.ifo, d.files.idx, d.files.dict, d.files.syn]).filter(Boolean) as string[]);
+  const files: ExistingUploads["files"] = {};
+  for (const o of objects) {
+    if (isJunkPath(o.key) || /\/index-[a-z0-9]+\//.test(o.key) || !DICT_FILE.test(o.key)) continue;
+    const rel = o.key.replace(/^dict\/[^/]+\//, "");
+    const ref = toRef(o.key);
+    const prev = files[rel];
+    // prefer the copy an installed dictionary already uses
+    if (!prev || (inUse.has(ref) && !inUse.has(prev.ref))) files[rel] = { ref, size: o.size };
+  }
+  return { files, installed: rows.map((d) => d.files.ifo) };
 }

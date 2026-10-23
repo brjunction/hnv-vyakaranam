@@ -8,6 +8,7 @@ import { PageHeader, Panel } from "@/components/admin/ui";
 import { ActionForm, Field, SubmitButton, inputCls } from "@/components/admin/ActionForm";
 import { MoveButtons } from "@/components/admin/hnv/bits";
 import DictionaryUploader from "@/components/admin/dict/DictionaryUploader";
+import StorageCleanup from "@/components/admin/dict/StorageCleanup";
 
 export const metadata = { title: "Dictionaries" };
 // Adding a dictionary builds its search index (a few seconds for large ones).
@@ -43,6 +44,12 @@ export default async function DictionariesAdmin() {
       {canEdit && (
         <Panel title="Add dictionaries" description="Choose the folder that contains the files, a .zip of it, or the files themselves. Several dictionaries can be added at once.">
           <DictionaryUploader />
+        </Panel>
+      )}
+
+      {canEdit && (
+        <Panel title="Storage">
+          <StorageCleanup />
         </Panel>
       )}
 

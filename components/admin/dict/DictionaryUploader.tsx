@@ -3,8 +3,9 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileArchive, FolderOpen, Files, Loader2, CheckCircle2, AlertCircle, UploadCloud, MinusCircle } from "lucide-react";
-import { addDictionary, discardUploads, finishMultipart, startUploads, type UploadPlan } from "@/lib/actions/dictionaries";
+import { addDictionary, discardUploads, existingUploads, finishMultipart, startUploads, type UploadPlan } from "@/lib/actions/dictionaries";
 import { isArchive, readArchive } from "@/lib/dict/archive";
+import { cleanStoragePath, guessScheme, isJunkPath, sampleIdxBytes } from "@/lib/dict/guess";
 
 // Adds any number of StarDict dictionaries at once: pick files, a folder
 // (with sub-folders), or archives (.zip / .tar.gz, also nested). Archives are
@@ -40,31 +41,8 @@ type Group = {
   message?: string;
 };
 
-function guessScheme(name: string, sample: string[]): Exclude<Scheme, "auto"> {
-  const s = sample.join(" ");
-  if (/[ऀ-ॿ]/.test(s)) return "devanagari";
-  if (/[āīūṛṝṅñṭḍṇśṣṃṁḥ]/.test(s)) return "iast";
-  if (/itrans/i.test(name) || /(Sh|~N|~n|RRi|[a-z]A|A[a-z])/.test(s)) return "itrans";
-  if (/slp/i.test(name)) return "slp1";
-  if (/\bhk\b|harvard/i.test(name)) return "hk";
-  if (/[a-z][A-Z]/.test(s)) return "hk";
-  if (/sanskrit|sa-|-sa\b|monier|apte|vacaspat|amara|shabda|kosha|kosa/i.test(name)) return "itrans";
-  return "english";
-}
-
 async function sampleIdx(blob: Blob): Promise<string[]> {
-  const buf = new Uint8Array(await blob.slice(0, 16384).arrayBuffer());
-  if (buf[0] === 0x1f && buf[1] === 0x8b) return [];
-  const out: string[] = [];
-  const dec = new TextDecoder();
-  let p = 0;
-  while (p < buf.length && out.length < 40) {
-    const z = buf.indexOf(0, p);
-    if (z < 0 || z + 9 > buf.length) break;
-    out.push(dec.decode(buf.subarray(p, z)));
-    p = z + 9;
-  }
-  return out.filter((w) => /^\p{L}/u.test(w)).slice(5, 25);
+  return sampleIdxBytes(new Uint8Array(await blob.slice(0, 16384).arrayBuffer()));
 }
 
 function put(url: string, body: Blob, onProgress: (n: number) => void): Promise<string> {
@@ -120,7 +98,7 @@ export default function DictionaryUploader() {
   const [scheme, setScheme] = useState<Scheme>("auto");
   const [groups, setGroups] = useState<Group[]>([]);
   const [phase, setPhase] = useState<"idle" | "reading" | "adding" | "done">("idle");
-  const [stats, setStats] = useState({ archiveRead: 0, archiveTotal: 0, uploaded: 0, files: 0, skipped: 0 });
+  const [stats, setStats] = useState({ archiveRead: 0, archiveTotal: 0, uploaded: 0, files: 0, skipped: 0, reused: 0 });
   const [error, setError] = useState<string | null>(null);
   const filesRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
@@ -134,7 +112,15 @@ export default function DictionaryUploader() {
     const batch = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
     const groupMap = new Map<string, Group>();
     const sync = () => setGroups([...groupMap.values()]);
-    const s = { archiveRead: 0, archiveTotal: inputs.filter((i) => isArchive(i.name)).reduce((n, i) => n + i.file.size, 0), uploaded: 0, files: 0, skipped: 0 };
+    const s = { archiveRead: 0, archiveTotal: inputs.filter((i) => isArchive(i.name)).reduce((n, i) => n + i.file.size, 0), uploaded: 0, files: 0, skipped: 0, reused: 0 };
+    // Files already in storage from an earlier run (same path and size) are reused, not uploaded again.
+    let existing: Awaited<ReturnType<typeof existingUploads>> = { files: {}, installed: [] };
+    try {
+      existing = await existingUploads();
+    } catch {
+      /* first run or not allowed: upload everything */
+    }
+    const installed = new Set(existing.installed);
     let doneArchives = 0;
     const tick = () => setStats({ ...s });
 
@@ -181,7 +167,7 @@ export default function DictionaryUploader() {
     }
 
     async function accept(path: string, blob: Blob) {
-      const m = path.match(DICT_FILE);
+      const m = isJunkPath(path) ? null : path.match(DICT_FILE);
       if (!m) {
         s.skipped++;
         return;
@@ -210,6 +196,14 @@ export default function DictionaryUploader() {
         g.words = Number(info.wordcount) || undefined;
       }
       if (part === "idx") g.sample = await sampleIdx(blob);
+      const prior = existing.files[cleanStoragePath(path)];
+      if (prior && prior.size === blob.size) {
+        g.refs[part] = prior.ref;
+        s.reused++;
+        sync();
+        tick();
+        return;
+      }
       sync();
       await slot();
       const group = g;
@@ -235,6 +229,7 @@ export default function DictionaryUploader() {
       const queue = [...inputs];
       while (queue.length) {
         const item = queue.shift()!;
+        if (isJunkPath(item.path)) continue;
         if (isArchive(item.name)) {
           const prefix = item.path.replace(/\.(zip|tar|tar\.gz|tgz)$/i, "");
           const before = s.archiveRead;
@@ -242,7 +237,7 @@ export default function DictionaryUploader() {
           await readArchive(
             item.file,
             item.name,
-            (p) => DICT_FILE.test(p) || isArchive(p),
+            (p) => !isJunkPath(p) && (DICT_FILE.test(p) || isArchive(p)),
             async (p, blob) => {
               const full = `${prefix}/${p}`;
               if (isArchive(p)) queue.push({ path: full, file: blob, name: p });
@@ -265,10 +260,15 @@ export default function DictionaryUploader() {
     const all = [...groupMap.values()];
     for (const g of all) {
       if (g.status === "error") continue;
+      if (g.refs.ifo && installed.has(g.refs.ifo)) {
+        g.status = "duplicate";
+        g.message = "Already added.";
+        continue;
+      }
       if (!g.refs.ifo || !g.refs.idx || !g.refs.dict) {
         g.status = "incomplete";
         g.message = "Needs .ifo, .idx and .dict (or .dict.dz) together — skipped.";
-        await discardUploads(Object.values(g.refs).filter(Boolean) as string[]);
+        await discardUploads((Object.values(g.refs).filter(Boolean) as string[]).filter((r) => !Object.values(existing.files).some((f) => f.ref === r)));
         continue;
       }
       g.status = "waiting";
@@ -372,7 +372,7 @@ export default function DictionaryUploader() {
               </span>
             )}
             <span className="text-[var(--a-fg-muted)]">
-              {stats.files} files · {(stats.uploaded / 1048576).toFixed(1)} MB uploaded
+              {stats.files} files · {(stats.uploaded / 1048576).toFixed(1)} MB uploaded{stats.reused ? ` · ${stats.reused} files already in storage (reused)` : ""}
             </span>
             {groups.length > 0 && (
               <span className="text-[var(--a-fg-muted)]">

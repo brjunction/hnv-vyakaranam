@@ -34,10 +34,26 @@ export const objectUrl = (key: string) => `${cfg().endpoint}/${cfg().bucket}/${e
 export const toRef = (key: string) => `s3:${key}`;
 export const fromRef = (ref: string) => (ref.startsWith("s3:") ? ref.slice(3) : null);
 
-async function call(url: string, init: RequestInit = {}, tries = 4): Promise<Response> {
+/**
+ * Signed request. The body is always sent as a plain byte block with a known
+ * length: aws4fetch's own fetch() wraps it in a stream, which goes out as
+ * "Transfer-Encoding: chunked" — Neon (like S3) rejects that with 501.
+ */
+async function signedFetch(url: string, init: { method?: string; headers?: Record<string, string>; body?: Buffer | Uint8Array | string }) {
+  const body = typeof init.body === "string" ? Buffer.from(init.body) : init.body;
+  const signed = await aws().sign(url, { method: init.method ?? "GET", headers: init.headers, body: body as BodyInit | undefined });
+  const headers = new Headers(signed.headers);
+  return fetch(signed.url, { method: init.method ?? "GET", headers, body: body ? new Uint8Array(body) : undefined, cache: "no-store" });
+}
+
+async function call(
+  url: string,
+  init: { method?: string; headers?: Record<string, string>; body?: Buffer | Uint8Array | string } = {},
+  tries = 4
+): Promise<Response> {
   let last: Response | null = null;
   for (let i = 0; i < tries; i++) {
-    const res = await aws().fetch(url, init);
+    const res = await signedFetch(url, init);
     if (res.status !== 503 && res.status !== 500) return res;
     last = res;
     await new Promise((r) => setTimeout(r, 300 * 2 ** i)); // SlowDown → back off
@@ -54,7 +70,7 @@ export async function getObject(key: string, start?: number, end?: number): Prom
 }
 
 export async function putObject(key: string, body: Buffer | Uint8Array | string, contentType = "application/octet-stream") {
-  const res = await call(objectUrl(key), { method: "PUT", body: body as BodyInit, headers: { "Content-Type": contentType } });
+  const res = await call(objectUrl(key), { method: "PUT", body, headers: { "Content-Type": contentType } });
   if (!res.ok) throw new Error(`Storage write ${key}: ${res.status} ${await res.text()}`);
 }
 

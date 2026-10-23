@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MessageSquareText, Search } from "lucide-react";
+import { FileSpreadsheet, MessageSquareText, Search } from "lucide-react";
 import { hasRole, requireUser } from "@/lib/auth/session";
 import { countDrafts, getEdition, listChaptersAdmin, listCommentaryTypesAdmin, listEditions } from "@/lib/data/hnvAdmin";
 import { moveChapter, saveChapter } from "@/lib/actions/hnv";
@@ -39,7 +39,7 @@ export default async function EditionAdmin({
       />
       <EditionSwitch active={edition.slug} editions={editions.map((e) => ({ slug: e.slug, name: EDITION_NAMES[e.slug] ?? e.name }))} />
 
-      <div className="grid gap-4 md:grid-cols-[1fr_auto] mb-6">
+      <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] mb-6">
         <form action="/admin/hnv/find" className="flex gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
           <input type="hidden" name="edition" value={edition.slug} />
           <label className="sr-only" htmlFor="find-n">Sūtra number</label>
@@ -59,6 +59,16 @@ export default async function EditionAdmin({
               {types.length} kind{types.length === 1 ? "" : "s"}
               {drafts ? ` · ${drafts} draft${drafts === 1 ? "" : "s"} to review` : ""}
             </span>
+          </span>
+        </Link>
+        <Link
+          href={`/admin/hnv/${edition.slug}/spreadsheet`}
+          className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 hover:border-[var(--fg)]"
+        >
+          <FileSpreadsheet size={20} className="text-[var(--accent)]" />
+          <span>
+            <span className="block font-semibold">Spreadsheet</span>
+            <span className="block text-sm text-[var(--fg-muted)]">Download · upload</span>
           </span>
         </Link>
       </div>

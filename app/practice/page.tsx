@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import PracticeApp from "./PracticeApp";
+import { getPracticeData } from "@/lib/data/practice";
+
+export const revalidate = 86400; // admin saves refresh it immediately
 
 export const metadata: Metadata = {
   title: "Practice",
   description: "Practice Sandhi and Sandhi-viccheda from Hari-nāmāmṛta Vyākaraṇa — choose a chapter, topic, and difficulty, then test yourself.",
 };
 
-export default function PracticePage() {
+export default async function PracticePage() {
+  const data = await getPracticeData();
+  const topicCount = data.chapters.reduce((n, c) => n + c.topics.length, 0);
   return (
     <>
       <section className="relative overflow-hidden border-b border-[var(--border)]">
@@ -22,9 +27,9 @@ export default function PracticePage() {
           </div>
           <dl className="grid grid-cols-3 gap-3">
             {[
-              ["30", "verified questions"],
-              ["3", "kinds of sandhi"],
-              ["41–86", "sūtras covered"],
+              [String(data.questions.length), "verified questions"],
+              [String(topicCount), topicCount === 1 ? "topic" : "topics"],
+              [data.sutraSpan || "—", "sūtras covered"],
             ].map(([n, label]) => (
               <div key={label} className="rounded-2xl border border-[var(--border)] bg-[var(--bg)]/70 p-4 text-center">
                 <dt className="sr-only">{label}</dt>
@@ -35,7 +40,7 @@ export default function PracticePage() {
           </dl>
         </div>
       </section>
-      <PracticeApp />
+      <PracticeApp chapters={data.chapters} questions={data.questions} />
     </>
   );
 }

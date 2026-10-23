@@ -7,7 +7,6 @@ import { dailyItems, dailyPins, revisions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
 import { revalidateDaily, revalidateEverything, revalidateHnv } from "@/lib/actions/revalidate";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
-import { importNotesFromGoogleDoc } from "@/lib/import/notesDoc";
 
 const Pool = z.enum(["verse_of_day", "subhashita"]);
 const DateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date.");
@@ -125,23 +124,6 @@ export async function removePin(_prev: ActionState, form: FormData): Promise<Act
 }
 
 // -------------------------------------------------------------- tools --
-/** One-time: copy the old sūtra-notes Google Doc into the "Notes" commentary. */
-export async function runNotesImport(_prev: ActionState): Promise<ActionState> {
-  const user = await requireUser("owner");
-  try {
-    const r = await importNotesFromGoogleDoc(user.id);
-    revalidateHnv();
-    if (r.found === 0) return fail("No notes were found — is the Google Doc still shared “Anyone with the link”?");
-    return ok(
-      `Found ${r.found} notes; imported ${r.imported}.` +
-        (r.skipped.length ? ` Skipped (no such sūtra, empty, or already in the database): ${r.skipped.join(", ")}.` : "")
-    );
-  } catch (err) {
-    console.error("[runNotesImport]", err);
-    return fail("The import stopped with an error. Nothing was deleted; check the Vercel logs and try again.");
-  }
-}
-
 export async function revalidateSite(_prev: ActionState): Promise<ActionState> {
   await requireUser("owner");
   revalidateEverything();

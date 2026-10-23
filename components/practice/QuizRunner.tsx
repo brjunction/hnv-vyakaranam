@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Question } from "@/lib/practiceData";
+import { shuffle, shuffleOptions, type Question } from "@/lib/practiceData";
 import { Check, X, Flame } from "lucide-react";
 
 export type AnsweredQuestion = {
@@ -17,8 +17,9 @@ export default function QuizRunner({
   questions: Question[];
   onFinish: (answers: AnsweredQuestion[]) => void;
 }) {
-  // Shuffle once per quiz, stable across re-renders.
-  const shuffled = useMemo(() => [...questions].sort(() => Math.random() - 0.5), [questions]);
+  // Shuffle the questions AND each question's options once per quiz
+  // (stable across re-renders), so the right answer is never always first.
+  const shuffled = useMemo(() => shuffle(questions).map(shuffleOptions), [questions]);
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<AnsweredQuestion[]>([]);

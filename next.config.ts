@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // Keep xlsx as a real Node dependency (not bundled by webpack) so its
   // file-system based XLSX.readFile() works correctly on the server.
   serverExternalPackages: ["xlsx"],
+  // Spreadsheet uploads in the admin (Vercel caps request bodies at ~4.5 MB).
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
 
   // Make sure the Excel files under content/ are shipped with the deployed
   // server functions (Vercel only includes files it can see being used).

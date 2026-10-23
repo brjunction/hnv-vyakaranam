@@ -22,3 +22,8 @@ export function revalidateEverything() {
   for (const t of [tags.hnvAll, tags.daily, tags.home, tags.practice, tags.posts, tags.settings]) revalidateTag(t);
   revalidatePath("/", "layout");
 }
+
+export function revalidatePractice() {
+  revalidateTag(tags.practice);
+  revalidatePath("/practice");
+}

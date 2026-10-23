@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ListTree, LayoutDashboard, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound } from "lucide-react";
+import { Dumbbell, ListTree, LayoutDashboard, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound } from "lucide-react";
 
 const ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, owner: false },
   { href: "/admin/hnv", label: "Chapters & sūtras", icon: ListTree, owner: false },
+  { href: "/admin/practice", label: "Practice", icon: Dumbbell, owner: false },
   { href: "/admin/verses", label: "Verse of the Day", icon: BookOpenText, owner: false },
   { href: "/admin/subhashita", label: "Subhāṣita", icon: Quote, owner: false },
   { href: "/admin/schedule", label: "Schedule", icon: CalendarDays, owner: false },

@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import {
-  PRACTICE_CHAPTERS,
-  MISC_CHAPTER,
   GAME_TEASERS,
   type PracticeChapter,
   type Difficulty,
   type PracticeType,
-  questionsFor,
+  type Question,
 } from "@/lib/practiceData";
 import {
   Sparkles,
@@ -25,7 +23,9 @@ import {
 } from "lucide-react";
 
 type Props = {
-  onStart: (opts: { topicSlug: string | "all"; difficulty: Difficulty | "all"; type: PracticeType | "all" }) => void;
+  chapters: PracticeChapter[];
+  questions: Question[];
+  onStart: (questions: Question[]) => void;
 };
 
 const DIFFICULTIES: { key: Difficulty | "all"; label: string; icon: React.ReactNode; color: string }[] = [
@@ -93,7 +93,16 @@ function ChapterCard({
   );
 }
 
-export default function PracticeSetup({ onStart }: Props) {
+export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, onStart }: Props) {
+  const MISC_CHAPTER: PracticeChapter = {
+    slug: "miscellaneous",
+    number: null,
+    title: "Miscellaneous",
+    titleEn: "All available chapters, mixed together",
+    topics: PRACTICE_CHAPTERS.filter((c) => c.available).flatMap((c) => c.topics),
+    available: true,
+    isMisc: true,
+  };
   const [chapterSlug, setChapterSlug] = useState<string | null>(null);
   const chapter =
     chapterSlug === MISC_CHAPTER.slug
@@ -104,6 +113,17 @@ export default function PracticeSetup({ onStart }: Props) {
   const [type, setType] = useState<PracticeType | "all">("all");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
 
+  function selection(): Question[] {
+    if (!chapter) return [];
+    const keys = topicSlug === "all" ? chapter.topics.map((t) => t.slug) : [topicSlug];
+    return questions.filter(
+      (q) =>
+        keys.includes(q.topicSlug) &&
+        (difficulty === "all" || q.difficulty === difficulty) &&
+        (type === "all" || q.type === type)
+    );
+  }
+
   // Step 1: choose a chapter
   if (!chapter) {
     return (
@@ -111,7 +131,7 @@ export default function PracticeSetup({ onStart }: Props) {
         <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 1 of 3</p>
         <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">Choose a chapter to practice</h2>
         <p className="text-center text-[var(--fg-muted)] mb-8 max-w-md mx-auto">
-          The full HNV curriculum is listed below. Locked chapters are coming soon — Sandhi is ready now.
+          The full HNV curriculum is listed below. Locked chapters are coming soon.
         </p>
 
         <p className="text-sm font-semibold text-[var(--fg)] max-w-4xl mx-auto mb-3">Ready now</p>
@@ -186,7 +206,7 @@ export default function PracticeSetup({ onStart }: Props) {
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[var(--accent)]">{TOPIC_ICONS[t.slug] ?? <Sparkles size={18} />}</span>
+              <span className="text-[var(--accent)]">{TOPIC_ICONS[t.icon] ?? <Sparkles size={18} />}</span>
               <p className="font-devanagari font-medium text-lg">{t.title}</p>
             </div>
             <p className="text-sm text-[var(--fg-muted)]">{t.subtitle}</p>
@@ -236,13 +256,13 @@ export default function PracticeSetup({ onStart }: Props) {
 
       <div className="text-center">
         <p className="text-sm text-[var(--fg-muted)] mb-4">
-          {questionsFor(topicSlug, difficulty).filter((q) => type === "all" || q.type === type).length} question
-          {questionsFor(topicSlug, difficulty).filter((q) => type === "all" || q.type === type).length === 1 ? "" : "s"}{" "}
+          {selection().length} question
+          {selection().length === 1 ? "" : "s"}{" "}
           ready for this selection
         </p>
         <button
-          onClick={() => onStart({ topicSlug, difficulty, type })}
-          disabled={questionsFor(topicSlug, difficulty).filter((q) => type === "all" || q.type === type).length === 0}
+          onClick={() => onStart(selection())}
+          disabled={selection().length === 0}
           className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           Start practice <ArrowRight size={18} />

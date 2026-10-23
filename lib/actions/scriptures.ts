@@ -1131,8 +1131,14 @@ export async function importScriptureRows(input: {
     const r = p.row;
     const cur = existing.find((e) => e.divisionId === p.divisionId && e.key === r.verse);
     const set: Partial<typeof scriptureVerses.$inferInsert> = {};
+    // "Text" column: one script only — the other column is cleared ("" ), so the site derives it.
+    const single = (r.devanagari === "" && Boolean(r.iast?.trim())) || (r.iast === "" && Boolean(r.devanagari?.trim()));
     if (r.devanagari?.trim()) set.devanagari = r.devanagari.trim();
     if (r.iast?.trim()) set.iast = r.iast.trim().normalize("NFC");
+    if (single && (cur?.language || book.verseLanguage) === "sanskrit") {
+      if (!r.devanagari?.trim()) set.devanagari = "";
+      if (!r.iast?.trim()) set.iast = "";
+    }
     if (r.speaker?.trim()) set.speaker = r.speaker.trim();
     if (r.verseNo?.trim()) set.verseNo = r.verseNo.trim();
     const st = r.status?.trim().toLowerCase();

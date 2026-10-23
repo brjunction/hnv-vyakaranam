@@ -57,8 +57,7 @@ export async function buildScriptureTemplate(code: string, divisionId?: number):
       ...pad(n.path),
       v.key,
       v.verseNo === auto ? "" : v.verseNo,
-      cut(v.devanagari),
-      cut(v.iast),
+      cut(((v.language || book.verseLanguage) !== "sanskrit" && v.devanagari) || v.iast || v.devanagari),
       v.speaker,
       v.status,
       ...verseTypes.map((t) => exportCell(cOf.get(`${v.id}:${t.id}`) ?? "")),
@@ -67,10 +66,10 @@ export async function buildScriptureTemplate(code: string, divisionId?: number):
   // a few empty example rows for a book without verses
   if (!vRows.length) {
     const firstLeaf = ordered[0] ?? scope.find((n) => n.depth === levels.length - 1);
-    if (firstLeaf) vRows.push([...pad(firstLeaf.path), "1", "", "", "", "", "published", ...verseTypes.map(() => "")]);
+    if (firstLeaf) vRows.push([...pad(firstLeaf.path), "1", "", "", "", "published", ...verseTypes.map(() => "")]);
   }
   const vs = XLSX.utils.aoa_to_sheet([head, ...vRows]);
-  vs["!cols"] = head.map((h, i) => ({ wch: i < levels.length ? 8 : h === "Devanagari" || h === "IAST" ? 50 : i < levels.length + VERSE_FIXED.length ? 10 : 60 }));
+  vs["!cols"] = head.map((h, i) => ({ wch: i < levels.length ? 8 : h === "Text" ? 60 : i < levels.length + VERSE_FIXED.length ? 10 : 60 }));
   vs["!freeze"] = { xSplit: levels.length + 1, ySplit: 1 };
   // keep every cell as text (verse numbers like 16-18 must not become dates)
   for (const k of Object.keys(vs)) if (!k.startsWith("!") && vs[k].t === "s") vs[k].z = "@";
@@ -100,7 +99,8 @@ export async function buildScriptureTemplate(code: string, divisionId?: number):
       ["• Empty cells NEVER erase anything. To clear a field, use the admin."],
       ["• Rows are never deleted by an upload. Delete in the admin."],
       ["• Missing chapters/divisions can be created automatically (tick the box when uploading)."],
-      ["• “/” or a new line inside Devanagari/IAST = a line break of the verse."],
+      ["• Text = the verse ONCE, in any script. IAST is best (dharma-kṣetre kuru-kṣetre …): Devanagari, Bengali and Odia are made from it, with words joined as printed."],
+      ["• “/” or a new line inside Text = a line break of the verse."],
       ["• Verse ranges: type 16-18. If Excel turns it into a date, type it as '16-18 (with an apostrophe)."],
       ["• “Shown as” is optional: leave it empty for the automatic number (e.g. 1.12.1)."],
       ["• Status: published, draft or archived (empty = unchanged, or published for new rows)."],

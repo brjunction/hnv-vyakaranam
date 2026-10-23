@@ -5,7 +5,9 @@
 // Sheet "Divisions": <one column per level> | Shown as | Title | Title (Devanagari) | Subtitle | Expected
 // Each level has its own column so Excel can never turn "1.10" into 1.1.
 
-export const VERSE_FIXED = ["Verse", "Shown as", "Devanagari", "IAST", "Speaker", "Status"] as const;
+/** "Text" = the verse ONCE, in any script (IAST best). Old sheets with "Devanagari" / "IAST" columns still upload. */
+export const VERSE_FIXED = ["Verse", "Shown as", "Text", "Speaker", "Status"] as const;
+const LEGACY_TEXT = ["Devanagari", "IAST"] as const;
 export const DIV_FIXED = ["Shown as", "Title", "Title (Devanagari)", "Subtitle", "Expected"] as const;
 export const TOO_LONG = "[too long for a spreadsheet cell — edit it in the admin]";
 export const CELL_MAX = 32000;
@@ -62,7 +64,8 @@ export function parseSheets(levels: string[], verses: string[][], divisions: str
     if (li.some((i) => i < 0)) out.problems.push(`The Verses sheet needs a column for each level: ${levels.join(", ")}.`);
     const fixed = Object.fromEntries(VERSE_FIXED.map((f) => [f, head.findIndex((h) => lower(h) === lower(f))]));
     if (fixed["Verse"] < 0) out.problems.push("The Verses sheet needs a “Verse” column.");
-    const known = new Set([...levels.map(lower), ...VERSE_FIXED.map(lower)]);
+    const legacy = Object.fromEntries(LEGACY_TEXT.map((f) => [f, head.findIndex((h) => lower(h) === lower(f))]));
+    const known = new Set([...levels.map(lower), ...VERSE_FIXED.map(lower), ...LEGACY_TEXT.map(lower)]);
     const commCols = head.map((h, i) => ({ h, i })).filter(({ h }) => h && !known.has(lower(h)));
     out.commentaryColumns = commCols.map((c) => c.h);
     if (!out.problems.length) {
@@ -80,8 +83,11 @@ export function parseSheets(levels: string[], verses: string[][], divisions: str
           location: loc.join("."),
           verse,
           verseNo: get(fixed["Shown as"]) || undefined,
-          devanagari: get(fixed["Devanagari"]) || undefined,
-          iast: get(fixed["IAST"]) || undefined,
+          ...(() => {
+            const t = get(fixed["Text"]);
+            if (t) return /[\u0900-\u097F\u0980-\u09FF\u0B00-\u0B7F]/.test(t) ? { devanagari: t, iast: "" } : { iast: t, devanagari: "" };
+            return { devanagari: get(legacy["Devanagari"]) || undefined, iast: get(legacy["IAST"]) || undefined };
+          })(),
           speaker: get(fixed["Speaker"]) || undefined,
           status: get(fixed["Status"]) || undefined,
           c,

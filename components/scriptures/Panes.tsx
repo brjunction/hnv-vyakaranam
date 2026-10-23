@@ -1,11 +1,11 @@
 "use client";
 
-import { AArrowDown, AArrowUp, ChevronDown, Headphones, Languages } from "lucide-react";
+import { AArrowDown, AArrowUp, Headphones, Languages } from "lucide-react";
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import Select from "@/components/ui/Select";
 import type { ReaderPrefs } from "@/components/scriptures/prefs";
 import SynonymsBlock from "@/components/scriptures/SynonymsBlock";
-import { SCRIPT_LABELS, detectScript, type CommentaryType, type ScriptName, type VerseData } from "@/lib/scriptures/core";
+import { SCRIPT_LABELS, type CommentaryType, type ScriptName, type VerseData } from "@/lib/scriptures/core";
 
 type SetPrefs = (p: Partial<ReaderPrefs>) => void;
 
@@ -140,9 +140,6 @@ export function VersePane({
   big?: boolean;
 }) {
   const hasText = verse.iast || verse.devanagari;
-  const second = prefs.script === "iast" && Boolean(verse.devanagari || verse.iast);
-  const origSc = detectScript(verse.devanagari) ?? "devanagari";
-  const origName = origSc === "bengali" ? "Bengali" : origSc === "oriya" ? "Odia" : "Devanagari";
   return (
     <div>
       <p className="mb-4 text-[0.85rem] font-semibold tabular-nums text-[var(--color-saffron)]">{refLabel}</p>
@@ -157,22 +154,6 @@ export function VersePane({
         />
       ) : (
         <p className="text-[var(--fg-muted)]">The verse text hasn't been added yet.</p>
-      )}
-      {second && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setPrefs({ showDeva: !prefs.showDeva })}
-            aria-expanded={prefs.showDeva}
-            className="ui-btn ui-btn-sm"
-          >
-            <ChevronDown size={14} className={`transition-transform ${prefs.showDeva ? "" : "-rotate-90"}`} />
-            {prefs.showDeva ? `Hide ${origName}` : `Show ${origName}`}
-          </button>
-          {prefs.showDeva && (
-            <VerseLinesIn sanskrit={verse.language === "sanskrit"} devanagari={verse.devanagari} iast={verse.iast} script={origSc} size={big ? "lg" : "md"} className="mt-2" />
-          )}
-        </div>
       )}
       <VerseCompanions types={types} c={verse.c} script={prefs.script} />
     </div>

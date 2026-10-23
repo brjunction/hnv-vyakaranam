@@ -7,7 +7,7 @@ import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import Select from "@/components/ui/Select";
 import SynonymsBlock from "@/components/scriptures/SynonymsBlock";
-import { detectScript, versePath, type DivisionData } from "@/lib/scriptures/core";
+import { versePath, type DivisionData } from "@/lib/scriptures/core";
 import DictButton from "@/components/DictButton";
 
 // A whole chapter on one page: every verse at once, with a view switch —
@@ -109,9 +109,6 @@ export default function ChapterView({ data }: { data: DivisionData }) {
                           <VerseLinesIn sanskrit={v.language === "sanskrit"} devanagari={v.devanagari} iast={v.iast} script={prefs.script} size="md" />
                         ) : (
                           <p className="text-sm italic text-[var(--fg-muted)]">Text not yet added.</p>
-                        )}
-                        {prefs.script === "iast" && prefs.showDeva && (v.devanagari || v.iast) && (
-                          <VerseLinesIn sanskrit={v.language === "sanskrit"} devanagari={v.devanagari} iast={v.iast} script={detectScript(v.devanagari) ?? "devanagari"} size="md" className="mt-2 text-[var(--fg-muted)]" />
                         )}
                         {prefs.chapterAnvaya && anvayaT.map((t) => <AnvayaBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                         {withTrans && wfwT.filter((t) => v.c[t.id]).map((t) => <SynonymsBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}

@@ -6,8 +6,8 @@ import PageHead, { MetaChip } from "@/components/PageHead";
 import SongBrowser from "@/components/songs/SongBrowser";
 
 export const metadata: Metadata = {
-  title: "Vaiṣṇava songs",
-  description: "Vaiṣṇava songs, aṣṭakams, stotras and Padyāvalī verses — A–Z, by author, book or type, in Devanagari, IAST, Bengali or Odia.",
+  title: "Vaiṣṇava Bhajans",
+  description: "Vaiṣṇava bhajans — songs of the ācāryas, aṣṭakams, stotras and Padyāvalī verses — A–Z, by author, book or type, in Devanagari, IAST, Bengali or Odia.",
   alternates: { canonical: "/songs" },
 };
 export const revalidate = false;
@@ -21,12 +21,12 @@ export default async function SongsPage() {
   return (
     <>
       <PageHead
-        title="Vaiṣṇava songs"
-        intro="Songs of the ācāryas, aṣṭakams, stotras and Padyāvalī — search any song, in any script."
+        title="Vaiṣṇava Bhajans"
+        intro="Songs of the ācāryas, aṣṭakams, stotras and Padyāvalī — search any bhajan, in any script."
         meta={
           songs.length ? (
             <>
-              <MetaChip n={songs.length} label="songs" />
+              <MetaChip n={songs.length} label="bhajans" />
               <MetaChip n={authors} label="authors" />
               <MetaChip n={books.size} label="books" />
             </>

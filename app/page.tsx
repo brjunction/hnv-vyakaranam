@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ScrollText, Library, BookOpen, ArrowRight, Leaf, Gauge, Flame, Search, ArrowDownAZ, Music, Languages, Wrench, NotebookPen, Earth, LayoutGrid } from "lucide-react";
+import { ScrollText, Library, BookOpen, ArrowRight, ArrowDown, Sparkles, Waves, Droplets, Leaf, Gauge, Flame, Search, ArrowDownAZ, Music, Languages, Wrench, NotebookPen, Earth, LayoutGrid } from "lucide-react";
 import VarnaBoard from "@/components/home/VarnaBoard";
 import DailyPanel from "@/components/home/DailyPanel";
 import { getChapterList } from "@/lib/data/hnv";
@@ -230,42 +230,68 @@ export default async function Home() {
 
       <DailyPanel />
 
-      <section className="max-w-5xl mx-auto px-5 py-20">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-center">
-          The finest treatise of Sanskrit grammar ever composed
-        </h2>
-        <p className="text-[var(--fg-muted)] max-w-2xl mx-auto text-center mb-12 leading-relaxed">
-          Śrīla Jīva Gosvāmī studied virtually every major Sanskrit grammar in existence —
-          Pāṇini&apos;s Aṣṭādhyāyī with the Vārttikas, Mahā-bhāṣya, and Kāśikā; Śarvavarmā&apos;s
-          Kātantra; Vopadeva&apos;s Mugdha-bodha; Kramadīśvara&apos;s Saṅkṣipta-sāra; Candra
-          Gomī&apos;s Cāndra-vyākaraṇa; Padmanābha Datta&apos;s Supadma; Anubhūti
-          Svarūpāchārya&apos;s Sārasvata; and Rāmacandra Āchārya&apos;s Prakriyā-kaumudī. Having weighed
-          them all, he found each one either incomplete, riddled with errors, or so terse it was
-          unusable without a chain of commentaries.
-        </p>
-        <div className="grid sm:grid-cols-3 gap-6">
-          {[
-            {
-              title: "Unparalleled clarity",
-              body: "Every sūtra is composed so its meaning is immediate and unambiguous — no chain of commentaries required.",
-            },
-            {
-              title: "The ocean, churned",
-              body: "Jīva Gosvāmī churned the entire ocean of Sanskrit grammar and distilled only its essence into this one work.",
-            },
-            {
-              title: "Grammar as nectar",
-              body: "Every example is drawn from the names and pastimes of Kṛṣṇa, turning dry rules of language into rasa.",
-            },
-          ].map((f) => (
-            <div
-              key={f.title}
-              className="rounded-xl border border-[var(--border)] p-6 hover:border-[var(--color-vermillion)] transition-colors"
-            >
-              <h3 className="font-medium mb-2 text-[var(--color-vermillion)]">{f.title}</h3>
-              <p className="text-sm text-[var(--fg-muted)] leading-relaxed">{f.body}</p>
+      {/* ------------------------------------------------ The finest treatise */}
+      <section className="relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-14 items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Why this grammar</p>
+            <h2 className="text-3xl sm:text-4xl font-semibold leading-tight mb-5">
+              The finest treatise of Sanskrit grammar <span className="text-[var(--color-vermillion)]">ever composed</span>
+            </h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed">
+              Śrīla Jīva Gosvāmī studied virtually every major Sanskrit grammar in existence. Having weighed them all, he found each one either incomplete, riddled with errors, or so terse it was unusable without a chain of commentaries — and churned their essence into one work.
+            </p>
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: Sparkles, title: "Unparalleled clarity", body: "Every sūtra’s meaning is immediate and unambiguous — no chain of commentaries required." },
+                { icon: Waves, title: "The ocean, churned", body: "The entire ocean of Sanskrit grammar, distilled to its essence in one work." },
+                { icon: Droplets, title: "Grammar as nectar", body: "Every example drawn from the names and pastimes of Kṛṣṇa." },
+              ].map(({ icon: Icon, title, body }) => (
+                <div key={title} className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 transition-colors hover:border-[var(--color-vermillion)]">
+                  <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-vermillion)]/10 text-[var(--color-vermillion)]">
+                    <Icon size={17} strokeWidth={1.8} />
+                  </span>
+                  <h3 className="mb-1 text-sm font-semibold">{title}</h3>
+                  <p className="text-xs leading-relaxed text-[var(--fg-muted)]">{body}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* the churning: eight grammars flow into one */}
+          <div className="relative rounded-3xl border border-[var(--border)] bg-[var(--bg-2)] p-5 sm:p-7 shadow-[var(--shadow-lift)]">
+            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[0.25em] text-[var(--fg-muted)]">Grammars weighed by Śrī Jīva</p>
+            <ul className="flex flex-wrap justify-center gap-2">
+              {[
+                ["Aṣṭādhyāyī", "Pāṇini"],
+                ["Mahā-bhāṣya", "Patañjali"],
+                ["Kāśikā", ""],
+                ["Kātantra", "Śarvavarmā"],
+                ["Mugdha-bodha", "Vopadeva"],
+                ["Saṅkṣipta-sāra", "Kramadīśvara"],
+                ["Cāndra-vyākaraṇa", "Candra Gomī"],
+                ["Supadma", "Padmanābha Datta"],
+                ["Sārasvata", "Anubhūti Svarūpācārya"],
+                ["Prakriyā-kaumudī", "Rāmacandra Ācārya"],
+              ].map(([w, a]) => (
+                <li key={w} className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-center">
+                  <span className="block text-sm font-medium leading-tight">{w}</span>
+                  {a && <span className="block text-[10.5px] text-[var(--fg-muted)]">{a}</span>}
+                </li>
+              ))}
+            </ul>
+            <div className="my-4 flex flex-col items-center text-[var(--color-saffron)]" aria-hidden>
+              <span className="h-6 w-px bg-gradient-to-b from-transparent to-[var(--color-saffron)]" />
+              <ArrowDown size={18} />
+            </div>
+            <div className="rounded-2xl p-[2px]" style={{ background: "linear-gradient(135deg, var(--color-saffron), var(--color-vermillion), var(--color-gold))" }}>
+              <div className="rounded-[14px] bg-[var(--bg)] px-5 py-5 text-center">
+                <p className="font-devanagari text-2xl leading-snug sm:text-3xl">हरिनामामृतव्याकरणम्</p>
+                <p className="mt-1 font-semibold">Harināmāmṛta-vyākaraṇa</p>
+                <p className="text-xs text-[var(--fg-muted)]">Śrīla Jīva Gosvāmī</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -334,7 +360,7 @@ export default async function Home() {
             { n: sutraTotal, label: "Sūtras", sub: "Madhyama edition, online" },
             { n: books.length, label: "Scriptures", sub: "in the library" },
             { n: verseTotal, label: "Verses", sub: "to read, in any script" },
-            { n: songIndex.length, label: "Songs", sub: "of the ācāryas" },
+            { n: songIndex.length, label: "Bhajans", sub: "songs of the ācāryas" },
             { n: headwords, label: "Dictionary words", sub: `in ${dicts.length} dictionaries` },
           ]}
         />
@@ -431,14 +457,14 @@ export default async function Home() {
             ))}
           </div>
           <div className="order-1 lg:order-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Vaiṣṇava songs</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Vaiṣṇava Bhajans</p>
             <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">The songs of the ācāryas</h2>
             <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
               Songs, aṣṭakams, stotras and the verses of Padyāvalī — organised by author, book and type, each with its translation, in the script you read best.
-              {songCount > 0 ? ` ${songCount} songs so far.` : ""}
+              {songCount > 0 ? ` ${songCount} bhajans so far.` : ""}
             </p>
             <Link href="/songs" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors">
-              Browse the songs <ArrowRight size={16} />
+              Browse the bhajans <ArrowRight size={16} />
             </Link>
           </div>
         </div>
@@ -484,7 +510,7 @@ export default async function Home() {
               { n: 2, t: "Read the sūtras", d: "Chapter by chapter, with vṛtti, translation and commentaries.", href: "/chapters", cta: "Chapters" },
               { n: 3, t: "Practise", d: "Sandhi exercises — every answer shows its sūtra.", href: "/practice", cta: "Practice" },
               { n: 4, t: "Read śāstra", d: "Verse by verse, with the dictionary one click away.", href: "/scriptures", cta: "Scriptures" },
-              { n: 5, t: "Sing", d: "The songs of the ācāryas, in the script you read best.", href: "/songs", cta: "Songs" },
+              { n: 5, t: "Sing", d: "The songs of the ācāryas, in the script you read best.", href: "/songs", cta: "Bhajans" },
             ].map((x) => (
               <li key={x.n}>
                 <span className="path-dot">{x.n}</span>
@@ -507,7 +533,7 @@ export default async function Home() {
           {[
             { href: "/chapters", icon: BookOpen, t: "Chapters & sūtras", d: "Madhyama, Bṛhat and Laghu — sūtra by sūtra, in any script, with each Madhyama sūtra linked to its Bṛhat sūtra." },
             { href: "/scriptures", icon: ScrollText, t: "Scriptures", d: "Verse, synonyms, anvaya, translation and every commentary — the heart of the site." },
-            { href: "/songs", icon: Music, t: "Vaiṣṇava songs", d: "Search any song, organised by author, book and type." },
+            { href: "/songs", icon: Music, t: "Vaiṣṇava Bhajans", d: "Search any bhajan, organised by author, book and type." },
             { href: "/tools/dictionary/search", icon: Languages, t: "Dictionary", d: "All the major Sanskrit dictionaries, typed in any script." },
             { href: "/practice", icon: Library, t: "Practice", d: "Sandhi exercises by topic and difficulty, every answer tied to its sūtra." },
             { href: "/tools", icon: Wrench, t: "Tools", d: "Grammar tools that show the sūtra behind each change, and text utilities." },

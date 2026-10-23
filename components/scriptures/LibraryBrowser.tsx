@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, Landmark, Layers, Search, X } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronsDownUp, ChevronsUpDown, Landmark, Layers, Search, X } from "lucide-react";
 import Select from "@/components/ui/Select";
 
 // The library, one SECTION at a time (Primary scriptures, Gauḍīya …): pick a
@@ -110,7 +110,7 @@ export default function LibraryBrowser({ books }: { books: LibBook[] }) {
       if (v.sec && (v.sec === "all" || tree.some((s) => s.name === v.sec))) setSec(v.sec);
     } catch {}
   }, [tree]);
-  const current = sec || tree[0]?.name || "all";
+  const current = sec || (tree.length > 1 ? "all" : tree[0]?.name) || "all";
   const remember = (patch: { view?: View; sec?: string }) => {
     try {
       localStorage.setItem(KEY, JSON.stringify({ view, sec: current, ...patch }));
@@ -127,6 +127,7 @@ export default function LibraryBrowser({ books }: { books: LibBook[] }) {
   const matches = useMemo(() => (f ? books.filter((b) => plain(`${b.title} ${b.titleDeva} ${b.author} ${b.category} ${b.section}`).includes(f)) : []), [books, f]);
   const shownSecs = current === "all" ? tree : tree.filter((s) => s.name === current);
   const catOptions = current === "all" ? [] : tree.find((s) => s.name === current)?.cats ?? [];
+  const allKeys = view === "sections" ? shownSecs.flatMap((s) => s.cats.map((c) => `${s.name}::${c.name}`)) : [];
   // one section: all its categories open; "All": only the first two
   const isOpen = (key: string, i: number) => openCats.has(key) || (!openCats.has(`-${key}`) && (cat !== "all" || current !== "all" || i < 2));
   const toggleCat = (key: string, i: number) =>
@@ -208,17 +209,25 @@ export default function LibraryBrowser({ books }: { books: LibBook[] }) {
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <div className="lib-tabs" role="tablist" aria-label="Sections">
+              {tree.length > 1 && (
+                <button role="tab" aria-selected={current === "all"} onClick={() => pickSec("all")}>
+                  All scriptures <span>{books.length}</span>
+                </button>
+              )}
               {tree.map((s) => (
                 <button key={s.name} role="tab" aria-selected={current === s.name} onClick={() => pickSec(s.name)}>
                   {s.name} <span>{s.cats.reduce((n, c) => n + c.books.length, 0)}</span>
                 </button>
               ))}
-              {tree.length > 1 && (
-                <button role="tab" aria-selected={current === "all"} onClick={() => pickSec("all")}>
-                  All <span>{books.length}</span>
-                </button>
-              )}
             </div>
+            <span className="ml-auto flex gap-1.5">
+              <button type="button" onClick={() => setOpenCats(new Set(allKeys))} className="ui-btn ui-btn-sm" title="Open every category">
+                <ChevronsUpDown size={14} /> Expand all
+              </button>
+              <button type="button" onClick={() => setOpenCats(new Set(allKeys.map((k) => `-${k}`)))} className="ui-btn ui-btn-sm" title="Close every category">
+                <ChevronsDownUp size={14} /> Collapse all
+              </button>
+            </span>
             {catOptions.length > 1 && (
               <Select
                 value={cat}
@@ -232,7 +241,7 @@ export default function LibraryBrowser({ books }: { books: LibBook[] }) {
             )}
           </div>
 
-          <div className="grid gap-5">
+          <div className="grid gap-6">
             {shownSecs.map((s) => (
               <div key={s.name} className="lib-sec">
                 <div className="lib-sec-head">

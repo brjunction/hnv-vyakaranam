@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { BookOpenText, Quote } from "lucide-react";
 import { localDate, type DailyEntry, type DailyPayload } from "@/lib/daily/pick";
-import { splitLines } from "@/lib/text";
+import { VerseLinesIn } from "@/components/scriptures/ScriptText";
+import { useReaderPrefs } from "@/components/scriptures/prefs";
+import type { ScriptName } from "@/lib/scriptures/core";
 
 type State = { status: "loading" } | { status: "ready"; data: DailyPayload } | { status: "empty" };
 
@@ -14,37 +16,19 @@ function prettyDate(iso: string) {
   );
 }
 
-function Lines({ text, className, lang }: { text: string; className: string; lang: string }) {
-  const lines = splitLines(text);
-  if (lines.length === 0) return null;
+function DailyCard({ title, entry, icon: Icon, script }: { title: string; entry: DailyEntry; icon: typeof Quote; script: ScriptName }) {
   return (
-    <p className={className} lang={lang}>
-      {lines.map((l, i) => (
-        <span key={i} className="block">
-          {l}
+    <article className="daily-card flex flex-col p-5 sm:p-6">
+      <header className="mb-3 flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--accent)]">
+          <Icon size={16} strokeWidth={1.75} />
         </span>
-      ))}
-    </p>
-  );
-}
-
-function DailyCard({ title, entry, icon: Icon }: { title: string; entry: DailyEntry; icon: typeof Quote }) {
-  return (
-    <article className="daily-card flex flex-col p-6 sm:p-8">
-      <header className="flex items-center gap-3 mb-6">
-        <span className="w-10 h-10 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
-          <Icon size={18} strokeWidth={1.75} />
-        </span>
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[var(--color-saffron)]">{title}</p>
-          {entry.source && <p className="text-sm text-[var(--fg-muted)]">{entry.source}</p>}
-        </div>
+        <p className="text-sm font-semibold text-[var(--color-saffron)]">{title}</p>
+        {entry.source && <p className="ml-auto truncate text-xs text-[var(--fg-muted)]">{entry.source}</p>}
       </header>
-      <Lines text={entry.sanskrit} lang="sa-Deva" className="font-devanagari text-xl sm:text-2xl leading-relaxed mb-4" />
-      <Lines text={entry.iast} lang="sa-Latn" className="text-sm italic text-[var(--fg-muted)] leading-relaxed mb-5" />
-      {entry.translation && (
-        <blockquote className="mt-auto border-l-2 border-[var(--color-vermillion)] pl-4 leading-relaxed">{entry.translation}</blockquote>
-      )}
+      {/* ONE script — the reader's choice (header switcher); made from whichever text was entered */}
+      <VerseLinesIn devanagari={entry.sanskrit} iast={entry.iast} script={script} size="md" className="mb-3" />
+      {entry.translation && <p className="border-l-2 border-[var(--color-vermillion)] pl-3 text-[0.95rem] leading-relaxed">{entry.translation}</p>}
     </article>
   );
 }
@@ -58,6 +42,7 @@ function DailyCard({ title, entry, icon: Icon }: { title: string; entry: DailyEn
  */
 export default function DailyPanel() {
   const [state, setState] = useState<State>({ status: "loading" });
+  const [prefs] = useReaderPrefs();
 
   useEffect(() => {
     let cancelled = false;
@@ -85,14 +70,14 @@ export default function DailyPanel() {
       </div>
 
       {state.status === "loading" ? (
-        <div className="grid md:grid-cols-2 gap-6" aria-hidden>
-          <div className="anv-skeleton !h-72" />
-          <div className="anv-skeleton !h-72" />
+        <div className="grid md:grid-cols-2 gap-4" aria-hidden>
+          <div className="anv-skeleton !h-40" />
+          <div className="anv-skeleton !h-40" />
         </div>
       ) : (
-        <div className={`grid gap-6 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : "max-w-2xl mx-auto"}`}>
-          {state.data.verseOfDay && <DailyCard title="Verse of the Day" entry={state.data.verseOfDay} icon={BookOpenText} />}
-          {state.data.subhashita && <DailyCard title="Subhāṣita of the day" entry={state.data.subhashita} icon={Quote} />}
+        <div className={`grid items-start gap-4 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : "max-w-2xl mx-auto"}`}>
+          {state.data.verseOfDay && <DailyCard title="Verse of the Day" entry={state.data.verseOfDay} icon={BookOpenText} script={prefs.script} />}
+          {state.data.subhashita && <DailyCard title="Subhāṣita of the day" entry={state.data.subhashita} icon={Quote} script={prefs.script} />}
         </div>
       )}
     </section>

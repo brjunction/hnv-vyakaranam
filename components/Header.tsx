@@ -10,18 +10,47 @@ import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
 import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown, Music, GraduationCap, Landmark, type LucideIcon } from "lucide-react";
 import NavMenu, { isActive, type NavItem } from "@/components/NavMenu";
+import HeaderScript from "@/components/HeaderScript";
 
 // Header groups. Desktop: Study · Scriptures · Tools · About, then icons (More, Notebook, Theme).
 const STUDY: NavItem[] = [
-  { href: "/chapters", label: "Chapters", desc: "Harināmāmṛta-vyākaraṇam, sūtra by sūtra", icon: BookSearch },
-  { href: "/practice", label: "Practice", desc: "Exercises, every answer tied to its sūtra", icon: LandPlot },
+  {
+    href: "/chapters",
+    label: "Chapters",
+    desc: "Harināmāmṛta-vyākaraṇam sūtra by sūtra — vṛtti, translation and commentaries.",
+    icon: BookSearch,
+    links: [
+      { href: "/chapters", label: "Madhyama" },
+      { href: "/brhat/chapters", label: "Bṛhat" },
+      { href: "/laghu/chapters", label: "Laghu" },
+    ],
+  },
+  { href: "/practice", label: "Practice", desc: "Sandhi exercises by topic and level — every answer shows its sūtra.", icon: LandPlot },
   // Served as a raw static HTML page (its own document) — a plain <a> navigates to it.
-  { href: "/hnv-wiki", label: "HNV-Wiki", desc: "The sūtras explained simply", icon: Earth, external: true },
+  { href: "/hnv-wiki", label: "HNV-Wiki", desc: "The sūtras explained simply, with meanings and examples.", icon: Earth, external: true },
 ];
 const SCRIPTURES: NavItem[] = [
-  { href: "/scriptures", label: "Scriptures", desc: "The library of śāstra, verse by verse", icon: SquareLibrary },
-  { href: "/songs", label: "Vaiṣṇava songs", desc: "Songs, aṣṭakams, stotras — A–Z", icon: Music },
-  { href: "/scriptures/syllabus", label: "Śrīla Bhaktisiddhānta’s order", desc: "The order of study of śāstra", icon: Landmark },
+  {
+    href: "/scriptures",
+    label: "Scriptures",
+    desc: "The library of śāstra — verse by verse, with synonyms, anvaya, translation and commentaries.",
+    icon: SquareLibrary,
+    links: [
+      { href: "/scriptures", label: "Library" },
+      { href: "/scriptures/search", label: "Search verses" },
+      { href: "/scriptures/read", label: "Dual reading" },
+      { href: "/scriptures/syllabus", label: "Bhaktisiddhānta’s order" },
+    ],
+  },
+  {
+    href: "/songs",
+    label: "Vaiṣṇava Bhajans",
+    desc: "Songs of the ācāryas, aṣṭakams and stotras — search any bhajan, A–Z.",
+    icon: Music,
+    links: [
+      { href: "/songs", label: "All bhajans" },
+    ],
+  },
 ];
 const STUDY_PREFIXES = ["/chapters", "/brhat", "/laghu", "/practice", "/hnv-wiki"];
 const SCRIPTURE_PREFIXES = ["/scriptures", "/songs"];
@@ -96,9 +125,13 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             <ToolsGrid compact onNavigate={onClose} />
           </div>
         )}
-        <p className="px-4 pb-1 pt-3 text-xs font-semibold text-[var(--color-saffron)]">About</p>
+        <p className="px-4 pb-1 pt-3 text-xs font-semibold text-[var(--color-saffron)]">More</p>
+        <MobileLink href="/more" icon={LayoutGrid} label="More — courses & resources" active={isActive(pathname, ["/more"])} />
         <MobileLink href="/about" icon={Info} label="About" active={isActive(pathname, ["/about"])} />
-        <MobileLink href="/more" icon={LayoutGrid} label="Courses, resources & news" active={isActive(pathname, ["/more"])} />
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--bg-2)] px-4 py-3">
+          <span className="text-sm text-[var(--fg-muted)]">Script</span>
+          <HeaderScript />
+        </div>
       </nav>
     </div>,
     document.body
@@ -129,26 +162,25 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Desktop: four groups (icon above the name), then icon-only buttons */}
-        <nav className="hidden md:flex items-center gap-1" aria-label="Main">
-          <NavMenu label="Study" icon={GraduationCap} items={STUDY} prefixes={STUDY_PREFIXES} />
-          <NavMenu label="Scriptures" icon={SquareLibrary} items={SCRIPTURES} prefixes={SCRIPTURE_PREFIXES} />
+        {/* Desktop: Study · Scriptures · Tools · More · About | Notebook · Theme · Script */}
+        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1" aria-label="Main">
+          <NavMenu label="Study" icon={GraduationCap} items={STUDY} prefixes={STUDY_PREFIXES} title="Study" intro="Learn Harināmāmṛta-vyākaraṇam, step by step." />
+          <NavMenu label="Scriptures" icon={SquareLibrary} items={SCRIPTURES} prefixes={SCRIPTURE_PREFIXES} title="Scriptures" intro="Read śāstra and sing the songs of the ācāryas." />
           <ToolsMenu />
+          <Link href="/more" className={`nav-tab ${isActive(pathname, ["/more"]) ? "on" : ""}`} title="Courses, resources and news">
+            <LayoutGrid size={17} strokeWidth={1.8} />
+            <span className="nav-label">More</span>
+          </Link>
           <Link href="/about" className={`nav-tab ${isActive(pathname, ["/about"]) ? "on" : ""}`}>
-            <Info size={18} strokeWidth={1.8} />
+            <Info size={17} strokeWidth={1.8} />
             <span className="nav-label">About</span>
           </Link>
-          <span className="w-px h-6 bg-[var(--border)] mx-2" />
-          <Link
-            href="/more"
-            aria-label="More — courses, resources and news"
-            title="More — courses, resources and news"
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${isActive(pathname, ["/more"]) ? "bg-[var(--bg-2)] text-[var(--accent)]" : "text-[var(--fg-muted)] hover:bg-[var(--bg-2)] hover:text-[var(--fg)]"}`}
-          >
-            <LayoutGrid size={19} strokeWidth={1.75} />
-          </Link>
+          <span className="w-px h-6 bg-[var(--border)] mx-1.5" />
           <NotebookButton />
           <ThemeToggle />
+          <span className="hidden lg:block">
+            <HeaderScript />
+          </span>
         </nav>
 
         {/* Mobile: theme toggle + hamburger */}

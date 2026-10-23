@@ -34,7 +34,7 @@ export default async function SongPage({ params }: P) {
     <article className="mx-auto max-w-3xl px-5 pb-16 pt-5">
       <nav className="mb-4 flex flex-wrap items-center gap-x-2 text-sm text-[var(--fg-muted)]">
         <Link href="/songs" className="hover:text-[var(--accent)]">
-          Songs
+          Vaiṣṇava Bhajans
         </Link>
         {s.book && (
           <>

@@ -37,7 +37,7 @@ export default function SongBrowser({ songs }: { songs: SongEntry[] }) {
 
   const groups = useMemo(() => {
     const name = (s: SongEntry) =>
-      mode === "az" ? letterOf(s.title) : mode === "author" ? s.author || "Unknown author" : mode === "book" ? s.book || "Single songs" : mode === "kind" ? s.kind || "Song" : SONG_LANGUAGE_LABEL[s.language] ?? s.language;
+      mode === "az" ? letterOf(s.title) : mode === "author" ? s.author || "Unknown author" : mode === "book" ? s.book || "Single bhajans" : mode === "kind" ? s.kind || "Song" : SONG_LANGUAGE_LABEL[s.language] ?? s.language;
     const m = new Map<string, SongEntry[]>();
     for (const s of shown) m.set(name(s), [...(m.get(name(s)) ?? []), s]);
     const list = [...m.entries()].map(([g, items]) => ({
@@ -45,7 +45,7 @@ export default function SongBrowser({ songs }: { songs: SongEntry[] }) {
       letter: mode === "az" ? g : plainFirst(g),
       items: items.sort((a, b) => (mode === "book" ? comparePlace(a.bookPlace, b.bookPlace) : 0) || a.title.localeCompare(b.title)),
     }));
-    const tail = (n: string) => ["#", "Unknown author", "Single songs"].includes(n);
+    const tail = (n: string) => ["#", "Unknown author", "Single bhajans"].includes(n);
     return list.sort((a, b) => Number(tail(a.name)) - Number(tail(b.name)) || a.name.localeCompare(b.name));
   }, [shown, mode]);
 
@@ -73,9 +73,9 @@ export default function SongBrowser({ songs }: { songs: SongEntry[] }) {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search any song — title, first line, author… (any script)"
+              placeholder="Search any bhajan — title, first line, author… (any script)"
               className="dict-noring min-w-0 flex-1 bg-transparent text-sm outline-none"
-              aria-label="Search songs"
+              aria-label="Search bhajans"
             />
             {q && (
               <button type="button" onClick={() => setQ("")} className="ui-icon-btn ui-btn-sm !h-7 !w-7" aria-label="Clear">
@@ -101,15 +101,15 @@ export default function SongBrowser({ songs }: { songs: SongEntry[] }) {
           />
         </div>
         <p className="mt-2 text-xs text-[var(--fg-muted)]">
-          {shown.length === songs.length ? `${songs.length} song${songs.length === 1 ? "" : "s"}` : `${shown.length} of ${songs.length} songs`} · {groups.length}{" "}
+          {shown.length === songs.length ? `${songs.length} bhajan${songs.length === 1 ? "" : "s"}` : `${shown.length} of ${songs.length} bhajans`} · {groups.length}{" "}
           {mode === "az" ? "letters" : mode === "author" ? "authors" : mode === "book" ? "books" : mode === "kind" ? "types" : "languages"}
         </p>
       </div>
 
       {songs.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">The songs are being added — please come back soon.</p>
+        <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">The bhajans are being added — please come back soon.</p>
       ) : shown.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">No song matches “{q}”.</p>
+        <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">No bhajan matches “{q}”.</p>
       ) : (
         <div className="pr-8 sm:pr-10">
           {groups.map((g, gi) => (

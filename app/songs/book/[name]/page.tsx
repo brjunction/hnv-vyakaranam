@@ -34,7 +34,7 @@ export default async function BookPage({ params }: P) {
   const authors = [...new Set(list.map((s) => s.author).filter(Boolean))];
   return (
     <>
-      <PageHead eyebrow="Songs" title={name} intro={authors.join(", ") || undefined} meta={<MetaChip n={list.length} label={list.length === 1 ? "song" : "songs"} />} />
+      <PageHead eyebrow="Vaiṣṇava Bhajans" title={name} intro={authors.join(", ") || undefined} meta={<MetaChip n={list.length} label={list.length === 1 ? "bhajan" : "bhajans"} />} />
       <div className="mx-auto max-w-3xl px-5 pb-16 pt-6">
         <ol className="divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--bg)]">
           {list.map((s) => (

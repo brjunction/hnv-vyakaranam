@@ -794,3 +794,10 @@ a.sutra-xref:hover { background: color-mix(in srgb, var(--accent) 24%, transpare
 .path-steps > li { position: relative; text-align: left; }
 @media (min-width: 768px) { .path-steps > li { text-align: center; } }
 .path-dot { position: relative; z-index: 1; display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center; justify-content: center; border-radius: 999px; font-weight: 700; color: var(--color-ink); background: var(--accent); box-shadow: 0 0 0 6px var(--bg-2); }
+
+/* Bhajans — the statement at the top */
+.bhajan-essence { position: relative; border-radius: 1rem; padding: 1rem 1.2rem 1.05rem 1.35rem; line-height: 1.65; font-size: 0.95rem;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--lib-pink, #d6336c) 9%, var(--bg)), color-mix(in srgb, var(--color-gold) 10%, var(--bg)));
+  border: 1px solid color-mix(in srgb, var(--lib-pink, #d6336c) 28%, var(--border)); box-shadow: inset 4px 0 0 var(--lib-pink, #d6336c); }
+.bhajan-essence-title { margin-bottom: 0.25rem; font-weight: 700; color: var(--lib-pink, #d6336c); }
+.dark .bhajan-essence-title, [data-theme="dark"] .bhajan-essence-title { color: #f08cb3; }

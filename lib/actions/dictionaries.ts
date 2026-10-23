@@ -128,6 +128,11 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
     const prefix = indexPrefixFor(files.ifo);
     await writeShards(prefix, prepared.shards);
     const [{ top }] = await db.select({ top: max(dictionaries.sort) }).from(dictionaries);
+    // The upload folder ("Sanskrit-Hindi", "sa-hi" …) picks the section when it matches one.
+    const loose = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    const folders = files.ifo.replace(/^s3:dict\/[^/]+\//, "").split("/").slice(0, -1).map(loose);
+    const secs = await db.select().from(dictSections);
+    const section = secs.find((x) => folders.includes(loose(x.name)) || folders.includes(loose(x.key))) ?? null;
     const [row] = await db
       .insert(dictionaries)
       .values({
@@ -135,7 +140,9 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
         name,
         shortName: name.length <= 22 ? name : /\s/.test(name) && name.split(/\s+/).length >= 3 ? name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 8) : `${name.slice(0, 20)}…`,
         headwordScheme: scheme,
-        category: categoryFromRef(files.ifo),
+        // each new file is its own WORK (merge copies later in the admin by giving them the same Work)
+        category: name,
+        sectionId: section?.id ?? null,
         files,
         indexUrl: toRef(prefix),
         info: prepared.info,

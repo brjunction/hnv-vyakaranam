@@ -458,9 +458,9 @@ export default async function Home() {
           </div>
           <div className="order-1 lg:order-2">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Vaiṣṇava Bhajans</p>
-            <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">The songs of the ācāryas</h2>
+            <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">The essence of all philosophy, in song</h2>
             <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
-              Songs, aṣṭakams, stotras and the verses of Padyāvalī — organised by author, book and type, each with its translation, in the script you read best.
+              The songs of the ācāryas are not sentiment — they are the last drop of all their philosophy, its complete conclusion. Written for every level, from the conditioned soul to the liberated, as Śrīla Bhaktivinoda Ṭhākura gave them. Organised by author, book and type, each with its translation, in the script you read best.
               {songCount > 0 ? ` ${songCount} bhajans so far.` : ""}
             </p>
             <Link href="/songs" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors">

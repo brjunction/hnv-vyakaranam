@@ -34,6 +34,13 @@ export default async function SongsPage() {
         }
       />
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-4">
+        <aside className="bhajan-essence mb-6">
+          <p className="bhajan-essence-title">The last drop of all philosophy</p>
+          <p>
+            The songs of the ācāryas are not sentiment. Squeeze all of their philosophy completely, and what remains is their songs — the full conclusion of everything, after which nothing more is needed.
+            They are written for every level: Śrīla Bhaktivinoda Ṭhākura gave songs for devotees at every stage, from the conditioned state up to the liberated.
+          </p>
+        </aside>
         {topBooks.length > 1 && (
           <nav aria-label="Books" className="mb-2 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
             {topBooks.map(([b, n]) => (

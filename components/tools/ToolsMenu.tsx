@@ -80,11 +80,11 @@ export default function ToolsMenu() {
   return (
     <div className="relative" onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
       <Link href="/tools" aria-label="Tools" title="Tools" aria-expanded={open} className={`nav-tab ${active || open ? "on" : ""}`}>
-        <span className="nav-ic">
-          <Wrench size={15} strokeWidth={1.9} />
+        <Wrench size={18} strokeWidth={1.8} />
+        <span className="nav-label">
+          Tools
+          <ChevronDown size={11} className={`transition-transform ${open ? "rotate-180" : ""}`} />
         </span>
-        <span className="nav-label">Tools</span>
-        <ChevronDown size={13} className={`-ml-0.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </Link>
       {open && (
         <div className="absolute right-0 top-full z-50 pt-3">

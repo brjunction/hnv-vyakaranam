@@ -1,12 +1,12 @@
 import { asc } from "drizzle-orm";
-import { BookA, ExternalLink } from "lucide-react";
+import { BookA, ExternalLink, Plus } from "lucide-react";
 import { hasRole, requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
-import { dictionaries } from "@/lib/db/schema";
-import { deleteDictionary, moveDictionary, reprocessDictionary, updateDictionary } from "@/lib/actions/dictionaries";
+import { dictSections, dictionaries } from "@/lib/db/schema";
+import { saveDictSection } from "@/lib/actions/dictionaries";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { ActionForm, Field, SubmitButton, inputCls } from "@/components/admin/ActionForm";
-import { MoveButtons } from "@/components/admin/hnv/bits";
+import DictBoard from "@/components/admin/dict/DictBoard";
 import DictionaryUploader from "@/components/admin/dict/DictionaryUploader";
 import StorageCleanup from "@/components/admin/dict/StorageCleanup";
 
@@ -14,20 +14,14 @@ export const metadata = { title: "Dictionaries" };
 // Adding a dictionary builds its search index (a few seconds for large ones).
 export const maxDuration = 60;
 
-const SCHEME_LABEL: Record<string, string> = {
-  itrans: "ITRANS",
-  iast: "IAST",
-  devanagari: "Devanagari",
-  hk: "Harvard-Kyoto",
-  slp1: "SLP1",
-  velthuis: "Velthuis",
-  english: "English / other",
-};
 
 export default async function DictionariesAdmin() {
   const user = await requireUser("viewer");
   const canEdit = hasRole(user, "editor");
-  const list = await getDb().select().from(dictionaries).orderBy(asc(dictionaries.sort), asc(dictionaries.id));
+  const [list, secs] = await Promise.all([
+    getDb().select().from(dictionaries).orderBy(asc(dictionaries.sort), asc(dictionaries.id)),
+    getDb().select().from(dictSections).orderBy(asc(dictSections.sort), asc(dictSections.id)),
+  ]);
 
   return (
     <>
@@ -54,8 +48,8 @@ export default async function DictionariesAdmin() {
       )}
 
       <Panel
-        title={`Installed (${list.length})`}
-        description={`Searched in this order. Switch one off to hide it without deleting. Storage used: ${(list.reduce((n, d) => n + d.totalBytes, 0) / 1073741824).toFixed(2)} GB of 5 GB.`}
+        title="Sections & order"
+        description={`How the dictionary is organised on the site: sections (Sanskrit → English, Sanskrit → Sanskrit …) and the dictionaries in each, in the order they are shown. Storage used: ${(list.reduce((n, d) => n + d.totalBytes, 0) / 1073741824).toFixed(2)} GB of 5 GB.`}
       >
         {list.length === 0 ? (
           <div className="flex flex-col items-center py-10 text-center text-[var(--a-fg-muted)]">
@@ -63,79 +57,39 @@ export default async function DictionariesAdmin() {
             <p>No dictionaries yet.</p>
           </div>
         ) : (
-          <ul className="grid gap-3">
-            {list.map((d) => (
-              <li key={d.id} className="rounded-xl border border-[var(--a-border)] bg-[var(--a-bg)] p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--a-card)] ring-1 ring-[var(--a-border)]">
-                    <BookA size={17} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {d.name}
-                      {!d.isEnabled && <span className="ml-2 rounded-full bg-[var(--a-muted)] px-2 py-0.5 text-xs text-[var(--a-fg-muted)]">off</span>}
-                    </p>
-                    <p className="text-xs text-[var(--a-fg-muted)]">
-                      {d.wordCount.toLocaleString()} headwords · {(d.totalBytes / 1048576).toFixed(1)} MB · headwords in {SCHEME_LABEL[d.headwordScheme]} · short name “{d.shortName}”
-                    </p>
-                  </div>
-                  {canEdit && <MoveButtons action={moveDictionary} id={d.id} />}
-                </div>
-                {canEdit && (
-                  <details className="mt-3 border-t border-[var(--a-border)] pt-3">
-                    <summary className="cursor-pointer text-sm text-[var(--a-fg-muted)] hover:text-[var(--a-fg)]">Settings</summary>
-                    <div className="mt-4 grid gap-6 lg:grid-cols-2">
-                      <ActionForm action={updateDictionary} className="grid gap-3">
-                        <input type="hidden" name="id" value={d.id} />
-                        <Field label="Name">
-                          <input name="name" defaultValue={d.name} required className={inputCls} />
-                        </Field>
-                        <Field label="Short name" hint="Shown on results, e.g. MW, Apte.">
-                          <input name="shortName" defaultValue={d.shortName} className={inputCls} />
-                        </Field>
-                        <Field label="Category" hint="Group in the dictionary picker, e.g. MW, Apte, Grammar.">
-                          <input name="category" defaultValue={d.category} className={inputCls} />
-                        </Field>
-                        <Field label="Source / licence">
-                          <input name="source" defaultValue={d.source} className={inputCls} placeholder="e.g. Cologne Digital Sanskrit Dictionaries" />
-                        </Field>
-                        <Field label="Description">
-                          <textarea name="description" rows={2} defaultValue={d.description} className={inputCls} />
-                        </Field>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input type="checkbox" name="isEnabled" defaultChecked={d.isEnabled} /> Searchable on the site
-                        </label>
-                        <div>
-                          <SubmitButton>Save</SubmitButton>
-                        </div>
-                      </ActionForm>
-                      <div className="grid content-start gap-6">
-                        <ActionForm action={reprocessDictionary} className="grid gap-3">
-                          <input type="hidden" name="id" value={d.id} />
-                          <Field label="Headwords are written in" hint="If search results look wrong (e.g. ṟ instead of ṛ), change this and prepare again.">
-                            <select name="scheme" defaultValue={d.headwordScheme} className={inputCls}>
-                              {Object.entries(SCHEME_LABEL).map(([v, l]) => (
-                                <option key={v} value={v}>
-                                  {l}
-                                </option>
-                              ))}
-                            </select>
-                          </Field>
-                          <div>
-                            <SubmitButton variant="ghost">Prepare search again</SubmitButton>
-                          </div>
-                        </ActionForm>
-                        <ActionForm action={deleteDictionary} confirm={`Delete “${d.name}” and its files?`}>
-                          <input type="hidden" name="id" value={d.id} />
-                          <SubmitButton variant="danger">Delete dictionary</SubmitButton>
-                        </ActionForm>
-                      </div>
-                    </div>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ul>
+          <DictBoard
+            canEdit={canEdit}
+            sections={secs.map((s) => ({ id: s.id, name: s.name, description: s.description }))}
+            dicts={list.map((d) => ({
+              id: d.id,
+              name: d.name,
+              shortName: d.shortName,
+              category: d.category,
+              source: d.source,
+              description: d.description,
+              isEnabled: d.isEnabled,
+              wordCount: d.wordCount,
+              totalBytes: d.totalBytes,
+              headwordScheme: d.headwordScheme,
+              sectionId: d.sectionId,
+            }))}
+          />
+        )}
+        {canEdit && (
+          <div className="mt-5 border-t border-[var(--a-border)] pt-4">
+            <p className="mb-2 text-sm font-medium">Add a section</p>
+            <ActionForm action={saveDictSection} resetOnSuccess className="grid gap-2 sm:grid-cols-[16rem_1fr_auto] sm:items-end">
+              <Field label="Name">
+                <input name="name" required placeholder="e.g. Sanskrit → Bengali" className={inputCls} />
+              </Field>
+              <Field label="Description">
+                <input name="description" className={inputCls} />
+              </Field>
+              <SubmitButton>
+                <Plus size={15} /> Add section
+              </SubmitButton>
+            </ActionForm>
+          </div>
         )}
       </Panel>
     </>

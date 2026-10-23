@@ -6,6 +6,9 @@ import { getChapterList } from "@/lib/data/hnv";
 import { getBooks } from "@/lib/data/scriptures";
 import { getSongIndex } from "@/lib/data/songs";
 import ScriptDemo from "@/components/home/ScriptDemo";
+import LiveStats from "@/components/home/LiveStats";
+import { getSyllabus } from "@/lib/data/scriptures";
+import { listDictionaries } from "@/lib/dict/engine";
 import DictSearch from "@/components/home/DictSearch";
 
 const IMPORTANT_SITES = [
@@ -113,7 +116,16 @@ function AmrtaPrayers({ align = "center" }: { align?: "center" | "left" }) {
 export const revalidate = 86400; // admin saves refresh it immediately
 
 export default async function Home() {
-  const [chapters, books, songIndex] = await Promise.all([getChapterList("madhyama"), getBooks().catch(() => []), getSongIndex().catch(() => [])]);
+  const [chapters, books, songIndex, syllabus, dicts] = await Promise.all([
+    getChapterList("madhyama"),
+    getBooks().catch(() => []),
+    getSongIndex().catch(() => []),
+    getSyllabus().catch(() => null),
+    listDictionaries().catch(() => []),
+  ]);
+  const sutraTotal = chapters.reduce((n, c) => n + (c.kind === "sutras" ? c.sutraCount : 0), 0);
+  const verseTotal = books.reduce((n, b) => n + b.verses, 0);
+  const headwords = dicts.reduce((n, d) => n + d.wordCount, 0);
   const scriptureCount = books.length;
   const readyCount = books.filter((b) => b.verses > 0).length;
   const songCount = songIndex.length;
@@ -313,6 +325,21 @@ export default async function Home() {
         </ol>
       </section>
 
+      {/* ---------------------------------------------------- Live numbers */}
+      <section className="max-w-6xl mx-auto px-5 pt-16 sm:pt-20 pb-4">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">Growing every day</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center">One home for the study of Śrī Jīva&apos;s grammar</h2>
+        <LiveStats
+          items={[
+            { n: sutraTotal, label: "Sūtras", sub: "Madhyama edition, online" },
+            { n: books.length, label: "Scriptures", sub: "in the library" },
+            { n: verseTotal, label: "Verses", sub: "to read, in any script" },
+            { n: songIndex.length, label: "Songs", sub: "of the ācāryas" },
+            { n: headwords, label: "Dictionary words", sub: `in ${dicts.length} dictionaries` },
+          ]}
+        />
+      </section>
+
       {/* ---------------------------------------------------------- Scriptures */}
       <section className="relative overflow-hidden border-y border-[var(--border)]">
         <div className="anv-hero-bg absolute inset-0" aria-hidden />
@@ -353,6 +380,36 @@ export default async function Home() {
           <ScriptDemo />
         </div>
       </section>
+
+      {/* ------------------------------------- Śrīla Bhaktisiddhānta's order */}
+      {syllabus && (
+        <section className="relative overflow-hidden bg-[var(--color-ink)] text-[var(--color-parchment)]">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.18]" style={{ background: "radial-gradient(60% 80% at 15% 10%, var(--color-saffron), transparent 60%), radial-gradient(50% 70% at 90% 90%, var(--color-gold), transparent 60%)" }} aria-hidden />
+          <div className="relative max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-center">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-gold-light)] mb-3">The order of study</p>
+              <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">Śāstra, as Śrīla Bhaktisiddhānta Sarasvatī Ṭhākura arranged it</h2>
+              <p className="opacity-80 leading-relaxed mb-6">
+                For the Sārvabhauma examination of the Para-vidyāpīṭha in Śrī Māyāpura, he set out the scriptures in ten subjects — each with its principal and secondary works. See the whole list, linked to the books in our library.
+              </p>
+              <Link href="/scriptures/syllabus" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--color-gold)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity">
+                See the order of study <ArrowRight size={16} />
+              </Link>
+            </div>
+            <ol className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              {syllabus.subjects.map((x) => (
+                <li key={x.n}>
+                  <Link href="/scriptures/syllabus" className="group flex h-full flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-2 py-4 text-center transition-colors hover:border-[var(--color-gold)] hover:bg-white/[0.08]">
+                    <span className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-gold)] text-xs font-bold text-[var(--color-ink)]">{x.n}</span>
+                    <span className="font-devanagari text-lg leading-tight">{x.name}</span>
+                    <span className="mt-0.5 text-[11px] opacity-70">{x.nameEn.split(" — ")[0]}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
 
       {/* -------------------------------------------------------------- Songs */}
       <section className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
@@ -413,6 +470,32 @@ export default async function Home() {
             </ul>
           </div>
           <DictSearch />
+        </div>
+      </section>
+
+      {/* ------------------------------------------------- The path of study */}
+      <section className="border-y border-[var(--border)] bg-[var(--bg-2)]">
+        <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">Where to begin</p>
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-12 text-center">A path of study, step by step</h2>
+          <ol className="path-steps">
+            {[
+              { n: 1, t: "Learn the alphabet", d: "Every letter has a name of Hari. Tap the varṇa board above.", href: "/chapters/samjna-sandhi-prakarana", cta: "Saṁjñā sūtras" },
+              { n: 2, t: "Read the sūtras", d: "Chapter by chapter, with vṛtti, translation and commentaries.", href: "/chapters", cta: "Chapters" },
+              { n: 3, t: "Practise", d: "Sandhi exercises — every answer shows its sūtra.", href: "/practice", cta: "Practice" },
+              { n: 4, t: "Read śāstra", d: "Verse by verse, with the dictionary one click away.", href: "/scriptures", cta: "Scriptures" },
+              { n: 5, t: "Sing", d: "The songs of the ācāryas, in the script you read best.", href: "/songs", cta: "Songs" },
+            ].map((x) => (
+              <li key={x.n}>
+                <span className="path-dot">{x.n}</span>
+                <p className="mt-4 font-semibold">{x.t}</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--fg-muted)]">{x.d}</p>
+                <Link href={x.href} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:underline">
+                  {x.cta} <ArrowRight size={14} />
+                </Link>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 

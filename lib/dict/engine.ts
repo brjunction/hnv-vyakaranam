@@ -3,7 +3,7 @@ import zlib from "zlib";
 import { unstable_cache } from "next/cache";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { dictionaries } from "@/lib/db/schema";
+import { dictSections, dictionaries } from "@/lib/db/schema";
 import { isDbConfigured } from "@/lib/env";
 import { parseEntry, readAllDefinitions, readBytes, readDefinition } from "@/lib/dict/stardict";
 import { fieldToHtml, fieldsToText } from "@/lib/dict/render";
@@ -28,9 +28,13 @@ export type DictMeta = {
   sts: string;
   totalBytes: number;
   wordCount: number;
+  /** The work this file is a copy of — files of one work merge into one card. */
   category: string;
+  section: { id: number; key: string; name: string; sort: number };
   updatedAt: string;
 };
+
+const NO_SECTION = { id: 0, key: "other", name: "Other", sort: 1e6 };
 
 /** Group for the picker: saved category, else the first folder under the uploaded root. */
 export function categoryFromRef(ifoRef: string): string {
@@ -44,11 +48,15 @@ export const DICT_TAG = "dictionaries";
 export const listDictionaries = unstable_cache(
   async (): Promise<DictMeta[]> => {
     if (!isDbConfigured) return [];
-    const rows = await getDb()
-      .select()
-      .from(dictionaries)
-      .where(eq(dictionaries.isEnabled, true))
-      .orderBy(asc(dictionaries.sort), asc(dictionaries.id));
+    const db = getDb();
+    const [rows, secs] = await Promise.all([
+      db.select().from(dictionaries).where(eq(dictionaries.isEnabled, true)).orderBy(asc(dictionaries.sort), asc(dictionaries.id)),
+      db.select().from(dictSections).orderBy(asc(dictSections.sort), asc(dictSections.id)),
+    ]);
+    const secOf = (id: number | null) => {
+      const s = secs.find((x) => x.id === id);
+      return s ? { id: s.id, key: s.key, name: s.name, sort: s.sort } : NO_SECTION;
+    };
     return rows
       .filter((r) => r.indexUrl)
       .map((r) => ({
@@ -62,11 +70,13 @@ export const listDictionaries = unstable_cache(
         sts: (r.info as Record<string, string>).sametypesequence ?? "",
         totalBytes: r.totalBytes,
         wordCount: r.wordCount,
-        category: r.category || categoryFromRef(r.files.ifo),
+        category: r.category || r.name,
+        section: secOf(r.sectionId),
         updatedAt: r.updatedAt.toISOString(),
-      }));
+      }))
+      .sort((a, b) => a.section.sort - b.section.sort || 0);
   },
-  ["dict:list:v3"],
+  ["dict:list:v4"],
   { tags: [DICT_TAG], revalidate: 3600 }
 );
 
@@ -256,7 +266,7 @@ export async function searchDictionaries(
   return {
     results,
     note,
-    dictionaries: all.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName, category: m.category, words: m.wordCount })),
+    dictionaries: all.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName, category: m.category, section: m.section.name, sectionSort: m.section.sort, words: m.wordCount })),
   };
 }
 
@@ -322,7 +332,7 @@ async function meaningSearch(
 export type EntryResult = {
   headword: string;
   deva: string;
-  entries: { dict: string; dictName: string; category: string; source: string; headword: string; html: string }[];
+  entries: { dict: string; dictName: string; category: string; section: string; sectionSort: number; source: string; headword: string; html: string }[];
 };
 
 export async function lookupHeadword(headword: string, opts: { dict?: string[]; metas?: DictMeta[] } = {}): Promise<EntryResult> {
@@ -350,6 +360,8 @@ export async function lookupHeadword(headword: string, opts: { dict?: string[]; 
             dict: meta.slug,
             dictName: meta.name,
             category: meta.category,
+            section: meta.section.name,
+            sectionSort: meta.section.sort,
             source: meta.source,
             headword: r[1],
             html: parseEntry(buf, meta.sts || undefined).map(fieldToHtml).join(""),

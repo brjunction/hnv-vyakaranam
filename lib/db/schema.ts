@@ -280,13 +280,29 @@ export const DICT_SCHEMES = ["iast", "itrans", "hk", "slp1", "velthuis", "devana
 export type DictScheme = (typeof DICT_SCHEMES)[number];
 export type DictFiles = { ifo: string; idx: string; dict: string; syn?: string };
 
+/** Sections of the dictionary (Sanskrit → English, Sanskrit → Sanskrit, Dhātu …), ordered in the admin. */
+export const dictSections = pgTable("dict_sections", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  sort: integer("sort").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 export const dictionaries = pgTable("dictionaries", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   shortName: text("short_name").notNull().default(""),
-  /** Group in the dictionary picker (from the upload folder, editable). */
+  /**
+   * The WORK this file is a copy of ("Monier-Williams", "Apte" …). Files of the
+   * same work are shown as ONE card in results (their entries merged).
+   */
   category: text("category").notNull().default(""),
+  /** Section it is listed and shown under. */
+  sectionId: integer("section_id").references(() => dictSections.id, { onDelete: "set null" }),
   description: text("description").notNull().default(""),
   /** Source / licence note shown with entries. */
   source: text("source").notNull().default(""),

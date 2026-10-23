@@ -5,7 +5,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { and, asc, desc, eq, gt, lt, max } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { DICT_SCHEMES, dictionaries, revisions } from "@/lib/db/schema";
+import { DICT_SCHEMES, dictSections, dictionaries, revisions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 import { prepareIndex } from "@/lib/dict/prepare";
@@ -189,7 +189,8 @@ const MetaInput = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1).max(160),
   shortName: z.string().trim().max(24),
-  category: z.string().trim().max(60),
+  category: z.string().trim().max(80),
+  sectionId: z.coerce.number().int().positive().nullable(),
   description: z.string().trim().max(1000),
   source: z.string().trim().max(500),
   isEnabled: z.boolean(),
@@ -202,6 +203,7 @@ export async function updateDictionary(_prev: ActionState, form: FormData): Prom
     name: form.get("name"),
     shortName: form.get("shortName") ?? "",
     category: form.get("category") ?? "",
+    sectionId: form.get("sectionId") ? form.get("sectionId") : null,
     description: form.get("description") ?? "",
     source: form.get("source") ?? "",
     isEnabled: form.get("isEnabled") === "on",
@@ -379,4 +381,70 @@ export async function existingUploads(): Promise<ExistingUploads> {
     if (!prev || (inUse.has(ref) && !inUse.has(prev.ref))) files[rel] = { ref, size: o.size };
   }
   return { files, installed: rows.map((d) => d.files.ifo) };
+}
+
+// ------------------------------------------------------------ sections ---
+const SectionIn = z.object({
+  id: z.coerce.number().int().positive().optional(),
+  name: z.string().trim().min(1, "Give the section a name.").max(80),
+  description: z.string().trim().max(300),
+});
+
+export async function saveDictSection(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireUser("editor");
+  const p = SectionIn.safeParse({ id: form.get("id") || undefined, name: form.get("name"), description: form.get("description") ?? "" });
+  if (!p.success) return fail(p.error.issues[0]?.message ?? "Check the form.");
+  const db = getDb();
+  if (p.data.id) {
+    await db.update(dictSections).set({ name: p.data.name, description: p.data.description }).where(eq(dictSections.id, p.data.id));
+  } else {
+    const all = await db.select({ key: dictSections.key, sort: dictSections.sort }).from(dictSections);
+    const base = slugifyTitle(p.data.name) || "section";
+    let key = base;
+    for (let i = 2; all.some((x) => x.key === key); i++) key = `${base}-${i}`;
+    await db.insert(dictSections).values({ key, name: p.data.name, description: p.data.description, sort: Math.max(0, ...all.map((x) => x.sort)) + 10 });
+  }
+  refresh();
+  revalidatePath("/admin/dictionaries");
+  return ok(p.data.id ? "Section saved." : "Section added.");
+}
+
+export async function deleteDictSection(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireUser("editor");
+  const id = z.coerce.number().int().positive().parse(form.get("id"));
+  await getDb().delete(dictSections).where(eq(dictSections.id, id)); // its dictionaries become “not in a section”
+  refresh();
+  revalidatePath("/admin/dictionaries");
+  return ok("Section deleted — its dictionaries are now unsorted.");
+}
+
+const LayoutIn = z.object({
+  sections: z.array(z.coerce.number().int().positive()).max(100),
+  /** section id (0 = not in a section) → dictionary ids in order */
+  dicts: z.array(z.object({ sectionId: z.number().int().min(0), ids: z.array(z.number().int().positive()).max(1000) })).max(101),
+});
+
+/** Saves the order of sections and of dictionaries within them, after a drag in the admin. */
+export async function saveDictLayout(input: z.input<typeof LayoutIn>): Promise<{ ok: boolean; message: string }> {
+  await requireUser("editor");
+  const p = LayoutIn.safeParse(input);
+  if (!p.success) return { ok: false, message: "Could not save the order." };
+  const db = getDb();
+  const ops = [
+    ...p.data.sections.map((id, i) => db.update(dictSections).set({ sort: (i + 1) * 10 }).where(eq(dictSections.id, id))),
+    ...p.data.dicts.flatMap((g) =>
+      g.ids.map((id, i) => db.update(dictionaries).set({ sectionId: g.sectionId || null, sort: (i + 1) * 10 }).where(eq(dictionaries.id, id)))
+    ),
+  ];
+  for (let i = 0; i < ops.length; i += 80) await db.batch(ops.slice(i, i + 80) as never);
+  refresh();
+  return { ok: true, message: "Order saved." };
+}
+
+/** Quick on/off from the board. */
+export async function setDictionaryEnabled(id: number, on: boolean): Promise<{ ok: boolean }> {
+  const user = await requireUser("editor");
+  await getDb().update(dictionaries).set({ isEnabled: on, updatedBy: user.id }).where(eq(dictionaries.id, z.number().int().positive().parse(id)));
+  refresh();
+  return { ok: true };
 }

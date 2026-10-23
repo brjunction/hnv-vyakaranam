@@ -8,8 +8,19 @@ import {
 } from "lucide-react";
 
 type Hit = { headword: string; deva: string; match: "exact" | "prefix" | "similar" | "contains" | "meaning"; dicts: string[] };
-type DictInfo = { slug: string; name: string; shortName: string; category: string; words: number };
-type Article = { dict: string; dictName: string; category: string; source: string; headword: string; html: string };
+type DictInfo = { slug: string; name: string; shortName: string; category: string; section: string; sectionSort: number; words: number };
+type Article = { dict: string; dictName: string; category: string; section: string; sectionSort: number; source: string; headword: string; html: string };
+/** One card: every entry of one WORK (all its files) for this word, senses numbered. */
+type Card = { key: string; title: string; work: string; section: string; sectionSort: number; source: string; senses: { html: string; headword: string; dict: string }[]; dicts: string[] };
+
+/** Loose text key so the same sense from two copies of a work is shown once. */
+const senseKey = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .normalize("NFKD")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .toLowerCase();
 type Entry = { headword: string; deva: string; entries: Article[] };
 
 const MATCH_LABEL: Record<Hit["match"], string> = { exact: "", prefix: "", similar: "similar", contains: "compound", meaning: "meaning" };
@@ -48,12 +59,14 @@ function ScopePicker({ dicts, scope, setScope }: { dicts: DictInfo[]; scope: str
     const f = filter.trim().toLowerCase();
     const m = new Map<string, DictInfo[]>();
     for (const d of dicts) {
-      if (f && !`${d.name} ${d.category}`.toLowerCase().includes(f)) continue;
-      const list = m.get(d.category || "Other") ?? [];
+      if (f && !`${d.name} ${d.category} ${d.section}`.toLowerCase().includes(f)) continue;
+      const g = d.section || "Other";
+      const list = m.get(g) ?? [];
       list.push(d);
-      m.set(d.category || "Other", list);
+      m.set(g, list);
     }
-    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const order = (g: string) => dicts.find((d) => (d.section || "Other") === g)?.sectionSort ?? 1e6;
+    return [...m.entries()].sort((a, b) => order(a[0]) - order(b[0]));
   }, [dicts, filter]);
 
   const set = (slugs: string[]) => setScope(slugs.length === dicts.length ? [] : slugs.length ? slugs : ["__none__"]);
@@ -123,7 +136,7 @@ function ScopePicker({ dicts, scope, setScope }: { dicts: DictInfo[]; scope: str
                       >
                         {on === list.length && <Check size={11} strokeWidth={3} />}
                       </span>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-saffron)]">{cat}</span>
+                      <span className="text-[13px] font-semibold text-[var(--color-saffron)]">{cat}</span>
                       <span className="ml-auto text-xs text-[var(--fg-muted)]">
                         {on}/{list.length}
                       </span>
@@ -156,51 +169,53 @@ function ScopePicker({ dicts, scope, setScope }: { dicts: DictInfo[]; scope: str
 }
 
 // ---------------------------------------------------------------- article
-function DictSection({
-  a,
-  open,
-  onToggle,
-  id,
-}: {
-  a: Article & { count: number; index: number; total: number };
-  open: boolean;
-  onToggle: () => void;
-  id: string;
-}) {
+function WorkCard({ c, open, onToggle, id }: { c: Card; open: boolean; onToggle: () => void; id: string }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [tall, setTall] = useState(false);
   useEffect(() => {
-    if (open && bodyRef.current) setTall(bodyRef.current.scrollHeight > 560);
-  }, [open, a.html]);
+    if (open && bodyRef.current) setTall(bodyRef.current.scrollHeight > 620);
+  }, [open, c]);
+  const n = c.senses.length;
   return (
-    <section id={id} className="scroll-mt-24 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] shadow-sm">
-      <button onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-2)] sm:px-5">
+    <section id={id} className="dict-card scroll-mt-24">
+      <button onClick={onToggle} aria-expanded={open} className="dict-card-head">
         <ChevronDown size={16} className={`shrink-0 text-[var(--fg-muted)] transition-transform ${open ? "" : "-rotate-90"}`} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{a.dictName}</span>
-          <span className="block truncate text-xs text-[var(--fg-muted)]">
-            {a.category}
-            {a.total > 1 ? ` · entry ${a.index + 1} of ${a.total}` : ""}
-            {a.headword && ` · ${a.headword}`}
-          </span>
+          <span className="block truncate font-semibold">{c.title}</span>
         </span>
+        {n > 1 && <span className="dict-count">{n} senses</span>}
       </button>
       {open && (
-        <div className="border-t border-[var(--border)] px-4 pb-5 pt-4 sm:px-5">
-          <div
-            ref={bodyRef}
-            className={`dict-article relative leading-relaxed ${tall && !full ? "max-h-[520px] overflow-hidden" : ""}`}
-            dangerouslySetInnerHTML={{ __html: a.html }}
-          />
+        <div className="dict-card-body">
+          <div ref={bodyRef} className={`relative ${tall && !full ? "max-h-[600px] overflow-hidden" : ""}`}>
+            {n === 1 ? (
+              <div className="dict-article leading-relaxed" dangerouslySetInnerHTML={{ __html: c.senses[0].html }} />
+            ) : (
+              <ol className="dict-senses">
+                {c.senses.map((x, i) => (
+                  <li key={i}>
+                    <span className="dict-sense-n">{i + 1}</span>
+                    <div className="dict-article min-w-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: x.html }} />
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
           {tall && (
-            <div className={`${full ? "" : "-mt-16 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent pt-14"} relative`}>
+            <div className={`${full ? "mt-3" : "-mt-16 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/90 to-transparent pt-14"} relative`}>
               <button onClick={() => setFull((f) => !f)} className="rounded-full border border-[var(--border)] bg-[var(--bg)] px-3 py-1 text-xs font-medium shadow-sm hover:border-[var(--accent)]">
-                {full ? "Show less" : "Show the full entry"}
+                {full ? "Show less" : "Show the whole entry"}
               </button>
             </div>
           )}
-          {a.source && <p className="mt-4 text-xs text-[var(--fg-muted)]">{a.source}</p>}
+          {(c.source || c.dicts.length > 1) && (
+            <p className="mt-4 text-xs text-[var(--fg-muted)]">
+              {c.source}
+              {c.source && c.dicts.length > 1 ? " · " : ""}
+              {c.dicts.length > 1 ? `merged from ${c.dicts.length} files of ${c.work}` : ""}
+            </p>
+          )}
         </div>
       )}
     </section>
@@ -219,7 +234,8 @@ export default function DictionaryApp() {
   const [loading, setLoading] = useState(false);
   const [entry, setEntry] = useState<Entry | null>(null);
   const [entryLoading, setEntryLoading] = useState(false);
-  const [openSet, setOpenSet] = useState<Set<number>>(new Set([0, 1]));
+  const [openSet, setOpenSet] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<string>("all");
   const [mobileEntry, setMobileEntry] = useState(false);
   const [ready, setReady] = useState(false);
   const [note, setNote] = useState("");
@@ -259,7 +275,7 @@ export default function DictionaryApp() {
         const res = await fetch(`/api/dict/entry?h=${encodeURIComponent(headword)}${scopeParam}`, { signal: ac.signal });
         const data = (await res.json()) as Entry;
         setEntry(data);
-        setOpenSet(new Set([0, 1]));
+        setOpenSet(new Set(["__first__"]));
         if (data.entries?.length) {
           setRecent((r) => {
             const next = [headword, ...r.filter((x) => x !== headword)].slice(0, 12);
@@ -364,27 +380,45 @@ export default function DictionaryApp() {
     }
   }
 
-  // entries grouped by dictionary (keeps dictionary order)
-  const sections = useMemo(() => {
-    if (!entry) return [];
-    const counts = new Map<string, number>();
-    entry.entries.forEach((e) => counts.set(e.dict, (counts.get(e.dict) ?? 0) + 1));
-    const seen = new Map<string, number>();
-    return entry.entries.map((e) => {
-      const i = seen.get(e.dict) ?? 0;
-      seen.set(e.dict, i + 1);
-      return { ...e, count: counts.get(e.dict)!, index: i, total: counts.get(e.dict)! };
-    });
+  // ONE card per work (all of its files), grouped by section, senses numbered and de-duplicated
+  const cards = useMemo(() => {
+    if (!entry) return [] as Card[];
+    const out: Card[] = [];
+    for (const e of entry.entries) {
+      const key = `${e.section}::${e.category || e.dict}`;
+      let c = out.find((x) => x.key === key);
+      if (!c) {
+        c = { key, title: e.dictName, work: e.category || e.dictName, section: e.section || "Other", sectionSort: e.sectionSort ?? 1e6, source: e.source, senses: [], dicts: [] };
+        out.push(c);
+      }
+      if (!c.dicts.includes(e.dict)) c.dicts.push(e.dict);
+      const k = senseKey(e.html);
+      if (k && !c.senses.some((x) => senseKey(x.html) === k)) c.senses.push({ html: e.html, headword: e.headword, dict: e.dict });
+    }
+    return out.sort((a, b) => a.sectionSort - b.sectionSort);
   }, [entry]);
-  const dictList = useMemo(() => {
-    const out: { slug: string; name: string; first: number; n: number }[] = [];
-    sections.forEach((s, i) => {
-      const cur = out.find((o) => o.slug === s.dict);
-      if (cur) cur.n++;
-      else out.push({ slug: s.dict, name: s.dictName, first: i, n: 1 });
+  const tabs = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of cards) m.set(c.section, (m.get(c.section) ?? 0) + 1);
+    return [...m.entries()];
+  }, [cards]);
+  useEffect(() => {
+    if (tab !== "all" && !tabs.some(([t]) => t === tab)) setTab("all");
+  }, [tabs, tab]);
+  const shownCards = tab === "all" ? cards : cards.filter((c) => c.section === tab);
+  const isOpen = (c: Card, i: number) => openSet.has(c.key) || (openSet.has("__first__") && i < 3 && !openSet.has(`-${c.key}`));
+  const toggleCard = (c: Card, i: number) =>
+    setOpenSet((o) => {
+      const n = new Set(o);
+      if (isOpen(c, i)) {
+        n.delete(c.key);
+        n.add(`-${c.key}`);
+      } else {
+        n.add(c.key);
+        n.delete(`-${c.key}`);
+      }
+      return n;
     });
-    return out;
-  }, [sections]);
 
   const starred = entry ? stars.includes(entry.headword) : false;
   const toggleStar = () => {
@@ -574,7 +608,8 @@ export default function DictionaryApp() {
                           {entry.deva && <h2 className="font-devanagari text-4xl leading-tight sm:text-5xl">{entry.deva}</h2>}
                           <p className={entry.deva ? "text-xl italic text-[var(--fg-muted)]" : "text-3xl font-semibold"}>{entry.headword}</p>
                           <p className="mt-2 text-xs text-[var(--fg-muted)]">
-                            {sections.length} {sections.length === 1 ? "entry" : "entries"} in {dictList.length} dictionar{dictList.length === 1 ? "y" : "ies"}
+                            Found in {cards.length} dictionar{cards.length === 1 ? "y" : "ies"}
+                            {tabs.length > 1 ? ` · ${tabs.length} sections` : ""}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -601,63 +636,47 @@ export default function DictionaryApp() {
                       </div>
                     </header>
 
-                    {sections.length === 0 ? (
+                    {cards.length === 0 ? (
                       <p className="text-[var(--fg-muted)]">No entry found for this word in the chosen dictionaries.</p>
                     ) : (
                       <>
-                        {/* dictionary bar */}
-                        <div className="mb-4 flex flex-wrap items-center gap-1.5">
-                          <button onClick={() => setOpenSet(new Set(sections.map((_, i) => i)))} className={chip}>
-                            <ChevronsUpDown size={14} /> Open all
+                        {/* section tabs */}
+                        <div className="dict-tabs mb-4" role="tablist" aria-label="Sections">
+                          <button role="tab" aria-selected={tab === "all"} onClick={() => setTab("all")}>
+                            All <span>{cards.length}</span>
                           </button>
-                          <button onClick={() => setOpenSet(new Set())} className={chip}>
-                            <ChevronsDownUp size={14} /> Close all
-                          </button>
-                          <span className="mx-1 h-5 w-px bg-[var(--border)]" />
-                          <Layers size={14} className="text-[var(--fg-muted)]" />
-                          {dictList.map((d) => {
-                            const isOpen = sections.some((s, i) => s.dict === d.slug && openSet.has(i));
-                            return (
-                              <button
-                                key={d.slug}
-                                onClick={() => {
-                                  const idx = sections.map((s, i) => (s.dict === d.slug ? i : -1)).filter((i) => i >= 0);
-                                  setOpenSet((o) => {
-                                    const n = new Set(o);
-                                    if (isOpen) idx.forEach((i) => n.delete(i));
-                                    else idx.forEach((i) => n.add(i));
-                                    return n;
-                                  });
-                                  if (!isOpen) setTimeout(() => document.getElementById(`sec-${d.first}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-                                }}
-                                className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs transition-colors ${
-                                  isOpen ? "border-[var(--accent)] bg-[var(--accent)]/12 text-[var(--fg)]" : "border-[var(--border)] text-[var(--fg-muted)] hover:border-[var(--accent)]"
-                                }`}
-                                title={d.name}
-                              >
-                                <span className="max-w-[12rem] truncate">{d.name}</span>
-                                {d.n > 1 && <span className="tabular-nums opacity-70">{d.n}</span>}
-                              </button>
-                            );
-                          })}
+                          {tabs.map(([t, n]) => (
+                            <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>
+                              {t} <span>{n}</span>
+                            </button>
+                          ))}
+                          <span className="ml-auto flex gap-1.5">
+                            <button onClick={() => setOpenSet(new Set(cards.map((c) => c.key)))} className={chip} title="Open all">
+                              <ChevronsUpDown size={14} />
+                            </button>
+                            <button onClick={() => setOpenSet(new Set(cards.map((c) => `-${c.key}`)))} className={chip} title="Close all">
+                              <ChevronsDownUp size={14} />
+                            </button>
+                          </span>
                         </div>
 
-                        <div className="space-y-3" style={{ fontSize: `${size}rem` }} onClick={onArticleClick} onDoubleClick={onArticleDblClick}>
-                          {sections.map((s, i) => (
-                            <DictSection
-                              key={`${s.dict}-${i}`}
-                              id={`sec-${i}`}
-                              a={s}
-                              open={openSet.has(i)}
-                              onToggle={() =>
-                                setOpenSet((o) => {
-                                  const n = new Set(o);
-                                  if (n.has(i)) n.delete(i);
-                                  else n.add(i);
-                                  return n;
-                                })
-                              }
-                            />
+                        <div className="space-y-6" style={{ fontSize: `${size}rem` }} onClick={onArticleClick} onDoubleClick={onArticleDblClick}>
+                          {(tab === "all" ? tabs.map(([t]) => t) : [tab]).map((sec) => (
+                            <div key={sec}>
+                              {tab === "all" && tabs.length > 1 && (
+                                <h3 className="dict-sec-head">
+                                  <Layers size={14} /> {sec}
+                                </h3>
+                              )}
+                              <div className="space-y-2.5">
+                                {shownCards
+                                  .filter((c) => c.section === sec)
+                                  .map((c) => {
+                                    const i = cards.indexOf(c);
+                                    return <WorkCard key={c.key} id={`card-${i}`} c={c} open={isOpen(c, i)} onToggle={() => toggleCard(c, i)} />;
+                                  })}
+                              </div>
+                            </div>
                           ))}
                         </div>
                         <p className="mt-4 text-xs text-[var(--fg-muted)]">Tip: double-click any word in an entry to look it up · press / to search.</p>

@@ -28,9 +28,12 @@ export function VerseLinesIn({
   className = "",
   lineClass = "",
   size = "md",
+  sanskrit = true,
 }: {
   devanagari: string;
   iast: string;
+  /** Sanskrit text is sandhi-joined when made from IAST; other languages (Bengali songs, CC) are not. */
+  sanskrit?: boolean;
   script: ScriptName;
   className?: string;
   lineClass?: string;
@@ -52,11 +55,11 @@ export function VerseLinesIn({
       return;
     }
     // convert line by line so the "/" markers can't be mangled
-    Promise.all(lines(src.t).map((l) => convertScript(l, src.f, script))).then((ls) => live && setText(ls.join(" / ")));
+    Promise.all(lines(src.t).map((l) => convertScript(l, src.f, script, { sanskrit }))).then((ls) => live && setText(ls.join(" / ")));
     return () => {
       live = false;
     };
-  }, [direct, devanagari, iast, script, origScript]);
+  }, [direct, devanagari, iast, script, origScript, sanskrit]);
   const ls = lines(text);
   if (!ls.length) return null;
   return (

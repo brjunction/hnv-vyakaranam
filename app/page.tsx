@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { ScrollText, Library, BookOpen, ArrowRight, Leaf, Gauge, Flame } from "lucide-react";
+import { ScrollText, Library, BookOpen, ArrowRight, Leaf, Gauge, Flame, Search, ArrowDownAZ, Music, Languages, Wrench, NotebookPen, Earth, LayoutGrid } from "lucide-react";
 import VarnaBoard from "@/components/home/VarnaBoard";
 import DailyPanel from "@/components/home/DailyPanel";
 import { getChapterList } from "@/lib/data/hnv";
+import { getBooks } from "@/lib/data/scriptures";
+import { getSongIndex } from "@/lib/data/songs";
+import ScriptDemo from "@/components/home/ScriptDemo";
+import DictSearch from "@/components/home/DictSearch";
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -25,8 +29,8 @@ const EXPLORE_CARDS = [
     href: "/scriptures",
     icon: ScrollText,
     label: "Scriptures",
-    title: "Śrīmad-Bhāgavatam & Bhagavad-gītā",
-    body: "Every verse with its anvaya and translation, with Devanagari and a link to Śrīla Prabhupāda's purport.",
+    title: "The library of śāstra",
+    body: "Verse by verse in any script, with synonyms, anvaya, translation and the ācāryas' commentaries.",
     cta: "Explore the Scriptures",
   },
   {
@@ -109,7 +113,10 @@ function AmrtaPrayers({ align = "center" }: { align?: "center" | "left" }) {
 export const revalidate = 86400; // admin saves refresh it immediately
 
 export default async function Home() {
-  const chapters = await getChapterList("madhyama");
+  const [chapters, books, songIndex] = await Promise.all([getChapterList("madhyama"), getBooks().catch(() => []), getSongIndex().catch(() => [])]);
+  const scriptureCount = books.length;
+  const readyCount = books.filter((b) => b.verses > 0).length;
+  const songCount = songIndex.length;
   return (
     <>
 
@@ -306,26 +313,137 @@ export default async function Home() {
         </ol>
       </section>
 
-      <section className="relative overflow-hidden border-b border-[var(--border)]">
+      {/* ---------------------------------------------------------- Scriptures */}
+      <section className="relative overflow-hidden border-y border-[var(--border)]">
         <div className="anv-hero-bg absolute inset-0" aria-hidden />
-        <div className="relative max-w-4xl mx-auto px-5 py-20 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-4">
-            Scriptures
-          </p>
-          <h2 className="font-devanagari text-3xl sm:text-5xl mb-4">अन्वयाः</h2>
-          <div className="anv-ornament mb-6" aria-hidden>
-            ◆
+        <div className="relative max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[1fr_1.05fr] gap-10 items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Scriptures · शास्त्राणि</p>
+            <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">The library of śāstra, verse by verse</h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
+              {scriptureCount > 0 ? `${scriptureCount} scriptures listed, ${readyCount} ready to read — ` : ""}arranged as you like: by category, by author, A–Z, or in the order of study given by Śrīla Bhaktisiddhānta Sarasvatī Ṭhākura.
+            </p>
+            <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-3 mb-8 text-sm">
+              {[
+                ["Any script", "Devanagari, IAST, Bengali or Odia — one click"],
+                ["Four layers", "Synonyms, anvaya, translation — and the commentaries"],
+                ["Every commentary", "Ṭīkās and purports in one tidy list"],
+                ["Whole chapters", "All verses at once, with or without translation"],
+                ["Dual reading", "Two books or two verses, side by side"],
+                ["Your notebook", "Write notes while you read, on any page"],
+              ].map(([t, d]) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-saffron)]" />
+                  <span>
+                    <span className="font-medium">{t}</span>
+                    <span className="block text-[var(--fg-muted)]">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/scriptures" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity">
+                Open the library <ArrowRight size={16} />
+              </Link>
+              <Link href="/scriptures/syllabus" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
+                Śrīla Bhaktisiddhānta&apos;s order
+              </Link>
+            </div>
           </div>
-          <p className="text-[var(--fg-muted)] max-w-2xl mx-auto mb-8 leading-relaxed">
-            Śrīmad-Bhāgavatam &amp; Bhagavad-gītā, every verse with its anvaya and translation, with
-            Devanagari and a link to Śrīla Prabhupāda&apos;s purport.
-          </p>
-          <Link
-            href="/scriptures"
-            className="inline-block px-8 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            Explore the Scriptures
-          </Link>
+          <ScriptDemo />
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------- Songs */}
+      <section className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
+        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-10 items-center">
+          <div className="order-2 lg:order-1 grid grid-cols-2 gap-3">
+            {[
+              { icon: Search, t: "Find any song", d: "By title, first line or author — in any script or spelling" },
+              { icon: ArrowDownAZ, t: "A–Z rail", d: "Tap or drag through the letters, like your phone’s contacts" },
+              { icon: BookOpen, t: "By book", d: "Śaraṇāgati, Gītāvalī, Prema-bhakti-candrikā … in their own order" },
+              { icon: Music, t: "Sing from the page", d: "Lyrics only, or with translation and synonyms" },
+            ].map(({ icon: Icon, t, d }) => (
+              <div key={t} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-4">
+                <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--bg)] text-[var(--accent)] ring-1 ring-[var(--border)]">
+                  <Icon size={17} strokeWidth={1.8} />
+                </span>
+                <p className="font-medium text-sm">{t}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-[var(--fg-muted)]">{d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="order-1 lg:order-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Vaiṣṇava songs</p>
+            <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">The songs of the ācāryas</h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
+              Songs, aṣṭakams, stotras and the verses of Padyāvalī — organised by author, book and type, each with its translation, in the script you read best.
+              {songCount > 0 ? ` ${songCount} songs so far.` : ""}
+            </p>
+            <Link href="/songs" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors">
+              Browse the songs <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* --------------------------------------------------------- Dictionary */}
+      <section className="border-y border-[var(--border)] bg-[var(--bg-2)]">
+        <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[1fr_1fr] gap-10 items-center">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Sanskrit dictionary</p>
+            <h2 className="text-2xl sm:text-4xl font-semibold mb-4 leading-tight">Every great dictionary, one search</h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
+              Monier-Williams, Apte, Amarakośa, Vācaspatyam, Śabdakalpadruma, declension and conjugation tables, and more — searched together or one by one.
+            </p>
+            <ul className="grid gap-3 text-sm mb-2">
+              {[
+                ["Type it any way", "कृष्ण, kṛṣṇa, krsna or krishna — all find the same word. No special codes to learn."],
+                ["Search by meaning", "Type “lotus” or “God” and see which Sanskrit words mean it."],
+                ["Choose your dictionaries", "Search all of them at once, or only the ones you trust."],
+              ].map(([t, d]) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-saffron)]" />
+                  <span>
+                    <span className="font-medium">{t}</span>
+                    <span className="block text-[var(--fg-muted)]">{d}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <DictSearch />
+        </div>
+      </section>
+
+      {/* ------------------------------------------------- Everything else */}
+      <section className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">On this website</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-10 text-center">Everything for your study, in one place</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { href: "/chapters", icon: BookOpen, t: "Chapters & sūtras", d: "Madhyama, Bṛhat and Laghu — sūtra by sūtra, in any script, with each Madhyama sūtra linked to its Bṛhat sūtra." },
+            { href: "/scriptures", icon: ScrollText, t: "Scriptures", d: "Verse, synonyms, anvaya, translation and every commentary — the heart of the site." },
+            { href: "/songs", icon: Music, t: "Vaiṣṇava songs", d: "Search any song, organised by author, book and type." },
+            { href: "/tools/dictionary/search", icon: Languages, t: "Dictionary", d: "All the major Sanskrit dictionaries, typed in any script." },
+            { href: "/practice", icon: Library, t: "Practice", d: "Sandhi exercises by topic and difficulty, every answer tied to its sūtra." },
+            { href: "/tools", icon: Wrench, t: "Tools", d: "Grammar tools that show the sūtra behind each change, and text utilities." },
+            { href: "/notes", icon: NotebookPen, t: "Notebook", d: "Your own notes from any page — kept on your device, with backup." },
+            { href: "/hnv-wiki", icon: Earth, t: "HNV-Wiki", d: "The sūtras explained simply, with meanings and examples." },
+            { href: "/more", icon: LayoutGrid, t: "Courses & resources", d: "Online courses on Harināmāmṛta-vyākaraṇam, playlists, resources and news." },
+          ].map(({ href, icon: Icon, t, d }) => (
+            <Link key={href} href={href} className="group flex gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5 transition-all hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[var(--shadow-lift)]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--bg-2)] text-[var(--accent)] ring-1 ring-[var(--border)] transition-colors group-hover:bg-[var(--accent)] group-hover:text-[var(--color-ink)]">
+                <Icon size={18} strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-1 font-medium">
+                  {t} <ArrowRight size={14} className="opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+                </span>
+                <span className="mt-1 block text-sm leading-relaxed text-[var(--fg-muted)]">{d}</span>
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 

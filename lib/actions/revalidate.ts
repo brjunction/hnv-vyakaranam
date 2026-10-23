@@ -24,7 +24,7 @@ export function revalidateScriptures() {
 }
 
 export function revalidateEverything() {
-  for (const t of [tags.hnvAll, tags.scrAll, tags.daily, tags.home, tags.practice, tags.posts, tags.more, tags.settings]) revalidateTag(t);
+  for (const t of [tags.hnvAll, tags.scrAll, tags.daily, tags.home, tags.practice, tags.posts, tags.more, tags.songs, tags.settings]) revalidateTag(t);
   revalidatePath("/", "layout");
 }
 
@@ -36,4 +36,10 @@ export function revalidatePractice() {
 export function revalidateMore() {
   revalidateTag(tags.more);
   revalidatePath("/more", "layout");
+}
+
+export function revalidateSongs() {
+  revalidateTag(tags.songs);
+  revalidatePath("/songs", "layout");
+  revalidatePath("/");
 }

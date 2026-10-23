@@ -4,7 +4,8 @@ import { AArrowDown, AArrowUp, ChevronDown, Headphones, Languages } from "lucide
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import Select from "@/components/ui/Select";
 import type { ReaderPrefs } from "@/components/scriptures/prefs";
-import { SCRIPT_LABELS, type CommentaryType, type ScriptName, type VerseData } from "@/lib/scriptures/core";
+import SynonymsBlock from "@/components/scriptures/SynonymsBlock";
+import { SCRIPT_LABELS, detectScript, type CommentaryType, type ScriptName, type VerseData } from "@/lib/scriptures/core";
 
 type SetPrefs = (p: Partial<ReaderPrefs>) => void;
 
@@ -115,10 +116,7 @@ export function VerseCompanions({ types, c, script, compact = false }: { types: 
           ) : t.pane === "translation" ? (
             <TranslationBlock key={t.id} type={t} html={c[t.id]} script={script} compact={compact} />
           ) : c[t.id] ? (
-            <section key={t.id} className={`${compact ? "mt-4" : "mt-6"} border-t border-[var(--border)] pt-4`}>
-              <h3 className="mb-2 text-[0.8rem] font-medium text-[var(--fg-muted)]">{t.name}</h3>
-              <RichIn html={c[t.id]} english={t.language === "english"} script={script} className="text-[0.95em]" />
-            </section>
+            <SynonymsBlock key={t.id} type={t} html={c[t.id]} script={script} compact={compact} />
           ) : null
         )}
     </>
@@ -142,13 +140,15 @@ export function VersePane({
   big?: boolean;
 }) {
   const hasText = verse.iast || verse.devanagari;
-  const second = prefs.script === "iast" && verse.devanagari && verse.iast;
+  const second = prefs.script === "iast" && Boolean(verse.devanagari || verse.iast);
+  const origSc = detectScript(verse.devanagari) ?? "devanagari";
+  const origName = origSc === "bengali" ? "Bengali" : origSc === "oriya" ? "Odia" : "Devanagari";
   return (
     <div>
       <p className="mb-4 text-[0.85rem] font-semibold tabular-nums text-[var(--color-saffron)]">{refLabel}</p>
       {verse.speaker && <p className="mb-2 text-sm italic text-[var(--fg-muted)]">{verse.speaker}</p>}
       {hasText ? (
-        <VerseLinesIn
+        <VerseLinesIn sanskrit={verse.language === "sanskrit"}
           devanagari={verse.devanagari}
           iast={verse.iast}
           script={prefs.script}
@@ -167,10 +167,10 @@ export function VersePane({
             className="ui-btn ui-btn-sm"
           >
             <ChevronDown size={14} className={`transition-transform ${prefs.showDeva ? "" : "-rotate-90"}`} />
-            {prefs.showDeva ? "Hide Devanagari" : "Show Devanagari"}
+            {prefs.showDeva ? `Hide ${origName}` : `Show ${origName}`}
           </button>
           {prefs.showDeva && (
-            <VerseLinesIn devanagari={verse.devanagari} iast="" script="devanagari" size={big ? "lg" : "md"} className="mt-2" />
+            <VerseLinesIn sanskrit={verse.language === "sanskrit"} devanagari={verse.devanagari} iast={verse.iast} script={origSc} size={big ? "lg" : "md"} className="mt-2" />
           )}
         </div>
       )}

@@ -12,6 +12,7 @@ export const tags = {
   practice: "practice",
   posts: "posts",
   more: "more",
+  songs: "songs",
   settings: "settings",
   admin: "admin",
 } as const;

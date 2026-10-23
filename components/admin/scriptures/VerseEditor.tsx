@@ -11,7 +11,8 @@ import { ScriptPicker, VersePane } from "@/components/scriptures/Panes";
 import { CommentaryNav } from "@/components/scriptures/CommentaryNav";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import { saveVerse } from "@/lib/actions/scriptures";
-import { convertScript, detectScript, lines, type CommentaryType, type VerseData } from "@/lib/scriptures/core";
+import { SCRIPT_LABELS, detectScript, lines, type CommentaryType, type VerseData } from "@/lib/scriptures/core";
+import { VerseLinesIn } from "@/components/scriptures/ScriptText";
 
 type Layout = "split" | "edit" | "preview";
 
@@ -47,13 +48,21 @@ export type VerseEditorProps = {
 export default function VerseEditor(p: VerseEditorProps) {
   const { verse: v, types, canEdit } = p;
   const [layout, setLayout] = useState<Layout>("split");
-  const [deva, setDeva] = useState(v.devanagari);
-  const [iast, setIast] = useState(v.iast);
+  // ONE verse text, in any script: IAST (preferred — it keeps the word breaks)
+  // or Devanagari / Bengali / Odia. Every other script is derived from it.
+  const nonSa0 = (v.language || p.book.verseLanguage || "sanskrit") !== "sanskrit";
+  const [text, setText] = useState(nonSa0 && v.devanagari ? v.devanagari : v.iast || v.devanagari);
+  // Non-Sanskrit texts (Bengali CC verses …): IAST can't be derived faithfully
+  // from Bengali spelling, so an optional "IAST as printed" may be given too.
+  const [printed, setPrinted] = useState(v.devanagari && v.iast ? v.iast : "");
+  const textScript = detectScript(text);
   const [speaker, setSpeaker] = useState(v.speaker);
   const [key, setKey] = useState(v.key);
   const [langSel, setLangSel] = useState(v.language);
   const lang = langSel || p.book.verseLanguage || "sanskrit";
   const isSa = lang === "sanskrit";
+  const deva = textScript ? text : "";
+  const iast = textScript ? (isSa ? "" : printed.trim()) : text;
   const [comm, setComm] = useState<Record<number, string>>(() => Object.fromEntries(p.entries.map((e) => [e.typeId, e.html])));
   const [dirty, setDirty] = useState(false);
   const [changed, setChanged] = useState<Set<number>>(new Set());
@@ -63,7 +72,6 @@ export default function VerseEditor(p: VerseEditorProps) {
     const list = p.types.filter((t) => t.appliesTo !== "division" && t.pane === "commentary");
     return (list.find((t) => p.entries.some((e) => e.typeId === t.id && e.html)) ?? list[0])?.id ?? null;
   });
-  const [busy, setBusy] = useState<"" | "iast" | "deva">("");
   const [prefs, setPrefs] = useReaderPrefs();
   const formRef = useRef<HTMLDivElement>(null);
   const nextBtn = useRef<HTMLButtonElement>(null);
@@ -132,7 +140,7 @@ export default function VerseEditor(p: VerseEditorProps) {
   const companions = verseTypes.filter((t) => t.pane !== "commentary");
   const comments = verseTypes.filter((t) => t.pane === "commentary");
   const filled = (id: number) => (comm[id] ?? "").replace(/<[^>]+>/g, "").trim();
-  const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Word-for-word" };
+  const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Synonyms" };
   const LNG: Record<string, string> = { sanskrit: "Sanskrit", english: "English — not converted", bengali: "Bengali", hindi: "Hindi", nepali: "Nepali", odia: "Odia", other: "Other" };
   const field = (t: (typeof verseTypes)[number]) => {
     const e = p.entries.find((x) => x.typeId === t.id);
@@ -172,23 +180,7 @@ export default function VerseEditor(p: VerseEditorProps) {
   };
   const refLabel = `${p.book.abbrev ? p.book.abbrev + " " : ""}${v.verseNo}`;
 
-  async function fill(from: "deva" | "iast") {
-    setBusy(from === "deva" ? "iast" : "deva");
-    try {
-      if (from === "deva") {
-        const src = detectScript(deva) ?? "devanagari";
-        const out = await Promise.all(lines(deva).map((l) => convertScript(l, src, "iast")));
-        setIast(out.join(" / "));
-      } else {
-        const target = lang === "bengali" ? "bengali" : lang === "odia" ? "oriya" : "devanagari";
-        const out = await Promise.all(lines(iast).map((l) => convertScript(l, "iast", target)));
-        setDeva(out.join(" / "));
-      }
-      setDirty(true);
-    } finally {
-      setBusy("");
-    }
-  }
+
 
   const editor = (
     <div ref={formRef} className="grid gap-6" onInput={() => setDirty(true)}>
@@ -213,38 +205,49 @@ export default function VerseEditor(p: VerseEditorProps) {
               </select>
             </Field>
           </div>
-          <Field label={isSa ? "Devanagari" : `Original text (${LANG_LABEL[lang] ?? lang} script)`} hint={isSa ? undefined : "As in the book, e.g. Bengali script for CC."}>
-            <textarea
-              name="devanagari"
-              rows={Math.max(3, lines(deva).length + 1)}
-              value={deva}
-              onChange={(e) => setDeva(e.target.value)}
-              lang={isSa ? "sa-Deva" : undefined}
-              className={`${inputCls} font-devanagari text-lg leading-relaxed`}
-              placeholder="धर्मक्षेत्रे कुरुक्षेत्रे / समवेता युयुत्सवः ।"
-            />
-          </Field>
           <div>
-            <Field label={isSa ? "IAST (as typed — never changed automatically)" : "Transliteration (as typed)"}>
+            <Field
+              label={`${p.book.verseLabel} text`}
+              hint="Type or paste it ONCE, in any script. IAST is best: from IAST the other scripts are made with the words joined as printed (karma-phala-hetur bhūr → कर्मफलहेतुर्भूर्). From Devanagari, IAST shows without word breaks."
+            >
               <textarea
-                name="iast"
-                rows={Math.max(3, lines(iast).length + 1)}
-                value={iast}
-                onChange={(e) => setIast(e.target.value)}
-                lang="sa-Latn"
-                className={`${inputCls} italic leading-relaxed`}
+                rows={Math.max(3, lines(text).length + 1)}
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setDirty(true);
+                }}
+                lang={textScript ? "sa-Deva" : "sa-Latn"}
+                className={`${inputCls} text-lg leading-relaxed ${textScript ? "font-devanagari" : ""}`}
                 placeholder="dharma-kṣetre kuru-kṣetre / samavetā yuyutsavaḥ"
               />
             </Field>
-            {canEdit && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button type="button" onClick={() => fill("deva")} disabled={!deva || Boolean(busy)} className="a-btn a-btn-outline h-8 text-xs">
-                  <Wand2 size={13} /> {busy === "iast" ? "Converting…" : `Fill IAST from the ${isSa ? "Devanagari" : "original"}`}
-                </button>
-                <button type="button" onClick={() => fill("iast")} disabled={!iast || Boolean(busy)} className="a-btn a-btn-outline h-8 text-xs">
-                  <Wand2 size={13} /> {busy === "deva" ? "Converting…" : `Fill the ${isSa ? "Devanagari" : "original"} from IAST`}
-                </button>
-                <span className="self-center text-xs text-[var(--a-fg-muted)]">Check the result — automatic conversion can’t place hyphens or ṁ/ṃ the way books do.</span>
+            {!isSa && textScript && (
+              <div className="mt-3">
+                <Field label="IAST as printed (optional)" hint="For Bengali / Hindi texts: the transliteration exactly as in the book (e.g. “doyā koro more”). Left empty, it is made from the original script.">
+                  <textarea
+                    rows={Math.max(2, lines(printed).length + 1)}
+                    value={printed}
+                    onChange={(e) => {
+                      setPrinted(e.target.value);
+                      setDirty(true);
+                    }}
+                    lang="sa-Latn"
+                    className={`${inputCls} italic`}
+                  />
+                </Field>
+              </div>
+            )}
+            <input type="hidden" name="devanagari" value={deva} />
+            <input type="hidden" name="iast" value={iast} />
+            {text.trim() && (
+              <div className="mt-3 grid gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-muted)]/40 p-3 sm:grid-cols-2">
+                {(["devanagari", "iast", "bengali", "oriya"] as const).map((sc) => (
+                  <div key={sc} className="min-w-0">
+                    <p className="mb-0.5 text-[11px] font-medium text-[var(--a-fg-muted)]">{SCRIPT_LABELS[sc]}</p>
+                    <VerseLinesIn sanskrit={isSa} devanagari={deva} iast={iast} script={sc} size="md" className="!text-base" />
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -282,7 +285,7 @@ export default function VerseEditor(p: VerseEditorProps) {
         <section className="a-card overflow-hidden">
           <div className="border-b border-[var(--a-border)] bg-amber-500/5 px-5 py-3 sm:px-6">
             <h2 className="font-semibold">With the verse</h2>
-            <p className="text-xs text-[var(--a-fg-muted)]">Anvaya, translation, word-for-word — shown right under the verse, each in its own design.</p>
+            <p className="text-xs text-[var(--a-fg-muted)]">Synonyms, anvaya, translation — shown right under the verse, each in its own design.</p>
           </div>
           <div className="grid gap-7 p-5 sm:p-6">{companions.map(field)}</div>
         </section>

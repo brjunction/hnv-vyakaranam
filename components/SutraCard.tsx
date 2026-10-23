@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { PublicSutra } from "@/lib/data/hnv";
-import VerseLines from "@/components/VerseLines";
-import RichText from "@/components/RichText";
+import Link from "next/link";
+import RichText, { isHtml } from "@/components/RichText";
+import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
+import { detectScript, type ScriptName } from "@/lib/scriptures/core";
 
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -18,12 +20,15 @@ export default function SutraCard({
   sutra,
   forceOpen,
   showNotes,
+  script = "devanagari",
 }: {
   sutra: PublicSutra;
   /** When set (true/false), overrides the card's own open/closed state. */
   forceOpen?: boolean;
   /** Whether commentaries render when the card is open. */
   showNotes: boolean;
+  /** Reader's script (Devanagari / IAST / Bengali / Odia). */
+  script?: ScriptName;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -48,8 +53,13 @@ export default function SutraCard({
           {sutra.number}
         </span>
         <span className="flex-1">
-          <VerseLines text={sutra.sanskrit} className="block font-devanagari text-lg leading-snug" />
-          <VerseLines text={sutra.transliteration} className="block text-sm italic text-[var(--fg-muted)] mt-0.5" />
+          <VerseLinesIn devanagari={sutra.sanskrit} iast={sutra.transliteration} script={script} className="sutra-main" />
+          <VerseLinesIn
+            devanagari={sutra.sanskrit}
+            iast={sutra.transliteration}
+            script={script === "iast" ? detectScript(sutra.sanskrit) ?? "devanagari" : "iast"}
+            className="sutra-second mt-0.5"
+          />
         </span>
         <span className="flex items-center gap-2 shrink-0">
           {hasCommentary && (
@@ -65,6 +75,21 @@ export default function SutraCard({
           </span>
         </span>
       </button>
+      {sutra.links.length > 0 && (
+        <div className="-mt-2 flex flex-wrap gap-1.5 pb-3 pl-[4.25rem] pr-4">
+          {sutra.links.map((l) =>
+            l.href ? (
+              <Link key={l.label} href={l.href} className="sutra-xref" title={`Open ${l.label}`}>
+                {l.label} →
+              </Link>
+            ) : (
+              <span key={l.label} className="sutra-xref opacity-70" title="That edition is not published yet">
+                {l.label}
+              </span>
+            )
+          )}
+        </div>
+      )}
 
       {isOpen && (
         <div className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
@@ -75,7 +100,16 @@ export default function SutraCard({
           )}
           <Block label="Vṛtti">
             {sutra.vrtti.trim() ? (
-              <RichText value={sutra.vrtti} className="font-devanagari text-base leading-relaxed" />
+              isHtml(sutra.vrtti) ? (
+                <RichIn html={sutra.vrtti} english={false} script={script} className="text-base leading-relaxed" />
+              ) : (
+                <VerseLinesIn
+                  devanagari={detectScript(sutra.vrtti) ? sutra.vrtti : ""}
+                  iast={detectScript(sutra.vrtti) ? "" : sutra.vrtti}
+                  script={script}
+                  className="!text-base !leading-relaxed"
+                />
+              )
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}

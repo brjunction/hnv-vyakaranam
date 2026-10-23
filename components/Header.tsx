@@ -8,11 +8,12 @@ import ThemeToggle from "./ThemeToggle";
 import NotebookButton from "@/components/notebook/Notebook";
 import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
-import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown } from "lucide-react";
+import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown, Music } from "lucide-react";
 
 const links = [
   { href: "/chapters", label: "Chapters", icon: BookSearch },
   { href: "/scriptures", label: "Scriptures", icon: SquareLibrary },
+  { href: "/songs", label: "Songs", icon: Music },
   { href: "/practice", label: "Practice", icon: LandPlot },
   // Served as a raw static HTML page (its own full document), not a Next
   // route — a plain <a> forces a normal browser navigation to it.
@@ -108,46 +109,44 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur border-b border-[var(--border)] bg-[var(--bg)]/85">
-      <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 group">
            <Image src="/hnvlogo.png" alt="HNV Logo" width={40} height={40} />
-          <span className="hidden sm:inline text-sm tracking-wide uppercase text-[var(--fg-muted)] group-hover:text-[var(--fg)] transition-colors">
+          <span className="hidden sm:inline md:hidden 2xl:inline text-sm tracking-wide uppercase text-[var(--fg-muted)] group-hover:text-[var(--fg)] transition-colors">
             Harināmāmṛta Vyākaraṇam
           </span>
         </Link>
 
-        {/* Desktop nav: icon only, label on hover via title + tooltip */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Desktop nav: labelled tabs — an icon in a small circle inside a soft rounded rectangle */}
+        <nav className="hidden md:flex items-center gap-0.5 xl:gap-1">
           {[...links.filter((l) => l.href !== "/more"), "tools" as const, ...links.filter((l) => l.href === "/more")].map((l) => {
             if (l === "tools") return <ToolsMenu key="tools" />;
             const Icon = l.icon;
             const active =
-            pathname === l.href ||
-            (l.href !== "/" && pathname?.startsWith(l.href)) ||
-            (l.href === "/chapters" && /^\/(brhat|laghu)\/chapters/.test(pathname ?? ""));
-            const className = `group relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-              active ? "text-[var(--accent)] bg-[var(--bg-2)]" : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-2)]"
-            }`;
+              pathname === l.href ||
+              (l.href !== "/" && pathname?.startsWith(l.href)) ||
+              (l.href === "/chapters" && /^\/(brhat|laghu)\/chapters/.test(pathname ?? ""));
             const inner = (
               <>
-                <Icon size={19} strokeWidth={1.75} />
-                <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs px-2 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-[var(--fg)] opacity-0 group-hover:opacity-100 transition-opacity">
-                  {l.label}
+                <span className="nav-ic">
+                  <Icon size={15} strokeWidth={1.9} />
                 </span>
+                <span className="nav-label">{l.label}</span>
               </>
             );
+            const cls = `nav-tab ${active ? "on" : ""}`;
             return "external" in l && l.external ? (
-              <a key={l.href} href={l.href} aria-label={l.label} className={className}>
+              <a key={l.href} href={l.href} aria-label={l.label} title={l.label} className={cls}>
                 {inner}
               </a>
             ) : (
-              <Link key={l.href} href={l.href} aria-label={l.label} className={className}>
+              <Link key={l.href} href={l.href} aria-label={l.label} title={l.label} className={cls} aria-current={active ? "page" : undefined}>
                 {inner}
               </Link>
             );
           })}
+          <span className="w-px h-5 bg-[var(--border)] mx-1.5" />
           <NotebookButton />
-          <span className="w-px h-5 bg-[var(--border)] mx-2" />
           <ThemeToggle />
         </nav>
 

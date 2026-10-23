@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PublicChapter } from "@/lib/data/hnv";
 import SutraCard from "@/components/SutraCard";
+import { ScriptPicker } from "@/components/scriptures/Panes";
+import { useReaderPrefs } from "@/components/scriptures/prefs";
+import DictButton from "@/components/DictButton";
 
 export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   const allSectionSlugs = useMemo(() => chapter.sections.map((s) => s.slug), [chapter]);
@@ -16,6 +19,27 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   // true/false = force every card open or closed.
   const [forceAllSutras, setForceAllSutras] = useState<boolean | undefined>(undefined);
   const [showNotes, setShowNotes] = useState(true);
+  const [prefs, setPrefs] = useReaderPrefs();
+
+  // Arriving at #<sūtra number> (e.g. from a Madhyama ↔ Bṛhat link): open its section and scroll to it.
+  useEffect(() => {
+    const go = () => {
+      const n = decodeURIComponent(window.location.hash.slice(1));
+      if (!n) return;
+      const sec = chapter.sections.find((x) => x.sutras.some((y) => y.number === n));
+      if (!sec) return;
+      setOpenSections((prev) => new Set(prev).add(sec.slug));
+      setTimeout(() => {
+        const el = document.getElementById(n);
+        el?.scrollIntoView({ block: "start" });
+        el?.classList.add("sutra-flash");
+        setTimeout(() => el?.classList.remove("sutra-flash"), 2200);
+      }, 60);
+    };
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+  }, [chapter]);
 
   const totalSutras = chapter.sections.reduce((n, s) => n + s.sutras.length, 0);
   const notesCount = chapter.sections.reduce(
@@ -42,7 +66,10 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   return (
     <div>
       {totalSutras > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-10 text-sm">
+        <div className="flex flex-wrap items-center gap-2 mb-8 text-sm">
+          <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+          <DictButton />
+          <span className="w-px h-5 bg-[var(--border)] mx-1" />
           <button
             onClick={expandAllSections}
             className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
@@ -133,7 +160,7 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
                   ) : (
                     <div className="space-y-3 mb-4">
                       {section.sutras.map((s) => (
-                        <SutraCard
+                        <SutraCard script={prefs.script}
                           key={s.id}
                           sutra={s}
                           forceOpen={forceAllSutras}

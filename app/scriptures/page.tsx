@@ -4,6 +4,7 @@ import { ArrowRight, Columns2, NotebookPen } from "lucide-react";
 import { getBooks, getCategories, type BookCard } from "@/lib/data/scriptures";
 import Shelf from "@/components/scriptures/Shelf";
 import ScriptureSearch from "@/components/scriptures/ScriptureSearch";
+import LibraryBrowser from "@/components/scriptures/LibraryBrowser";
 import PageHead, { MetaChip } from "@/components/PageHead";
 
 export const metadata: Metadata = {
@@ -119,38 +120,13 @@ export default async function ScripturesHome() {
           </section>
         )}
 
-        {/* jump bar */}
-        <nav aria-label="Library sections" className="mb-6 flex flex-wrap gap-2">
-          {sections.flatMap((s) => s.cats).map((c) => (
-            <a key={c.key} href={`#${slug(c.key)}`} className="ui-btn ui-btn-sm">
-              {c.name} <span className="tabular-nums text-[var(--fg-muted)]">{c.books.length}</span>
-            </a>
-          ))}
-        </nav>
-
-        {sections.map((s) => (
-          <section key={s.name} className="mb-8">
-            <div className="mb-3 flex items-center gap-4">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{s.name}</h2>
-              <span className="h-px flex-1 bg-[var(--border)]" />
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {s.cats.map((c) => (
-                <div key={c.key} id={slug(c.key)} className="scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-sm sm:p-4">
-                  <div className="mb-2 px-3">
-                    <h3 className="text-base font-semibold">{c.name}</h3>
-                    {c.description && <p className="text-sm text-[var(--fg-muted)]">{c.description}</p>}
-                  </div>
-                  <ul className="grid">
-                    {[...c.books].sort((a, b) => Number(b.verses > 0) - Number(a.verses > 0)).map((b) => (
-                      <BookRow key={b.code} b={b} />
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
+        <LibraryBrowser
+          books={books.map((b) => {
+            const ci = cats.findIndex((x) => x.id === b.categoryId);
+            const c = cats[ci];
+            return { code: b.code, title: b.title, titleDeva: b.titleDeva, author: b.author, verses: b.verses, verseLabelPlural: b.verseLabelPlural, category: c?.name ?? "", section: c?.section ?? "", order: ci < 0 ? 9999 : ci };
+          })}
+        />
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <Link href="/scriptures/read" className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 transition-colors hover:border-[var(--accent)]">

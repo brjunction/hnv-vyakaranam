@@ -11,7 +11,7 @@ import { readingOrder } from "@/lib/scriptures/core";
 export const metadata = { title: "Progress" };
 export const dynamic = "force-dynamic";
 
-const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Word-for-word", commentary: "Commentary" };
+const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Synonyms", commentary: "Commentary" };
 
 function Bar({ value, max, tone = "primary" }: { value: number; max: number; tone?: "primary" | "amber" }) {
   const pct = max ? Math.round((value / max) * 100) : 0;

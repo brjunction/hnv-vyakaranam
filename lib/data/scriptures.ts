@@ -10,6 +10,7 @@ import {
   scriptureCommentaryTypes,
   scriptureDivisions,
   scriptureVerses,
+  siteSettings,
 } from "@/lib/db/schema";
 import { isDbConfigured } from "@/lib/env";
 import { tags } from "@/lib/data/tags";
@@ -441,3 +442,24 @@ export async function searchScriptures(needles: string[], bookCode?: string, lim
   }
   return hits.slice(0, limit);
 }
+
+// ------------------------------------------- Śrīla Bhaktisiddhānta's order ---
+export type Syllabus = {
+  title: string;
+  subtitle: string;
+  titleEn: string;
+  source: string;
+  closing: string;
+  subjects: { n: number; name: string; nameEn: string; primaryLabel: string; secondaryLabel: string; primary: string[]; secondary: string[] }[];
+};
+
+/** The Sārvabhauma examination syllabus of the Para-vidyāpīṭha (stored in site_settings, entered from the original print). */
+export const getSyllabus = unstable_cache(
+  async (): Promise<Syllabus | null> => {
+    if (!isDbConfigured) return null;
+    const [row] = await getDb().select().from(siteSettings).where(eq(siteSettings.key, "scriptures.syllabus.bhaktisiddhanta")).limit(1);
+    return (row?.value as Syllabus) ?? null;
+  },
+  ["scr:syllabus:v1"],
+  { tags: [tags.scrAll] }
+);

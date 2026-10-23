@@ -81,7 +81,7 @@ export type DivisionData = {
 
 export const SCR_BASE = "/scriptures";
 /** Codes a book may not use (they are admin/public route names). */
-export const RESERVED_CODES = ["d", "v", "new", "read", "search", "api"];
+export const RESERVED_CODES = ["d", "v", "new", "read", "search", "api", "syllabus"];
 
 export function bookPath(code: string) {
   return `${SCR_BASE}/${code}`;
@@ -186,12 +186,51 @@ export function detectScript(text: string): ScriptName | null {
   return null;
 }
 
-/** Convert text between scripts (lazy-loads the library). */
-export async function convertScript(text: string, from: ScriptName, to: ScriptName): Promise<string> {
+/**
+ * IAST as printed in books separates words and marks compounds with hyphens
+ * ("karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi"). Indic scripts write
+ * the same verse joined ("कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि"):
+ *   - compound hyphens are dropped,
+ *   - a word ending in a consonant runs into the next word,
+ *   - an avagraha (') attaches to the word before it.
+ * Words ending in a vowel, ṁ or ḥ stay separate, as in printed Devanagari.
+ */
+export function joinIastSandhi(text: string): string {
+  return text
+    .normalize("NFC")
+    .replace(/[’‘ʼ]/g, "'")
+    .replace(/(\p{L}\p{M}*)-(?=\p{L})/gu, "$1")
+    .replace(/\s+'/g, "'")
+    .replace(/([kgcjṭḍtdpbmyrlvśṣsnñṅṇh])\s+(?=[\p{L}'])/gu, "$1");
+}
+
+/** Bengali printing conventions: khaṇḍa-ta (ৎ) for a dead t, য় for a non-initial ya. */
+function bengaliOrthography(s: string) {
+  return s
+    .replace(/ত্(?![তথনমযরব])/g, "ৎ")
+    .replace(/(?<=[\u0980-\u09FF])(?<!্)য(?!়)/g, "য়");
+}
+
+/** Convert text between scripts (lazy-loads the library). IAST → Indic joins sandhi (see joinIastSandhi). */
+export async function convertScript(text: string, from: ScriptName, to: ScriptName, opts: { sanskrit?: boolean; join?: boolean } = {}): Promise<string> {
   if (!text || from === to) return text;
+  const sanskrit = opts.sanskrit !== false;
+  const join = sanskrit && opts.join !== false;
   const { default: Sanscript } = await import("@indic-transliteration/sanscript");
-  const src = from === "iast" ? text.normalize("NFC").replace(/ṁ/g, "ṃ") : text;
+  const src =
+    from === "iast"
+      ? (join ? joinIastSandhi(text) : text.normalize("NFC").replace(/[’‘ʼ]/g, "'").replace(/(\p{L}\p{M}*)-(?=\p{L})/gu, "$1")).replace(/ṁ/g, "ṃ")
+      : from === "bengali"
+        ? text.normalize("NFC").replace(/য়/g, "য").replace(/ৎ/g, "ত্")
+        : from === "oriya"
+          ? text.replace(/\u0B5F/g, "\u0B2F")
+          : text;
   const out = Sanscript.t(src, from, to);
   // keep the daṇḍas as daṇḍas in IAST (Sanscript writes | and ||)
-  return to === "iast" ? out.replace(/\|\|/g, "॥").replace(/\|/g, "।") : out;
+  if (to === "iast") return out.replace(/\|\|/g, "॥").replace(/\|/g, "।");
+  // Bengali, Hindi, Odia … as languages don't write a dead consonant at the end of a word.
+  const dropFinal = (t: string, virama: string) => (sanskrit ? t : t.replace(new RegExp(`${virama}(?=[\\s,.;:!?।॥|]|$)`, "gu"), ""));
+  if (to === "bengali") return dropFinal(bengaliOrthography(out), "\u09CD");
+  if (to === "oriya") return dropFinal(out.replace(/(?<=[\u0B00-\u0B7F])(?<!\u0B4D)\u0B2F(?!\u0B3C)/g, "\u0B5F"), "\u0B4D");
+  return dropFinal(out, "\u094D");
 }

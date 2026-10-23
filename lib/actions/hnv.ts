@@ -286,6 +286,11 @@ const CoreInput = z.object({
   subchapterId: Id,
   sanskrit: Plain(4000),
   transliteration: Plain(4000),
+  brhatNumber: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^[0-9A-Za-z.\-]*$/, "Bṛhat sūtra number: digits, letters, dots or a hyphen only."),
   synonyms: Rich,
   vrtti: Rich,
   translation: Rich,
@@ -293,11 +298,16 @@ const CoreInput = z.object({
 });
 
 function readCore(form: FormData) {
+  // One sūtra text in any script (IAST preferred). It goes to the column of
+  // its own script; the other is left empty and derived on the site.
+  const one = form.has("sutraText") ? str(form, "sutraText").trim() : null;
+  const indic = one !== null && /[\u0900-\u097F\u0980-\u09FF\u0B00-\u0B7F]/.test(one);
   return CoreInput.safeParse({
     number: str(form, "number"),
     subchapterId: str(form, "subchapterId"),
-    sanskrit: str(form, "sanskrit"),
-    transliteration: str(form, "transliteration"),
+    sanskrit: one === null ? str(form, "sanskrit") : indic ? one : "",
+    transliteration: one === null ? str(form, "transliteration") : indic ? "" : one,
+    brhatNumber: str(form, "brhatNumber"),
     synonyms: str(form, "synonyms"),
     vrtti: str(form, "vrtti"),
     translation: str(form, "translation"),

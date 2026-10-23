@@ -27,7 +27,7 @@ import { compareNumbers } from "@/lib/hnv/numbering";
 //   - Unknown sections are created; unknown chapters must be on the
 //     "Chapters" sheet.
 
-const SUTRA_COLS = ["Chapter", "Section", "Number", "Sanskrit", "Transliteration", "Vrtti", "Translation", "Synonyms", "Status"] as const;
+const SUTRA_COLS = ["Chapter", "Section", "Number", "Sanskrit", "Transliteration", "B_SN", "Vrtti", "Translation", "Synonyms", "Status"] as const;
 const CHAPTER_COLS = ["Slug", "Number", "Title", "English title", "Kind", "Summary", "Range label", "Status"] as const;
 const STATUSES = new Set(["published", "draft", "archived"]);
 
@@ -74,13 +74,14 @@ export async function buildTemplate(editionSlug: string): Promise<{ buffer: Buff
     s.number,
     s.sanskrit,
     s.transliteration,
+    s.brhatNumber,
     s.vrtti,
     s.translation,
     s.synonyms,
     s.status,
     ...types.map((t) => byKey.get(`${s.id}:${t.id}`) ?? ""),
   ]);
-  if (data.length === 0) data.push(["(chapter slug)", "(section title)", "1", "", "", "", "", "", "published", ...types.map(() => "")]);
+  if (data.length === 0) data.push(["(chapter slug)", "(section title)", "1", "", "", "", "", "", "", "published", ...types.map(() => "")]);
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
@@ -106,6 +107,8 @@ export async function buildTemplate(editionSlug: string): Promise<{ buffer: Buff
     ["• Rows are never deleted by an upload. Delete sūtras in the admin (it can renumber the following ones)."],
     ["• Chapter = the chapter's slug from the “Chapters” sheet. New chapters: add a row there first."],
     ["• Section = the section title. A title that doesn't exist yet in that chapter creates a new section."],
+    ["• Give the sūtra ONCE: fill Transliteration (IAST) and leave Sanskrit empty — the site makes Devanagari, Bengali and Odia from it, with words joined as printed."],
+    ["• B_SN = the Bṛhat sūtra number of the same rule (fill it on Madhyama rows). The site then links the two both ways."],
     ["• “/” in Sanskrit or Transliteration = line break. Status: published, draft or archived."],
     ["• One column per commentary (the columns after Status). New commentary kinds are added in the admin."],
     ["• Cells that show HTML tags (<p>, <strong>…) were formatted in the admin editor — keep the tags, or edit those in the admin."],
@@ -339,6 +342,7 @@ export async function importSpreadsheet(
     const text = {
       ...(get(r, "Sanskrit") && { sanskrit: get(r, "Sanskrit") }),
       ...(get(r, "Transliteration") && { transliteration: get(r, "Transliteration") }),
+      ...(get(r, "B_SN") && { brhatNumber: get(r, "B_SN") }),
       ...(get(r, "Vrtti") && { vrtti: richFromCell(get(r, "Vrtti")) }),
       ...(get(r, "Translation") && { translation: richFromCell(get(r, "Translation")) }),
       ...(get(r, "Synonyms") && { synonyms: richFromCell(get(r, "Synonyms")) }),
@@ -383,6 +387,7 @@ export async function importSpreadsheet(
           position,
           sanskrit: text.sanskrit ?? "",
           transliteration: text.transliteration ?? "",
+          brhatNumber: text.brhatNumber ?? "",
           vrtti: text.vrtti ?? "",
           translation: text.translation ?? "",
           synonyms: text.synonyms ?? "",

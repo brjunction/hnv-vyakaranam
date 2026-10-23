@@ -10,6 +10,7 @@ type SutraValues = {
   subchapterId: number | null;
   sanskrit: string;
   transliteration: string;
+  brhatNumber?: string;
   synonyms: string;
   vrtti: string;
   translation: string;
@@ -51,12 +52,14 @@ export function SutraFields({
           </select>
         </Field>
       </div>
-      <Field label="Sūtra (Devanagari)" hint="Use “/” for a line break.">
-        <textarea name="sanskrit" rows={2} defaultValue={values.sanskrit} className={`${inputCls} font-devanagari text-lg`} />
-      </Field>
-      <Field label="Transliteration (IAST)" hint="Stored exactly as typed. “/” = line break.">
-        <textarea name="transliteration" rows={2} defaultValue={values.transliteration} className={`${inputCls} italic`} />
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-[1fr_11rem]">
+        <Field label="Sūtra" hint="Give it once — IAST is best. Devanagari, Bengali and Odia are made from it on the site (with words joined as printed). “/” = line break.">
+          <textarea name="sutraText" rows={2} defaultValue={values.transliteration || values.sanskrit} className={`${inputCls} text-lg`} />
+        </Field>
+        <Field label="Bṛhat sūtra no. (B_SN)" hint="Links this sūtra to the same rule in the Bṛhat edition.">
+          <input name="brhatNumber" defaultValue={values.brhatNumber ?? ""} placeholder="e.g. 112" className={inputCls} />
+        </Field>
+      </div>
       {coreLocked ? (
         <>
           {(

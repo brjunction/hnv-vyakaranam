@@ -6,7 +6,9 @@ import { AnvayaBlock, ScriptPicker, SizeControl, TranslationBlock } from "@/comp
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import Select from "@/components/ui/Select";
-import { versePath, type DivisionData } from "@/lib/scriptures/core";
+import SynonymsBlock from "@/components/scriptures/SynonymsBlock";
+import { detectScript, versePath, type DivisionData } from "@/lib/scriptures/core";
+import DictButton from "@/components/DictButton";
 
 // A whole chapter on one page: every verse at once, with a view switch —
 // Verses · + Translation · + Commentary (choose which) — and an Anvaya toggle.
@@ -79,6 +81,7 @@ export default function ChapterView({ data }: { data: DivisionData }) {
               )}
               <span className="ml-auto flex flex-wrap items-center gap-2">
                 <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+                <DictButton />
                 <SizeControl value={prefs.fontScale} onChange={(v) => setPrefs({ fontScale: v })} label="verse" />
                 {mode === "commentary" && <SizeControl value={prefs.commScale} onChange={(v) => setPrefs({ commScale: v })} label="commentary" />}
               </span>
@@ -103,23 +106,15 @@ export default function ChapterView({ data }: { data: DivisionData }) {
                       <div style={font}>
                         {v.speaker && <p className="mb-1 text-sm italic text-[var(--fg-muted)]">{v.speaker}</p>}
                         {v.iast || v.devanagari ? (
-                          <VerseLinesIn devanagari={v.devanagari} iast={v.iast} script={prefs.script} size="md" />
+                          <VerseLinesIn sanskrit={v.language === "sanskrit"} devanagari={v.devanagari} iast={v.iast} script={prefs.script} size="md" />
                         ) : (
                           <p className="text-sm italic text-[var(--fg-muted)]">Text not yet added.</p>
                         )}
-                        {prefs.script === "iast" && prefs.showDeva && v.devanagari && v.iast && (
-                          <VerseLinesIn devanagari={v.devanagari} iast="" script="devanagari" size="md" className="mt-2 text-[var(--fg-muted)]" />
+                        {prefs.script === "iast" && prefs.showDeva && (v.devanagari || v.iast) && (
+                          <VerseLinesIn sanskrit={v.language === "sanskrit"} devanagari={v.devanagari} iast={v.iast} script={detectScript(v.devanagari) ?? "devanagari"} size="md" className="mt-2 text-[var(--fg-muted)]" />
                         )}
                         {prefs.chapterAnvaya && anvayaT.map((t) => <AnvayaBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
-                        {withTrans &&
-                          wfwT
-                            .filter((t) => v.c[t.id])
-                            .map((t) => (
-                              <section key={t.id} className="mt-4">
-                                <h3 className="mb-1 text-[0.8rem] font-medium text-[var(--fg-muted)]">{t.name}</h3>
-                                <RichIn html={v.c[t.id]} english={t.language === "english"} script={prefs.script} className="text-[0.95em]" />
-                              </section>
-                            ))}
+                        {withTrans && wfwT.filter((t) => v.c[t.id]).map((t) => <SynonymsBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                         {withTrans && transT.map((t) => <TranslationBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                       </div>
                       {mode === "commentary" && comm && (

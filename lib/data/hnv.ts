@@ -30,6 +30,8 @@ export type PublicSutra = {
   vrtti: string;
   translation: string;
   commentaries: PublicCommentary[];
+  /** Cross-edition links: Madhyama → its Bṛhat sūtra (B_SN), Bṛhat → the Madhyama sūtras that point to it. */
+  links: { label: string; href: string | null }[];
 };
 
 export type PublicSection = { slug: string; title: string; sutras: PublicSutra[] };
@@ -141,6 +143,41 @@ async function readChapter(edition: string, slug: string): Promise<PublicChapter
     bySutra.set(e.sutraId, list);
   }
 
+  // ---- cross-edition links (B_SN)
+  const linkMap = new Map<number, { label: string; href: string | null }[]>();
+  const addLink = (id: number, l: { label: string; href: string | null }) => linkMap.set(id, [...(linkMap.get(id) ?? []), l]);
+  if (edition !== "brhat") {
+    const wanted = [...new Set(rows.map((r) => r.brhatNumber.trim()).filter(Boolean))];
+    if (wanted.length) {
+      const bid = await editionId("brhat");
+      const targets = bid
+        ? await db
+            .select({ number: sutras.number, slug: chapters.slug })
+            .from(sutras)
+            .innerJoin(chapters, eq(chapters.id, sutras.chapterId))
+            .where(and(eq(sutras.editionId, bid), inArray(sutras.number, wanted), eq(sutras.status, "published"), eq(chapters.status, "published")))
+        : [];
+      const at = new Map(targets.map((t) => [t.number, t.slug]));
+      for (const r of rows) {
+        const n = r.brhatNumber.trim();
+        if (!n) continue;
+        const slug = at.get(n);
+        addLink(r.id, { label: `Bṛhat ${n}`, href: slug ? `/brhat/chapters/${slug}#${encodeURIComponent(n)}` : null });
+      }
+    }
+  } else if (rows.length) {
+    const mid = await editionId("madhyama");
+    const back = mid
+      ? await db
+          .select({ number: sutras.number, brhat: sutras.brhatNumber, slug: chapters.slug })
+          .from(sutras)
+          .innerJoin(chapters, eq(chapters.id, sutras.chapterId))
+          .where(and(eq(sutras.editionId, mid), inArray(sutras.brhatNumber, rows.map((r) => r.number)), eq(sutras.status, "published"), eq(chapters.status, "published")))
+      : [];
+    for (const r of rows)
+      for (const b of back.filter((x) => x.brhat === r.number)) addLink(r.id, { label: `Madhyama ${b.number}`, href: `/chapters/${b.slug}#${encodeURIComponent(b.number)}` });
+  }
+
   const toPublic = (s: (typeof rows)[number]): PublicSutra => ({
     id: s.id,
     number: s.number,
@@ -150,6 +187,7 @@ async function readChapter(edition: string, slug: string): Promise<PublicChapter
     vrtti: s.vrtti,
     translation: s.translation,
     commentaries: bySutra.get(s.id) ?? [],
+    links: linkMap.get(s.id) ?? [],
   });
 
   const sections: PublicSection[] = secs.map((sec) => ({
@@ -183,7 +221,7 @@ export function getChapterList(edition: string): Promise<ChapterSummary[]> {
 
 /** One chapter with its sections, sūtras and commentaries; null if not found. */
 export function getPublicChapter(edition: string, slug: string): Promise<PublicChapter | null> {
-  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v1", edition, slug], {
+  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v2", edition, slug], {
     tags: [tags.hnvAll, tags.hnvChapter(edition, slug)],
     revalidate: 86400,
   })();

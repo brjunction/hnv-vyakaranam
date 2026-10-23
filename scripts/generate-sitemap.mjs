@@ -42,6 +42,8 @@ add("/", { changefreq: "weekly", priority: 1.0 });
 add("/chapters", { changefreq: "weekly", priority: 0.9 });
 add("/scriptures", { changefreq: "weekly", priority: 0.9 });
 add("/scriptures/read", { changefreq: "monthly", priority: 0.4 });
+add("/scriptures/syllabus", { changefreq: "yearly", priority: 0.6 });
+add("/songs", { changefreq: "weekly", priority: 0.85 });
 add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.join(ROOT, "public/hnv-wiki.html")) });
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
@@ -138,6 +140,24 @@ async function scriptureUrls() {
   }
 }
 for (const u of await scriptureUrls()) add(u.loc, u);
+
+// Songs — every song and every book of songs.
+async function songUrls() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return [];
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(url);
+    const rows = await sql`select slug, book, to_char(updated_at, 'YYYY-MM-DD') as lastmod from songs where status = 'published'`;
+    const out = rows.map((r) => ({ loc: `/songs/${r.slug}`, lastmod: r.lastmod, priority: 0.7, changefreq: "monthly" }));
+    for (const b of [...new Set(rows.map((r) => r.book).filter(Boolean))]) out.push({ loc: `/songs/book/${encodeURIComponent(b)}`, priority: 0.6, changefreq: "weekly" });
+    return out;
+  } catch (err) {
+    console.warn("[sitemap] songs not reachable:", err.message);
+    return [];
+  }
+}
+for (const u of await songUrls()) add(u.loc, u);
 
 // ---------------------------------------------------------------------------
 // Write files

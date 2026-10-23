@@ -12,6 +12,7 @@ import {
   childrenOf, divisionPath, levelName, parseJump, readingOrder, versePath, verseRef,
   type BookInfo, type DivisionData, type TreeNode,
 } from "@/lib/scriptures/core";
+import DictButton from "@/components/DictButton";
 
 type Target = { path: string[]; verse?: string };
 
@@ -222,6 +223,7 @@ export default function Reader({
   const actions = (
     <div className="flex flex-wrap items-center gap-1.5">
       <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+      <DictButton />
       <button type="button" onClick={() => copy("verse")} className="ui-icon-btn" title={copied === "verse" ? "Copied" : "Copy verse"} aria-label="Copy verse">
         {copied === "verse" ? <Check size={16} /> : <Copy size={16} />}
       </button>
@@ -366,6 +368,7 @@ export default function Reader({
           {ref} <ChevronDown size={16} />
         </button>
         <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+        <DictButton />
       </div>
 
       <section

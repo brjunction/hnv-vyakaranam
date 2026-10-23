@@ -61,7 +61,7 @@ function TypeFields({ t, bookId }: { t: T; bookId: number }) {
           <select name="pane" defaultValue={t.pane ?? "commentary"} className={inputCls}>
             <option value="anvaya">Anvaya (prose order) — own block under the verse</option>
             <option value="translation">Translation — own block under the verse</option>
-            <option value="verse">Word-for-word / synonyms — under the verse</option>
+            <option value="verse">Synonyms (word-for-word) — under the verse</option>
             <option value="commentary">Commentary (purport, ṭīkā …) — commentary pane</option>
           </select>
         </Field>
@@ -76,7 +76,7 @@ function TypeFields({ t, bookId }: { t: T; bookId: number }) {
   );
 }
 
-const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Word-for-word", commentary: "Commentary" };
+const ROLE: Record<string, string> = { anvaya: "Anvaya", translation: "Translation", verse: "Synonyms", commentary: "Commentary" };
 const TARGET: Record<string, string> = { verse: "Verses", division: "Chapters", both: "Verses & chapters" };
 
 export default async function Commentaries({ params }: { params: Promise<{ code: string }> }) {
@@ -148,7 +148,7 @@ export default async function Commentaries({ params }: { params: Promise<{ code:
       </div>
 
       {canEdit && (
-        <Panel title="Add a commentary" description="Anvaya, a translation, word-for-word, a ṭīkā, a purport, a summary for each chapter …">
+        <Panel title="Add a commentary" description="Anvaya, a translation, synonyms, a ṭīkā, a purport, a summary for each chapter …">
           <ActionForm action={saveCommentaryType} resetOnSuccess>
             <TypeFields t={{}} bookId={book.id} />
             <div className="mt-4">

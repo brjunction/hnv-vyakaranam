@@ -669,3 +669,81 @@ body {
 .more-stage-doing .more-stage-icon { color: var(--color-saffron); }
 .more-stage-planned .more-stage-icon { color: var(--fg-muted); }
 .more-stage-doing { background: color-mix(in srgb, var(--color-saffron) 9%, var(--bg-2)); }
+
+/* HNV sūtra cards: script-aware text + cross-edition links */
+.sutra-main.verse-text { font-size: 1.125rem; line-height: 1.45; }
+.sutra-main.verse-latn { font-size: 1.05rem; }
+.sutra-second.verse-text { font-size: 0.875rem; line-height: 1.4; color: var(--fg-muted); }
+.sutra-second.verse-latn { font-style: italic; }
+.sutra-xref {
+  display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 999px; padding: 0.1rem 0.6rem;
+  font-size: 12px; font-weight: 500; color: var(--fg);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: background .15s;
+}
+a.sutra-xref:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.sutra-flash { box-shadow: 0 0 0 2px var(--accent); transition: box-shadow .4s; }
+
+/* Synonyms (word-for-word) — its own design: a word list, terms in the reader's script */
+.synonyms-block { border-radius: 0.9rem; padding: 0.85rem 1rem 0.95rem; border: 1px dashed color-mix(in srgb, var(--color-saffron) 45%, var(--border)); }
+.synonyms-head { display: flex; align-items: baseline; gap: 0.4rem; margin-bottom: 0.45rem; font-size: 0.8rem; font-weight: 600; color: var(--color-saffron); }
+.synonyms-body { font-size: 0.95em; line-height: 1.75; }
+.syn-term { font-style: italic; font-weight: 600; color: color-mix(in srgb, var(--color-saffron) 70%, var(--fg)); }
+.syn-term.font-devanagari { font-style: normal; }
+.syn-dash { color: var(--fg-muted); }
+
+/* Songs — A–Z rail (tap or drag) */
+.song-rail {
+  position: fixed; right: max(0.35rem, calc((100vw - 72rem) / 2 - 2.5rem)); top: 50%; transform: translateY(-50%); z-index: 30;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0.4rem 0.2rem;
+  border-radius: 999px; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(6px);
+  border: 1px solid var(--border); touch-action: none; user-select: none; max-height: calc(100dvh - 10rem); overflow: hidden;
+}
+.song-rail button { width: 1.6rem; height: clamp(0.95rem, 2.4dvh, 1.35rem); font-size: 11px; font-weight: 600; line-height: 1; border-radius: 999px; color: var(--fg-muted); }
+.song-rail button:hover, .song-rail button.on { color: var(--color-ink); background: var(--accent); }
+.song-rail-bubble {
+  position: absolute; right: calc(100% + 0.75rem); top: 50%; transform: translateY(-50%);
+  width: 3.25rem; height: 3.25rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; font-weight: 700; background: var(--accent); color: var(--color-ink); box-shadow: var(--shadow-lift);
+}
+
+/* Song reader */
+.song-verses { display: grid; gap: 1.6rem; }
+.song-verse { display: grid; grid-template-columns: 2rem 1fr; gap: 0.75rem; }
+.song-num {
+  margin-top: 0.3em; width: 1.75rem; height: 1.75rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-saffron);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-saffron) 45%, transparent);
+}
+.song-translation { margin-top: 0.6rem; font-size: 0.92em; color: var(--fg); border-left: 2px solid var(--border); padding-left: 0.85rem; }
+
+/* Śrīla Bhaktisiddhānta's order of study */
+.syl-card { border-radius: 1rem; border: 1px solid var(--border); background: var(--bg); padding: 1rem 1.1rem 1.1rem; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); }
+.syl-badge { display: inline-flex; width: 1.9rem; height: 1.9rem; align-items: center; justify-content: center; border-radius: 0.6rem; font-weight: 700; font-size: 0.85rem; color: var(--color-ink); background: var(--accent); flex-shrink: 0; align-self: center; }
+.syl-label { margin: 0 0 0.3rem; font-size: 0.72rem; font-weight: 600; color: var(--color-saffron); }
+.syl-item { display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.35rem; line-height: 1.55; }
+.syl-n { font-size: 0.72rem; color: var(--fg-muted); font-variant-numeric: tabular-nums; padding-top: 0.2em; text-align: right; }
+.syl-link { color: var(--fg); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.syl-link:hover { color: var(--accent); }
+.syl-link.soon { text-decoration-style: dotted; }
+
+/* Header — labelled tabs (desktop). md: icons only · lg: icon + name · xl: icon in a circle + name */
+.nav-tab {
+  display: inline-flex; align-items: center; gap: 0.35rem; height: 2.25rem; padding: 0 0.55rem;
+  border-radius: 0.7rem; border: 1px solid transparent; white-space: nowrap;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.005em; color: var(--fg-muted);
+  transition: background-color .15s, color .15s, border-color .15s;
+}
+.nav-tab:hover { color: var(--fg); background: var(--bg-2); }
+.nav-tab .nav-ic { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-tab .nav-label { display: none; }
+.nav-tab.on { color: var(--fg); background: color-mix(in srgb, var(--accent) 13%, transparent); border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
+.nav-tab.on .nav-ic { color: var(--accent); }
+@media (min-width: 1024px) { .nav-tab .nav-label { display: inline; } }
+@media (min-width: 1280px) {
+  .nav-tab { padding: 0 0.7rem 0 0.25rem; gap: 0.45rem; }
+  .nav-tab .nav-ic { width: 1.7rem; height: 1.7rem; border-radius: 999px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--border); }
+  .nav-tab:hover .nav-ic { background: var(--bg); }
+  .nav-tab.on .nav-ic { background: var(--accent); color: var(--color-ink); box-shadow: none; }
+}

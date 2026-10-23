@@ -192,6 +192,8 @@ export const sutras = pgTable(
     synonyms: text("synonyms").notNull().default(""),
     vrtti: text("vrtti").notNull().default(""),
     translation: text("translation").notNull().default(""),
+    /** The matching sūtra number in the Bṛhat edition (B_SN), set on Madhyama sūtras; "" = none. */
+    brhatNumber: text("brhat_number").notNull().default(""),
     extra: jsonb("extra").$type<ExtraFields>().notNull().default({}),
     /** Eligible for Verse of the Day rotation. */
     dailyEligible: boolean("daily_eligible").notNull().default(false),
@@ -325,6 +327,7 @@ export const sutraNotes = pgTable("sutra_notes", {
 export const BOOK_STRUCTURES = ["canto_chapter_verse", "chapter_verse"] as const;
 /** Language of a text (verses, commentary kinds). Only Sanskrit is ever re-scripted freely. */
 export const TEXT_LANGUAGES = ["sanskrit", "english", "hindi", "bengali", "nepali", "odia", "other"] as const;
+export const SONG_LANGUAGES = ["bengali", "sanskrit", "brajabuli", "hindi", "odia", "other"] as const;
 
 /** Sections → categories of the scripture library (Primary · Gauḍīya · Vyākaraṇa …). Edited in the admin. */
 export const scriptureCategories = pgTable("scripture_categories", {
@@ -753,6 +756,57 @@ export const moreItems = pgTable(
     updatedBy: updatedBy(),
   },
   (t) => [uniqueIndex("more_items_section_slug_uq").on(t.sectionId, t.slug), index("more_items_section_sort_idx").on(t.sectionId, t.sort)]
+);
+
+// ---------------------------------------------------------------------------
+// Vaiṣṇava songs (gīti, aṣṭakam, stotra, Padyāvalī verses …)
+// Each verse is given ONCE in any script (IAST preferred); the site makes the
+// other scripts. Non-Sanskrit songs (Bengali …) may also carry the IAST
+// exactly as printed, since Bengali pronunciation can't be derived.
+// ---------------------------------------------------------------------------
+export type SongVerse = {
+  /** The verse in any one script; "/" or a new line = line break. */
+  text: string;
+  /** Optional: IAST exactly as printed (Bengali / Hindi songs). */
+  printed?: string;
+  /** Translation (HTML). */
+  translation?: string;
+  /** Synonyms, "term — meaning; …" (HTML). */
+  synonyms?: string;
+};
+export type SongLink = { label: string; url: string };
+
+export const songs = pgTable(
+  "songs",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    /** Name of the song, usually its first words: "Śrī Guru-vandanā", "Jaya Rādhā-Mādhava". */
+    title: text("title").notNull(),
+    /** Other names it is known by (search only), comma separated. */
+    altTitles: text("alt_titles").notNull().default(""),
+    author: text("author").notNull().default(""),
+    /** The book it comes from: "Śaraṇāgati", "Gītāvalī", "Prema-bhakti-candrikā", "Padyāvalī" … */
+    book: text("book").notNull().default(""),
+    /** Place in that book, e.g. "Song 3" or "1.4" (shown, and used to order the book). */
+    bookPlace: text("book_place").notNull().default(""),
+    /** Song, Aṣṭakam, Stotram, Prayer, Kīrtana, Padyāvalī verse … */
+    kind: text("kind").notNull().default("Song"),
+    language: text("language", { enum: SONG_LANGUAGES }).notNull().default("bengali"),
+    verses: jsonb("verses").$type<SongVerse[]>().notNull().default([]),
+    introHtml: text("intro_html").notNull().default(""),
+    purportHtml: text("purport_html").notNull().default(""),
+    /** Who translated (e.g. "BBT", "Śrīla Bhaktivedānta Svāmī Prabhupāda"). */
+    translator: text("translator").notNull().default(""),
+    /** Audio / video LINKS only (never files). */
+    links: jsonb("links").$type<SongLink[]>().notNull().default([]),
+    sort: integer("sort").notNull().default(0),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [index("songs_book_idx").on(t.book), index("songs_author_idx").on(t.author)]
 );
 
 export const siteSettings = pgTable("site_settings", {

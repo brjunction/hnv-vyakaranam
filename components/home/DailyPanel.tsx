@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BookOpenText, Quote } from "lucide-react";
 import { localDate, type DailyEntry, type DailyPayload } from "@/lib/daily/pick";
 import { VerseLinesIn } from "@/components/scriptures/ScriptText";
+import VaisnavaToday from "@/components/home/VaisnavaToday";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import type { ScriptName } from "@/lib/scriptures/core";
 
@@ -63,12 +64,13 @@ export default function DailyPanel() {
   if (state.status === "empty") return null;
 
   return (
-    <section aria-labelledby="today-heading" className="max-w-5xl mx-auto px-5 py-16">
-      <div className="text-center mb-10">
+    <section aria-labelledby="today-heading" className="reveal max-w-5xl mx-auto px-5 py-12 sm:py-14">
+      <div className="text-center mb-8">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">For today</p>
         <h2 id="today-heading" className="text-2xl sm:text-3xl font-semibold">
           {state.status === "ready" ? prettyDate(state.data.date) : " "}
         </h2>
+        <div className="mt-4 flex justify-center"><VaisnavaToday /></div>
       </div>
 
       {state.status === "loading" ? (

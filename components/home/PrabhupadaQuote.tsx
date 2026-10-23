@@ -21,10 +21,10 @@ function mark(t: string) {
 export default function PrabhupadaQuote({ b }: { b: PrabhupadaBlock }) {
   const name = b.author || "Śrīla Prabhupāda";
   return (
-    <section className="prabhu-band" aria-labelledby="prabhu-heading">
-      <div className={`mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 sm:py-20 ${b.imageUrl ? "lg:grid-cols-[5fr_7fr] lg:gap-14" : "max-w-3xl"}`}>
+    <section className="prabhu-band reveal" aria-labelledby="prabhu-heading">
+      <div className={`mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 sm:py-16 ${b.imageUrl ? "lg:grid-cols-[18rem_1fr] lg:gap-12" : "max-w-3xl"}`}>
         {b.imageUrl && (
-          <figure className="prabhu-photo mx-auto aspect-[4/5] w-full max-w-sm lg:max-w-none">
+          <figure className="prabhu-photo mx-auto aspect-[4/5] w-full max-w-[18rem]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={b.imageUrl} alt={name} loading="lazy" />
             <figcaption className="prabhu-cap">
@@ -35,7 +35,7 @@ export default function PrabhupadaQuote({ b }: { b: PrabhupadaBlock }) {
         )}
         <div>
           <p className="prabhu-tag">In the words of</p>
-          <h2 id="prabhu-heading" className="mb-8 text-2xl font-semibold leading-tight sm:text-3xl">
+          <h2 id="prabhu-heading" className="mb-5 text-xl font-semibold leading-tight sm:text-2xl">
             {name}
           </h2>
           {b.quotes.map((q, i) => (

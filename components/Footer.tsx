@@ -6,9 +6,10 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   {
     title: "Study",
     links: [
-      { href: "/chapters", label: "Chapters — Madhyama" },
+      { href: "/chapters", label: "Madhyama edition" },
       { href: "/brhat/chapters", label: "Bṛhat edition" },
       { href: "/laghu/chapters", label: "Laghu edition" },
+      { href: "/chapters/samjna-sandhi-prakarana", label: "Saṁjñā & Sandhi" },
       { href: "/practice", label: "Practice" },
       { href: "/hnv-wiki", label: "HNV-Wiki", external: true },
     ],
@@ -29,13 +30,15 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/tools/dictionary/search", label: "Sanskrit dictionary" },
       { href: "/tools", label: "All tools" },
       { href: "/notes", label: "My notebook" },
+      { href: "/more", label: "Courses & resources" },
     ],
   },
   {
-    title: "More",
+    title: "About",
     links: [
-      { href: "/more", label: "Courses & resources" },
-      { href: "/about", label: "About" },
+      { href: "/about", label: "About this grammar" },
+      { href: "/about/acaryas", label: "Ācārya biographies" },
+      { href: "/about/places", label: "Holy places & temples" },
       { href: "/about/acknowledgements", label: "Acknowledgements" },
     ],
   },
@@ -44,7 +47,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
 export default function Footer() {
   return (
     <footer className="mt-7 border-t border-[var(--border)] bg-[var(--bg-2)]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 md:grid-cols-[1.2fr_2fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1.1fr_2.4fr]">
         <div>
           <Link href="/" className="inline-flex items-center gap-2.5">
             <Image src="/hnvlogo.png" alt="" width={40} height={40} />
@@ -53,6 +56,8 @@ export default function Footer() {
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-[var(--fg-muted)]">
             Śrīla Jīva Gosvāmī’s grammar of the holy names — sūtras, scriptures, bhajans and a Sanskrit dictionary, in one place.
           </p>
+          <p className="mt-4 font-devanagari text-lg text-[var(--accent)]">श्री हरिनामामृत व्याकरणम्</p>
+          <p className="mt-1 text-xs text-[var(--fg-muted)]">The Grammar of the Holy Names of Lord Hari</p>
         </div>
         <nav aria-label="Site map" className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {COLUMNS.map((c) => (
@@ -78,7 +83,10 @@ export default function Footer() {
         </nav>
       </div>
       <div className="border-t border-[var(--border)]">
-        <p className="mx-auto max-w-6xl px-5 py-4 text-xs text-[var(--fg-muted)]">Harināmāmṛta-Vyākaraṇam — the masterpiece of Sanskrit grammar.</p>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-5 py-4 text-xs text-[var(--fg-muted)]">
+          <p>Harināmāmṛta-Vyākaraṇam — the masterpiece of Sanskrit grammar.</p>
+          <p>Hare Kṛṣṇa Hare Kṛṣṇa Kṛṣṇa Kṛṣṇa Hare Hare · Hare Rāma Hare Rāma Rāma Rāma Hare Hare</p>
+        </div>
       </div>
     </footer>
   );

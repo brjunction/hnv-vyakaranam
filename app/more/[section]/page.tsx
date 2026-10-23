@@ -9,7 +9,7 @@ export const revalidate = false;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return (await getMoreSections()).map((s) => ({ section: s.key }));
+  return (await getMoreSections()).filter((s) => !s.key.startsWith("about-")).map((s) => ({ section: s.key }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ section: string }> }): Promise<Metadata> {

@@ -91,8 +91,9 @@ export default function SutraCard({
         </div>
       )}
 
-      {isOpen && (
-        <div className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
+      {/* Always rendered (hidden when closed) so search engines index the full text. */}
+      {(
+        <div hidden={!isOpen} className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
           {sutra.synonyms.trim() && (
             <Block label="Synonyms">
               <RichText value={sutra.synonyms} className="leading-relaxed" />

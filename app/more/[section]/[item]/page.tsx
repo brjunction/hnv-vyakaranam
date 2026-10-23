@@ -9,7 +9,7 @@ export const revalidate = false;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return (await getMoreSections()).flatMap((s) => s.items.filter((i) => hasPage(s.kind, i)).map((i) => ({ section: s.key, item: i.slug })));
+  return (await getMoreSections()).filter((s) => !s.key.startsWith("about-")).flatMap((s) => s.items.filter((i) => hasPage(s.kind, i)).map((i) => ({ section: s.key, item: i.slug })));
 }
 
 type P = { params: Promise<{ section: string; item: string }> };

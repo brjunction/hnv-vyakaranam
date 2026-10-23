@@ -226,3 +226,32 @@ export function getPublicChapter(edition: string, slug: string): Promise<PublicC
     revalidate: 86400,
   })();
 }
+
+/** Sūtra number → chapter slug, for one edition (powers the per-sūtra pages). */
+async function readSutraIndex(edition: string): Promise<Record<string, string>> {
+  if (!isDbConfigured) return {};
+  const eid = await editionId(edition);
+  if (!eid) return {};
+  const rows = await getDb()
+    .select({ number: sutras.number, slug: chapters.slug })
+    .from(sutras)
+    .innerJoin(chapters, and(eq(chapters.id, sutras.chapterId), eq(chapters.status, "published")))
+    .where(and(eq(sutras.editionId, eid), eq(sutras.status, "published")));
+  return Object.fromEntries(rows.map((r) => [r.number, r.slug]));
+}
+
+export function getSutraIndex(edition: string): Promise<Record<string, string>> {
+  return unstable_cache(() => readSutraIndex(edition), ["hnv:sutra-index:v1", edition], { tags: [tags.hnvAll], revalidate: 86400 })();
+}
+
+/** One sūtra with its chapter and neighbours. */
+export async function getSutraPage(edition: string, number: string) {
+  const slug = (await getSutraIndex(edition))[number];
+  if (!slug) return null;
+  const chapter = await getPublicChapter(edition, slug);
+  if (!chapter) return null;
+  const all = chapter.sections.flatMap((s) => s.sutras.map((x) => ({ sutra: x, section: s.title })));
+  const i = all.findIndex((x) => x.sutra.number === number);
+  if (i < 0) return null;
+  return { chapter, section: all[i].section, sutra: all[i].sutra, prev: all[i - 1]?.sutra ?? null, next: all[i + 1]?.sutra ?? null };
+}

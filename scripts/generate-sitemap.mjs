@@ -101,6 +101,29 @@ for (const c of await hnvChapterUrls()) {
   add(c.loc, { changefreq: "weekly", priority: 0.8, lastmod: c.lastmod });
 }
 
+// Every sūtra has its own page (/sutras/42, /brhat/sutras/…, /laghu/sutras/…).
+async function sutraUrls() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return [];
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(url);
+    const rows = await sql`
+      select e.slug as edition, s.number, to_char(s.updated_at, 'YYYY-MM-DD') as lastmod
+      from sutras s
+      join editions e on e.id = s.edition_id and e.is_published
+      join chapters c on c.id = s.chapter_id and c.status = 'published'
+      where s.status = 'published'
+      order by e.sort, c.sort, s.position`;
+    const base = { madhyama: "/sutras", brhat: "/brhat/sutras", laghu: "/laghu/sutras" };
+    return rows.filter((r) => base[r.edition]).map((r) => ({ loc: `${base[r.edition]}/${encodeURIComponent(r.number)}`, lastmod: r.lastmod, priority: 0.7, changefreq: "monthly" }));
+  } catch (err) {
+    console.warn("[sitemap] sutras not reachable:", err.message);
+    return [];
+  }
+}
+for (const u of await sutraUrls()) add(u.loc, u);
+
 // ---------------------------------------------------------------------------
 // Scriptures — from the database: every book, every division (canto,
 // chapter …) and every verse is its own indexable URL.
@@ -172,10 +195,11 @@ async function moreUrls() {
     const sql = neon(url);
     const secs = await sql`select id, key, kind, to_char(updated_at, 'YYYY-MM-DD') as lastmod from more_sections where is_visible`;
     const items = await sql`select section_id, slug, body_html, to_char(updated_at, 'YYYY-MM-DD') as lastmod from more_items where status = 'published'`;
-    const out = secs.map((s) => ({ loc: `/more/${s.key}`, lastmod: s.lastmod, priority: 0.6, changefreq: "weekly" }));
+    const base = (k) => (k.startsWith("about-") ? `/about/${k.slice(6)}` : `/more/${k}`);
+    const out = secs.map((s) => ({ loc: base(s.key), lastmod: s.lastmod, priority: 0.6, changefreq: "weekly" }));
     for (const i of items) {
       const s = secs.find((x) => x.id === i.section_id);
-      if (s && (s.kind === "posts" || (i.body_html ?? "").trim())) out.push({ loc: `/more/${s.key}/${i.slug}`, lastmod: i.lastmod, priority: 0.5, changefreq: "monthly" });
+      if (s && ((s.kind === "posts" && !s.key.startsWith("about-")) || (i.body_html ?? "").trim())) out.push({ loc: `${base(s.key)}/${i.slug}`, lastmod: i.lastmod, priority: 0.5, changefreq: "monthly" });
     }
     return out;
   } catch (err) {

@@ -152,8 +152,9 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
                 </button>
                 <div className="h-px bg-[var(--border)] mb-6" />
 
-                {isOpen &&
-                  (section.sutras.length === 0 ? (
+                {/* Always in the HTML (hidden when closed) so every sūtra is indexed. */}
+                <div hidden={!isOpen}>
+                {(section.sutras.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-[var(--border)] p-6 text-sm text-[var(--fg-muted)]">
                       Sūtras for this section will appear here.
                     </div>
@@ -169,6 +170,7 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
                       ))}
                     </div>
                   ))}
+                </div>
               </section>
             );
           })}

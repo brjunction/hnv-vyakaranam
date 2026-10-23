@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const revalidate = false;
 
 export default async function More() {
-  const sections = await getMoreSections();
+  const sections = (await getMoreSections()).filter((s) => !s.key.startsWith("about-"));
   return (
     <>
       <PageHead title="More" intro="Courses, playlists, resources and news around Harināmāmṛta-Vyākaraṇam." />

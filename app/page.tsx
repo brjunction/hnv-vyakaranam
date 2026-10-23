@@ -13,6 +13,8 @@ import { getPrabhupadaBlock } from "@/lib/data/home";
 import { getSyllabus } from "@/lib/data/scriptures";
 import { listDictionaries } from "@/lib/dict/engine";
 import DictSearch from "@/components/home/DictSearch";
+import HeroSky from "@/components/home/HeroSky";
+import Reveal from "@/components/home/Reveal";
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -120,13 +122,14 @@ export default async function Home() {
   return (
     <>
 
+     <Reveal />
      <section className="relative overflow-hidden">
-        <div className="absolute inset-0" aria-hidden />
+        <HeroSky />
         <div className="relative max-w-4xl mx-auto px-5 pt-15 pb-5 text-center">
           <p className="text-xs tracking-[0.3em] uppercase text-[var(--color-saffron)] mb-5">
             Śrīla Jīva Gosvāmī&apos;s
           </p>
-          <h1 className="font-devanagari text-4xl sm:text-6xl leading-tight mb-3">
+          <h1 className="hero-title font-devanagari text-4xl sm:text-6xl leading-tight mb-3">
             श्री हरिनामामृत व्याकरणम्
           </h1>
           <p className="text-xl sm:text-2xl mb-2">Śrī Harināmāmṛta Vyākaraṇam</p>
@@ -165,7 +168,7 @@ export default async function Home() {
     <div className="relative max-w-3xl mx-auto px-5">
       {/* Outer gradient frame */}
       <div
-        className="relative mx-auto rounded-[1.25rem] p-[6px] sm:p-2 shadow-2xl"
+        className="hero-cover relative mx-auto rounded-[1.25rem] p-[6px] sm:p-2 shadow-2xl"
         style={{
          background: `
     linear-gradient(var(--gradient-overlay), var(--gradient-overlay)),
@@ -185,7 +188,7 @@ export default async function Home() {
           <img
             src="/hero-cover.jpg"
             alt="The Ṣaḍ-Gosvāmīs of Vṛndāvana"
-            className="block w-full h-auto"
+            className="hero-cover-img block w-full h-auto"
             loading="lazy"
           />
         </div>
@@ -208,15 +211,33 @@ export default async function Home() {
 </section>
      
  
+      <DailyPanel />
+
       {prabhupada && <PrabhupadaQuote b={prabhupada} />}
 
-    <section id="amrta" className="amrta-band scroll-mt-20">
+    <section id="amrta" className="amrta-band reveal scroll-mt-20">
         <div className="relative max-w-5xl mx-auto px-5 py-14 sm:py-16">
           <AmrtaPrayers />
         </div>
       </section>
 
-      <DailyPanel />
+      {/* ---------------------------------------------------- Live numbers */}
+      <section className="max-w-6xl mx-auto px-5 py-14 sm:py-16 reveal">
+        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">All in one place</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center">Learn Śrīla Jīva Gosvāmī&apos;s grammar and the Gauḍīya teachings — in one place</h2>
+        <LiveStats
+          items={[
+            { n: sutraTotal, label: "Sūtras", sub: "Madhyama edition, online" },
+            { n: books.length, label: "Scriptures", sub: "in the library" },
+            { n: verseTotal, label: "Verses", sub: "to read, in any script" },
+            { n: songIndex.length, label: "Bhajans", sub: "songs of the ācāryas" },
+            { n: headwords, label: "Dictionary words", sub: `in ${dicts.length} dictionaries` },
+          ]}
+        />
+      </section>
+
+
+
 
       {/* ------------------------------------------------ The finest treatise */}
       <section className="relative overflow-hidden">
@@ -311,7 +332,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-5 py-20">
+      <section className="reveal max-w-6xl mx-auto px-5 py-20">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">The treatise</p>
         <h2 className="text-2xl sm:text-3xl font-semibold mb-10 text-center">Seven prakaraṇas, sūtra by sūtra</h2>
         <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -319,7 +340,7 @@ export default async function Home() {
             .filter((c) => c.kind === "sutras")
             .map((c) => (
               <li key={c.slug}>
-                <Link href={`/chapters/${c.slug}`} className="anv-card p-5 h-full group">
+                <Link href={`/chapters/${c.slug}`} className="anv-card lift p-5 h-full group">
                   <span className="anv-numeral absolute -right-1 -top-2 text-[4.5rem] sutra-number select-none">{c.number}</span>
                   <span className="block text-xs text-[var(--color-saffron)] mb-2">Chapter {c.number}</span>
                   <span className="block font-devanagari text-lg leading-snug pr-10 group-hover:text-[var(--accent)] transition-colors">{c.title}</span>
@@ -329,7 +350,7 @@ export default async function Home() {
               </li>
             ))}
           <li>
-            <Link href="/chapters" className="anv-card p-5 h-full group">
+            <Link href="/chapters" className="anv-card lift p-5 h-full group">
               <span className="block text-sm text-[var(--fg-muted)] mb-2">Also the Maṅgalācaraṇa and the Afterword</span>
               <span className="inline-flex items-center gap-1.5 font-medium text-[var(--accent)]">
                 Full table of contents <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -339,23 +360,8 @@ export default async function Home() {
         </ol>
       </section>
 
-      {/* ---------------------------------------------------- Live numbers */}
-      <section className="max-w-6xl mx-auto px-5 pt-16 sm:pt-20 pb-4">
-        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">Growing every day</p>
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-8 text-center">One home for the study of Śrī Jīva&apos;s grammar</h2>
-        <LiveStats
-          items={[
-            { n: sutraTotal, label: "Sūtras", sub: "Madhyama edition, online" },
-            { n: books.length, label: "Scriptures", sub: "in the library" },
-            { n: verseTotal, label: "Verses", sub: "to read, in any script" },
-            { n: songIndex.length, label: "Bhajans", sub: "songs of the ācāryas" },
-            { n: headwords, label: "Dictionary words", sub: `in ${dicts.length} dictionaries` },
-          ]}
-        />
-      </section>
-
       {/* ---------------------------------------------------------- Scriptures */}
-      <section className="relative overflow-hidden border-y border-[var(--border)]">
+      <section className="reveal relative overflow-hidden border-y border-[var(--border)]">
         <div className="anv-hero-bg absolute inset-0" aria-hidden />
         <div className="relative max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[1fr_1.05fr] gap-10 items-center">
           <div>
@@ -426,7 +432,7 @@ export default async function Home() {
       )}
 
       {/* -------------------------------------------------------------- Songs */}
-      <section className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
+      <section className="reveal max-w-6xl mx-auto px-5 py-16 sm:py-20">
         <div className="grid lg:grid-cols-[1.05fr_1fr] gap-10 items-center">
           <div className="order-2 lg:order-1 grid grid-cols-2 gap-3">
             {[
@@ -459,7 +465,7 @@ export default async function Home() {
       </section>
 
       {/* --------------------------------------------------------- Dictionary */}
-      <section className="border-y border-[var(--border)] bg-[var(--bg-2)]">
+      <section className="reveal border-y border-[var(--border)] bg-[var(--bg-2)]">
         <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20 grid lg:grid-cols-[1fr_1fr] gap-10 items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Sanskrit dictionary</p>
@@ -488,7 +494,7 @@ export default async function Home() {
       </section>
 
       {/* ------------------------------------------------- The path of study */}
-      <section className="border-y border-[var(--border)] bg-[var(--bg-2)]">
+      <section className="reveal border-y border-[var(--border)] bg-[var(--bg-2)]">
         <div className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
           <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">Where to begin</p>
           <h2 className="text-2xl sm:text-3xl font-semibold mb-12 text-center">A path of study, step by step</h2>
@@ -514,7 +520,7 @@ export default async function Home() {
       </section>
 
       {/* ------------------------------------------------- Everything else */}
-      <section className="max-w-6xl mx-auto px-5 py-16 sm:py-20">
+      <section className="reveal max-w-6xl mx-auto px-5 py-16 sm:py-20">
         <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3 text-center">On this website</p>
         <h2 className="text-2xl sm:text-3xl font-semibold mb-10 text-center">Everything for your study, in one place</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

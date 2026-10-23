@@ -166,3 +166,25 @@ paste large content through SQL (use the in-app import).
   (tokens `--a-*` in `globals.css`; the site's own tokens are remapped
   inside it), collapsible sidebar (remembered), mobile drawer, light/dark
   toggle, user menu. Components: `AdminShell`, `ui.tsx`, `ActionForm`.
+
+## 9. Update 2026-10-23 — dictionaries on Neon Object Storage
+
+- Dictionary files now live in **Neon Object Storage** (bucket
+  `dictionaries` on branch `main`, private, S3-compatible; 5 GB on the
+  free plan). Server access: `lib/storage/neon.ts` (aws4fetch SigV4;
+  env `NEON_S3_ENDPOINT`, `NEON_S3_REGION`, `NEON_S3_BUCKET`,
+  `NEON_S3_ACCESS_KEY_ID`, `NEON_S3_SECRET_ACCESS_KEY`; credential
+  `hnv-site-storage`). DB references look like `s3:dict/<batch>/<path>`.
+- Upload: the browser asks for presigned URLs (`startUploads`; files
+  > 64 MB use multipart with 32 MB parts) and PUTs directly to Neon. CORS
+  is set automatically (`ensureCors`). Archives (.zip, .tar, .tar.gz,
+  nested) are read as streams in the browser (`lib/dict/archive.ts`), so
+  1.5 GB+ collections work without loading them into memory. Every set of
+  .ifo/.idx/.dict(.dz)/.syn in any sub-folder becomes one dictionary;
+  duplicates (same title + word count) are skipped.
+- Search index is now **sharded by first letter** per dictionary
+  (`index-<id>/<letter>.json.gz`, rows `[key, label, offset, size]`), so a
+  search loads one small shard per dictionary; shards are cached (LRU,
+  ~600 MB). Meaning search runs on the chosen dictionaries (default: first
+  two; dictionaries > 80 MB are skipped).
+- `GET /api/dict/health` checks storage reachability (and sets CORS).

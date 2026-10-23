@@ -2,21 +2,92 @@
 
 import { z } from "zod";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { put, del } from "@vercel/blob";
+import { headers } from "next/headers";
 import { and, asc, desc, eq, gt, lt, max } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { DICT_SCHEMES, dictionaries, revisions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 import { prepareIndex } from "@/lib/dict/prepare";
+import {
+  completeMultipart,
+  createMultipart,
+  deleteObject,
+  deletePrefix,
+  ensureCors,
+  fromRef,
+  isStorageConfigured,
+  presignPart,
+  presignPut,
+  putObject,
+  toRef,
+} from "@/lib/storage/neon";
 import { DICT_TAG } from "@/lib/dict/engine";
 import { slugifyTitle } from "@/lib/hnv/slug";
 
-// Admin › Dictionaries. Files are uploaded by the browser straight to Blob
-// (app/api/admin/dict-upload); these actions register them, build the search
-// index, and manage the list. Only metadata goes into the database.
+// Admin › Dictionaries. The browser uploads dictionary files straight to
+// Neon Object Storage with presigned URLs (startUploads / finishMultipart);
+// addDictionary then builds the search index. Only metadata goes into the
+// database.
 
-const BlobUrl = z.string().url().refine((u) => /^https:\/\/[^/]+\.blob\.vercel-storage\.com\//.test(u), "Not a storage URL.");
+const Ref = z.string().regex(/^s3:dict\//, "Not a dictionary storage reference.");
+const PART = 32 * 1024 * 1024;
+const SINGLE_MAX = 64 * 1024 * 1024;
+
+export type UploadPlan =
+  | { path: string; key: string; mode: "single"; url: string }
+  | { path: string; key: string; mode: "multi"; uploadId: string; partSize: number; urls: string[] };
+
+/** Presigned upload URLs for a batch of files (paths relative to the chosen folder/zip). */
+export async function startUploads(batch: string, files: { path: string; size: number }[]): Promise<{ ok: boolean; message?: string; plans?: UploadPlan[] }> {
+  await requireUser("editor");
+  if (!isStorageConfigured()) return { ok: false, message: "Object storage is not configured on this deployment." };
+  if (!/^[a-z0-9-]{4,40}$/.test(batch) || files.length > 40) return { ok: false, message: "Invalid upload batch." };
+  const origin = (await headers()).get("origin");
+  await ensureCors(
+    [...new Set(["https://www.harinamamrta-vyakaranam.com", "https://harinamamrta-vyakaranam.com", "https://harinamamrta-vyakaranam.vercel.app", "http://localhost:3000", ...(origin ? [origin] : [])])]
+  );
+  const plans: UploadPlan[] = [];
+  for (const f of files) {
+    const clean = f.path
+      .split("/")
+      .map((seg) => seg.normalize("NFC").replace(/[^\p{L}\p{N}._ -]+/gu, "_").slice(0, 120))
+      .filter(Boolean)
+      .join("/");
+    const key = `dict/${batch}/${clean}`;
+    if (f.size <= SINGLE_MAX) plans.push({ path: f.path, key, mode: "single", url: await presignPut(key) });
+    else {
+      const uploadId = await createMultipart(key);
+      const n = Math.ceil(f.size / PART);
+      const urls = await Promise.all(Array.from({ length: n }, (_, i) => presignPart(key, uploadId, i + 1)));
+      plans.push({ path: f.path, key, mode: "multi", uploadId, partSize: PART, urls });
+    }
+  }
+  return { ok: true, plans };
+}
+
+export async function finishMultipart(key: string, uploadId: string, parts: { n: number; etag: string }[]): Promise<{ ok: boolean; message?: string }> {
+  await requireUser("editor");
+  if (!key.startsWith("dict/")) return { ok: false, message: "Bad key." };
+  try {
+    await completeMultipart(key, uploadId, parts);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: (err as Error).message };
+  }
+}
+
+const indexPrefixFor = (ifoRef: string) => {
+  const key = fromRef(ifoRef)!;
+  return `${key.slice(0, key.lastIndexOf("/"))}/index-${Date.now().toString(36)}/`;
+};
+
+async function writeShards(prefix: string, shards: Record<string, Buffer>) {
+  const entries = Object.entries(shards);
+  for (let i = 0; i < entries.length; i += 10) {
+    await Promise.all(entries.slice(i, i + 10).map(([c, buf]) => putObject(`${prefix}${c}.json.gz`, buf, "application/gzip")));
+  }
+}
 const Scheme = z.enum(DICT_SCHEMES);
 
 function refresh() {
@@ -24,12 +95,12 @@ function refresh() {
   revalidatePath("/tools/dictionary/search");
 }
 
-export type AddResult = { ok: boolean; message: string; preview?: { raw: string; iast: string }[]; wordCount?: number } | null;
+export type AddResult = { ok: boolean; message: string; duplicate?: boolean; preview?: { raw: string; iast: string }[]; wordCount?: number } | null;
 
 const AddInput = z.object({
   name: z.string().trim().min(1).max(160),
   scheme: Scheme,
-  files: z.object({ ifo: BlobUrl, idx: BlobUrl, dict: BlobUrl, syn: BlobUrl.optional() }),
+  files: z.object({ ifo: Ref, idx: Ref, dict: Ref, syn: Ref.optional() }),
   totalBytes: z.number().int().nonnegative(),
 });
 
@@ -39,12 +110,23 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
   if (!p.success) return { ok: false, message: p.error.issues[0]?.message ?? "Invalid upload." };
   const { name, scheme, files, totalBytes } = p.data;
   const db = getDb();
+  const dropFiles = () => Promise.all(Object.values(files).map((r) => r && deleteObject(fromRef(r)!).catch(() => {})));
   try {
     const prepared = await prepareIndex(files, scheme);
-    const taken = new Set((await db.select({ s: dictionaries.slug }).from(dictionaries)).map((r) => r.s));
+    // Same dictionary already installed? (same title and word count)
+    const existing = await db.select().from(dictionaries);
+    const dup = existing.find(
+      (d) => (d.info as Record<string, string>).bookname === prepared.info.bookname && d.wordCount === prepared.wordCount
+    );
+    if (dup) {
+      await dropFiles();
+      return { ok: true, duplicate: true, message: `Already installed as “${dup.name}” — skipped.` };
+    }
+    const taken = new Set(existing.map((r) => r.slug));
     let slug = slugifyTitle(name).slice(0, 40) || "dictionary";
     for (let i = 2; taken.has(slug); i++) slug = `${slugifyTitle(name).slice(0, 36)}-${i}`;
-    const blob = await put(`dict/${slug}/index.json.gz`, prepared.gz, { access: "public", addRandomSuffix: true, contentType: "application/gzip" });
+    const prefix = indexPrefixFor(files.ifo);
+    await writeShards(prefix, prepared.shards);
     const [{ top }] = await db.select({ top: max(dictionaries.sort) }).from(dictionaries);
     const [row] = await db
       .insert(dictionaries)
@@ -54,7 +136,7 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
         shortName: name.length > 18 ? name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 6) : name,
         headwordScheme: scheme,
         files,
-        indexUrl: blob.url,
+        indexUrl: toRef(prefix),
         info: prepared.info,
         wordCount: prepared.wordCount,
         totalBytes,
@@ -86,12 +168,14 @@ export async function reprocessDictionary(_prev: ActionState, form: FormData): P
   if (!d) return fail("That dictionary no longer exists.");
   try {
     const prepared = await prepareIndex(d.files, scheme.data);
-    const blob = await put(`dict/${d.slug}/index.json.gz`, prepared.gz, { access: "public", addRandomSuffix: true, contentType: "application/gzip" });
+    const prefix = indexPrefixFor(d.files.ifo);
+    await writeShards(prefix, prepared.shards);
     await db
       .update(dictionaries)
-      .set({ headwordScheme: scheme.data, indexUrl: blob.url, info: prepared.info, wordCount: prepared.wordCount, updatedBy: user.id })
+      .set({ headwordScheme: scheme.data, indexUrl: toRef(prefix), info: prepared.info, wordCount: prepared.wordCount, updatedBy: user.id })
       .where(eq(dictionaries.id, id));
-    if (d.indexUrl) await del(d.indexUrl).catch(() => {});
+    const old = fromRef(d.indexUrl);
+    if (old) await deletePrefix(old).catch(() => {});
     refresh();
     const sample = prepared.preview.slice(0, 5).map((x) => `${x.raw} → ${x.iast}`).join(" · ");
     return ok(`Prepared again: ${prepared.wordCount.toLocaleString()} headwords. Sample: ${sample}`);
@@ -156,8 +240,21 @@ export async function deleteDictionary(_prev: ActionState, form: FormData): Prom
   if (!d) return fail("Not found.");
   await db.delete(dictionaries).where(eq(dictionaries.id, id));
   await db.insert(revisions).values({ entityTable: "dictionaries", entityId: id, action: "delete", before: d, userId: user.id });
-  const urls = [d.files.ifo, d.files.idx, d.files.dict, d.files.syn, d.indexUrl].filter((u): u is string => Boolean(u));
-  await del(urls).catch(() => {});
+  const keys = [d.files.ifo, d.files.idx, d.files.dict, d.files.syn].map((r) => (r ? fromRef(r) : null)).filter((k): k is string => Boolean(k));
+  await Promise.all(keys.map((k) => deleteObject(k).catch(() => {})));
+  const idx = fromRef(d.indexUrl);
+  if (idx) await deletePrefix(idx).catch(() => {});
   refresh();
   return ok(`“${d.name}” and its files were deleted.`);
+}
+
+/** Remove uploaded files that didn't form a complete dictionary. */
+export async function discardUploads(refs: string[]): Promise<void> {
+  await requireUser("editor");
+  await Promise.all(
+    refs
+      .map(fromRef)
+      .filter((k): k is string => Boolean(k && k.startsWith("dict/")))
+      .map((k) => deleteObject(k).catch(() => {}))
+  );
 }

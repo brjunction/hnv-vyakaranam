@@ -5,13 +5,16 @@ import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { dictionaries } from "@/lib/db/schema";
 import { isDbConfigured } from "@/lib/env";
-import { parseEntry, readAllDefinitions, readDefinition } from "@/lib/dict/stardict";
+import { parseEntry, readAllDefinitions, readBytes, readDefinition } from "@/lib/dict/stardict";
 import { fieldToHtml, fieldsToText } from "@/lib/dict/render";
 import { fold, iastToDeva, queryKeys } from "@/lib/dict/translit";
-import type { PreparedIndex } from "@/lib/dict/prepare";
+import { shardOf, type Shard, type ShardRow } from "@/lib/dict/prepare";
+import { fromRef, listKeys } from "@/lib/storage/neon";
 
-// Dictionary search over the prepared indexes, reading definitions straight
-// from the StarDict files. Everything heavy is cached per server instance.
+// Dictionary search. Each dictionary's index is split by first letter
+// (lib/dict/prepare.ts); a search loads only the matching letter's shard
+// from each dictionary and keeps recently used shards in memory.
+// Definitions are read straight from the StarDict files in storage.
 
 export type DictMeta = {
   id: number;
@@ -20,8 +23,10 @@ export type DictMeta = {
   shortName: string;
   source: string;
   files: { ifo: string; idx: string; dict: string; syn?: string };
+  /** Prefix of the shard files: `${indexUrl}${letter}.json.gz` */
   indexUrl: string;
   sts: string;
+  totalBytes: number;
   updatedAt: string;
 };
 
@@ -46,78 +51,80 @@ export const listDictionaries = unstable_cache(
         files: r.files,
         indexUrl: r.indexUrl,
         sts: (r.info as Record<string, string>).sametypesequence ?? "",
+        totalBytes: r.totalBytes,
         updatedAt: r.updatedAt.toISOString(),
       }));
   },
-  ["dict:list:v1"],
+  ["dict:list:v2"],
   { tags: [DICT_TAG], revalidate: 3600 }
 );
 
-// ------------------------------------------------------------- loading
-type Loaded = {
-  meta: DictMeta;
-  ix: PreparedIndex;
-  /** Searchable terms (headwords + synonyms). */
-  termKey: string[];
-  termLabel: string[];
-  termEntry: Int32Array;
-  /** Term indices sorted by key (for exact/prefix search). */
-  sorted: Int32Array;
-  /** lower-case IAST label → entry indices */
-  byLabel: Map<string, number[]>;
-};
+// ------------------------------------------------------------- shards
+type Loaded = { rows: ShardRow[]; byLabel: Map<string, number[]>; bytes: number };
+const shardCache = new Map<string, Promise<Loaded>>();
+const shardSize = new Map<string, number>();
+let cachedBytes = 0;
+const CACHE_MAX = 600 * 1024 * 1024;
 
-const loaded = new Map<string, Promise<Loaded>>();
+const EMPTY: Loaded = { rows: [], byLabel: new Map(), bytes: 0 };
 
-async function fetchIndex(url: string): Promise<PreparedIndex> {
-  if (url.startsWith("file:")) {
-    const fs = await import("fs");
-    return JSON.parse(zlib.gunzipSync(fs.readFileSync(new URL(url))).toString("utf8"));
+async function fetchShard(meta: DictMeta, c: string): Promise<Loaded> {
+  let gz: Buffer;
+  try {
+    gz = await readBytes(`${meta.indexUrl}${c}.json.gz`);
+  } catch {
+    return EMPTY; // no headwords with this letter
   }
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Index ${url}: ${res.status}`);
-  return JSON.parse(zlib.gunzipSync(Buffer.from(await res.arrayBuffer())).toString("utf8"));
-}
-
-function build(meta: DictMeta, ix: PreparedIndex): Loaded {
-  const n = ix.words.length + ix.syn.length;
-  const termKey: string[] = new Array(n);
-  const termLabel: string[] = new Array(n);
-  const termEntry = new Int32Array(n);
-  for (let i = 0; i < ix.words.length; i++) {
-    const label = ix.iast[i] || ix.words[i];
-    termLabel[i] = label;
-    termKey[i] = fold(label);
-    termEntry[i] = i;
-  }
-  for (let j = 0; j < ix.syn.length; j++) {
-    const [w, iast, e] = ix.syn[j];
-    const label = iast || w;
-    termLabel[ix.words.length + j] = label;
-    termKey[ix.words.length + j] = fold(label);
-    termEntry[ix.words.length + j] = e;
-  }
-  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) =>
-    termKey[a] < termKey[b] ? -1 : termKey[a] > termKey[b] ? 1 : termLabel[a].length - termLabel[b].length
-  );
+  const json = zlib.gunzipSync(gz).toString("utf8");
+  const shard = JSON.parse(json) as Shard;
   const byLabel = new Map<string, number[]>();
-  for (let i = 0; i < n; i++) {
-    const k = termLabel[i].toLowerCase().normalize("NFC");
+  shard.rows.forEach((r, i) => {
+    const k = r[1].toLowerCase();
     const list = byLabel.get(k);
-    if (list) {
-      if (!list.includes(termEntry[i])) list.push(termEntry[i]);
-    } else byLabel.set(k, [termEntry[i]]);
-  }
-  return { meta, ix, termKey, termLabel, termEntry, sorted: Int32Array.from(order), byLabel };
+    if (list) list.push(i);
+    else byLabel.set(k, [i]);
+  });
+  return { rows: shard.rows, byLabel, bytes: json.length * 3 };
 }
 
-function load(meta: DictMeta): Promise<Loaded> {
-  const key = `${meta.id}:${meta.indexUrl}`;
-  let p = loaded.get(key);
+function loadShard(meta: DictMeta, c: string): Promise<Loaded> {
+  const key = `${meta.id}|${meta.indexUrl}|${c}`;
+  const hit = shardCache.get(key);
+  if (hit) {
+    // refresh LRU position
+    shardCache.delete(key);
+    shardCache.set(key, hit);
+    return hit;
+  }
+  const p = fetchShard(meta, c).then((l) => {
+    shardSize.set(key, l.bytes);
+    cachedBytes += l.bytes;
+    while (cachedBytes > CACHE_MAX && shardCache.size > 1) {
+      const oldest = shardCache.keys().next().value as string;
+      if (oldest === key) break;
+      cachedBytes -= shardSize.get(oldest) ?? 0;
+      shardCache.delete(oldest);
+      shardSize.delete(oldest);
+    }
+    return l;
+  });
+  p.catch(() => shardCache.delete(key));
+  shardCache.set(key, p);
+  return p;
+}
+
+const shardLists = new Map<string, Promise<string[]>>();
+/** Letters that have a shard (for whole-dictionary operations). */
+function shardLetters(meta: DictMeta): Promise<string[]> {
+  const k = `${meta.id}|${meta.indexUrl}`;
+  let p = shardLists.get(k);
   if (!p) {
-    p = fetchIndex(meta.indexUrl).then((ix) => build(meta, ix));
-    p.catch(() => loaded.delete(key));
-    loaded.set(key, p);
+    const key = fromRef(meta.indexUrl);
+    p = key
+      ? listKeys(key).then((list) => list.map((o) => o.key.slice(key.length).replace(/\.json\.gz$/, "")))
+      : import("fs").then((fs) => fs.readdirSync(new URL(meta.indexUrl)).map((f) => f.replace(/\.json\.gz$/, "")));
+    p.catch(() => shardLists.delete(k));
+    shardLists.set(k, p);
   }
   return p;
 }
@@ -130,12 +137,12 @@ export type SearchHit = {
   dicts: string[];
 };
 
-function lowerBound(d: Loaded, k: string) {
+function lowerBound(rows: ShardRow[], k: string) {
   let lo = 0;
-  let hi = d.sorted.length;
+  let hi = rows.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (d.termKey[d.sorted[mid]] < k) lo = mid + 1;
+    if (rows[mid][0] < k) lo = mid + 1;
     else hi = mid;
   }
   return lo;
@@ -166,8 +173,8 @@ export async function searchDictionaries(
   opts: { dict?: string[]; mode?: "word" | "meaning"; limit?: number; metas?: DictMeta[] } = {}
 ) {
   const limit = Math.min(opts.limit ?? 50, 100);
-  const metas = (opts.metas ?? (await listDictionaries())).filter((m) => !opts.dict?.length || opts.dict.includes(m.slug));
-  const dicts = await Promise.all(metas.map(load));
+  const all = opts.metas ?? (await listDictionaries());
+  const metas = all.filter((m) => !opts.dict?.length || opts.dict.includes(m.slug));
   const hits = new Map<string, { h: SearchHit; score: number }>();
   const add = (label: string, dict: string, match: SearchHit["match"], score: number) => {
     const key = label.toLowerCase();
@@ -181,74 +188,85 @@ export async function searchDictionaries(
     } else hits.set(key, { h: { headword: label, deva: "", match, dicts: [dict] }, score });
   };
 
-  if (opts.mode === "meaning") {
-    await meaningSearch(q, dicts, limit, add);
-  } else {
+  let note = "";
+  if (limit > 0 && opts.mode === "meaning") {
+    note = await meaningSearch(q, metas, opts.dict?.length ? metas : metas.slice(0, 2), limit, add);
+  } else if (limit > 0) {
     const keys = queryKeys(q);
-    for (const d of dicts) {
-      const slug = d.meta.slug;
-      for (const k of keys) {
-        // exact + prefix (sorted order = shortest first within a prefix)
-        let i = lowerBound(d, k);
+    for (const k of keys) {
+      const c = shardOf(k);
+      const loaded = await Promise.all(metas.map((m) => loadShard(m, c)));
+      loaded.forEach((s, di) => {
+        const slug = metas[di].slug;
+        let i = lowerBound(s.rows, k);
         let taken = 0;
-        while (i < d.sorted.length && taken < limit * 2) {
-          const t = d.sorted[i];
-          const key = d.termKey[t];
-          if (!key.startsWith(k)) break;
-          const exact = key === k;
-          add(d.termLabel[t], slug, exact ? "exact" : "prefix", (exact ? RANK.exact : RANK.prefix) + (key.length - k.length) / 1000);
+        while (i < s.rows.length && taken < limit * 2) {
+          const r = s.rows[i];
+          if (!r[0].startsWith(k)) break;
+          const exact = r[0] === k;
+          add(r[1], slug, exact ? "exact" : "prefix", (exact ? RANK.exact : RANK.prefix) + (r[0].length - k.length) / 1000);
           taken++;
           i++;
         }
-      }
-      // similar spellings (typos, missing diacritics): only when few results
-      if (hits.size < 12) {
-        for (const k of keys) {
-          if (k.length < 3) continue;
-          const max = k.length <= 5 ? 1 : 2;
-          const found: { t: number; dist: number }[] = [];
-          for (let t = 0; t < d.termKey.length; t++) {
-            const key = d.termKey[t];
-            if (key[0] !== k[0] || Math.abs(key.length - k.length) > max) continue;
-            const dist = distance(k, key, max);
-            if (dist <= max && dist > 0) found.push({ t, dist });
+      });
+      // similar spellings (typos, missing diacritics) when there are few results
+      if (hits.size < 12 && k.length >= 3) {
+        const max = k.length <= 5 ? 1 : 2;
+        loaded.forEach((s, di) => {
+          const found: { r: ShardRow; dist: number }[] = [];
+          for (const r of s.rows) {
+            if (Math.abs(r[0].length - k.length) > max) continue;
+            const dist = distance(k, r[0], max);
+            if (dist <= max && dist > 0) found.push({ r, dist });
           }
-          found.sort((a, b) => a.dist - b.dist).slice(0, 25).forEach(({ t, dist }) => add(d.termLabel[t], slug, "similar", RANK.similar + dist / 10));
-        }
+          found.sort((a, b) => a.dist - b.dist).slice(0, 20).forEach(({ r, dist }) => add(r[1], metas[di].slug, "similar", RANK.similar + dist / 10));
+        });
       }
-      // inside a word (compounds): last resort
-      if (hits.size < 6) {
-        for (const k of keys) {
-          if (k.length < 4) continue;
+      // inside a longer word (compounds) as a last resort
+      if (hits.size < 6 && k.length >= 4) {
+        loaded.forEach((s, di) => {
           let n = 0;
-          for (let t = 0; t < d.termKey.length && n < 30; t++) {
-            if (d.termKey[t].includes(k) && !d.termKey[t].startsWith(k)) {
-              add(d.termLabel[t], slug, "contains", RANK.contains + d.termKey[t].length / 1000);
+          for (const r of s.rows) {
+            if (n >= 20) break;
+            if (r[0].includes(k) && !r[0].startsWith(k)) {
+              add(r[1], metas[di].slug, "contains", RANK.contains + r[0].length / 1000);
               n++;
             }
           }
-        }
+        });
       }
     }
   }
 
-  const out = [...hits.values()]
+  const results = [...hits.values()]
     .sort((a, b) => a.score - b.score)
     .slice(0, limit)
     .map(({ h }) => ({ ...h, deva: iastToDeva(h.headword) }));
-  return { results: out, dictionaries: metas.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName })) };
+  return { results, note, dictionaries: all.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName })) };
 }
 
-// Meaning (reverse) search: English words inside definitions.
-const plainTexts = new Map<string, Promise<string[]>>();
+// Meaning (reverse) search over the definitions of a few dictionaries.
+const MEANING_MAX_BYTES = 80 * 1024 * 1024;
+const plainTexts = new Map<string, Promise<{ label: string; text: string }[]>>();
 
-async function textsOf(d: Loaded): Promise<string[]> {
-  const key = `${d.meta.id}:${d.meta.indexUrl}`;
+async function textsOf(meta: DictMeta) {
+  const key = `${meta.id}|${meta.indexUrl}`;
   let p = plainTexts.get(key);
   if (!p) {
-    p = readAllDefinitions(d.meta.files.dict).then((all) =>
-      d.ix.off.map((o, i) => fieldsToText(parseEntry(all.subarray(o, o + d.ix.size[i]), d.ix.sts || undefined)).toLowerCase())
-    );
+    p = (async () => {
+      const [all, letters] = await Promise.all([readAllDefinitions(meta.files.dict), shardLetters(meta)]);
+      const seen = new Set<number>();
+      const out: { label: string; text: string }[] = [];
+      for (const c of letters) {
+        const s = await loadShard(meta, c);
+        for (const r of s.rows) {
+          if (seen.has(r[2])) continue;
+          seen.add(r[2]);
+          out.push({ label: r[1], text: fieldsToText(parseEntry(all.subarray(r[2], r[2] + r[3]), meta.sts || undefined)).toLowerCase() });
+        }
+      }
+      return out;
+    })();
     p.catch(() => plainTexts.delete(key));
     plainTexts.set(key, p);
   }
@@ -257,26 +275,32 @@ async function textsOf(d: Loaded): Promise<string[]> {
 
 async function meaningSearch(
   q: string,
-  dicts: Loaded[],
+  _all: DictMeta[],
+  metas: DictMeta[],
   limit: number,
   add: (label: string, dict: string, match: SearchHit["match"], score: number) => void
-) {
+): Promise<string> {
   const words = q.toLowerCase().split(/\s+/).filter((w) => w.length >= 2).slice(0, 4);
-  if (!words.length) return;
+  if (!words.length) return "";
   const res = words.map((w) => new RegExp(`(^|[^a-z])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z])`));
-  for (const d of dicts) {
-    const texts = await textsOf(d);
+  const skipped: string[] = [];
+  for (const m of metas) {
+    if (m.totalBytes > MEANING_MAX_BYTES) {
+      skipped.push(m.shortName);
+      continue;
+    }
+    const texts = await textsOf(m);
     let n = 0;
-    for (let i = 0; i < texts.length && n < limit; i++) {
-      const t = texts[i];
-      if (!words.every((w) => t.includes(w))) continue;
-      if (!res.every((r) => r.test(t))) continue;
-      // earlier mention = more central to the entry
-      const pos = t.indexOf(words[0]);
-      add(d.ix.iast[i] || d.ix.words[i], d.meta.slug, "meaning", RANK.meaning + Math.min(pos, 5000) / 10000 + t.length / 1e7);
+    for (const t of texts) {
+      if (n >= limit) break;
+      if (!words.every((w) => t.text.includes(w)) || !res.every((r) => r.test(t.text))) continue;
+      add(t.label, m.slug, "meaning", RANK.meaning + Math.min(t.text.indexOf(words[0]), 5000) / 10000 + t.text.length / 1e7);
       n++;
     }
   }
+  return `Meanings searched in ${metas.filter((m) => !skipped.includes(m.shortName)).map((m) => m.shortName).join(", ") || "—"}${
+    skipped.length ? ` (too large for meaning search: ${skipped.join(", ")})` : ""
+  }. Choose dictionaries above to search others.`;
 }
 
 // ------------------------------------------------------------- entries
@@ -288,34 +312,36 @@ export type EntryResult = {
 
 export async function lookupHeadword(headword: string, opts: { dict?: string[]; metas?: DictMeta[] } = {}): Promise<EntryResult> {
   const label = headword.trim().toLowerCase().normalize("NFC");
+  const k = fold(label) || label;
+  const c = shardOf(k);
   const metas = (opts.metas ?? (await listDictionaries())).filter((m) => !opts.dict?.length || opts.dict.includes(m.slug));
   const out: EntryResult = { headword: headword.trim(), deva: iastToDeva(headword.trim()), entries: [] };
-  for (const meta of metas) {
-    const d = await load(meta);
-    let list = d.byLabel.get(label);
-    if (!list) {
-      // same folded key (e.g. typed without diacritics)
-      const k = fold(label);
-      const i = lowerBound(d, k);
-      const found: number[] = [];
-      for (let j = i; j < d.sorted.length && d.termKey[d.sorted[j]] === k && found.length < 5; j++) {
-        const e = d.termEntry[d.sorted[j]];
-        if (!found.includes(e)) found.push(e);
-      }
-      list = found;
+  const shards = await Promise.all(metas.map((m) => loadShard(m, c)));
+  const jobs: Promise<EntryResult["entries"][number] | null>[] = [];
+  metas.forEach((meta, di) => {
+    const s = shards[di];
+    let idxs = s.byLabel.get(label) ?? [];
+    if (!idxs.length) {
+      for (let i = lowerBound(s.rows, k); i < s.rows.length && s.rows[i][0] === k && idxs.length < 5; i++) idxs = [...idxs, i];
     }
-    for (const e of list.slice(0, 12)) {
-      const buf = await readDefinition(meta.files.dict, d.ix.off[e], d.ix.size[e]);
-      const html = parseEntry(buf, d.ix.sts || undefined).map(fieldToHtml).join("");
-      out.entries.push({ dict: meta.slug, dictName: meta.name, source: meta.source, headword: d.ix.iast[e] || d.ix.words[e], html });
+    const seen = new Set<number>();
+    for (const i of idxs.slice(0, 12)) {
+      const r = s.rows[i];
+      if (seen.has(r[2])) continue;
+      seen.add(r[2]);
+      jobs.push(
+        readDefinition(meta.files.dict, r[2], r[3])
+          .then((buf) => ({
+            dict: meta.slug,
+            dictName: meta.name,
+            source: meta.source,
+            headword: r[1],
+            html: parseEntry(buf, meta.sts || undefined).map(fieldToHtml).join(""),
+          }))
+          .catch(() => null)
+      );
     }
-  }
+  });
+  out.entries = (await Promise.all(jobs)).filter((e): e is EntryResult["entries"][number] => Boolean(e));
   return out;
-}
-
-/** For admin "test" panel: load one dictionary and report timings. */
-export async function warmDictionary(meta: DictMeta) {
-  const t0 = Date.now();
-  const d = await load(meta);
-  return { terms: d.termKey.length, ms: Date.now() - t0 };
 }

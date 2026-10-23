@@ -1,15 +1,22 @@
 import "server-only";
 import fs from "fs";
 import zlib from "zlib";
+import { fromRef, getObject } from "@/lib/storage/neon";
 
 // StarDict reader (the format GoldenDict uses): .ifo (info), .idx (sorted
 // headwords → offset/size), .dict or .dict.dz (definitions), .syn (synonyms).
-// Files are read straight from storage (Vercel Blob URLs, or file: paths in
-// tests). A .dict.dz is "dictzip": gzip with a chunk table, so any entry can
+// Files are read straight from storage ("s3:<key>" refs to Neon Object
+// Storage, https URLs, or file: paths in tests). A .dict.dz is "dictzip": gzip with a chunk table, so any entry can
 // be read by fetching and inflating only the chunk(s) that contain it.
 
 // ------------------------------------------------------------ byte access
-async function readBytes(url: string, start?: number, end?: number): Promise<Buffer> {
+export async function readBytes(url: string, start?: number, end?: number): Promise<Buffer> {
+  const key = fromRef(url);
+  if (key) {
+    const { buf, partial } = await getObject(key, start, end);
+    if (start !== undefined && !partial) return buf.subarray(start, end === undefined ? undefined : end + 1);
+    return buf;
+  }
   if (url.startsWith("file:")) {
     const buf = fs.readFileSync(new URL(url));
     return start === undefined ? buf : buf.subarray(start, end === undefined ? undefined : end + 1);

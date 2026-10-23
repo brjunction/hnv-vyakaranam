@@ -38,6 +38,7 @@ export default function DictionaryApp() {
   const [entryLoading, setEntryLoading] = useState(false);
   const [mobileEntry, setMobileEntry] = useState(false);
   const [ready, setReady] = useState(false);
+  const [note, setNote] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const searchAbort = useRef<AbortController | null>(null);
   const entryAbort = useRef<AbortController | null>(null);
@@ -74,7 +75,8 @@ export default function DictionaryApp() {
       setLoading(Boolean(q.trim()));
       try {
         const res = await fetch(`/api/dict/search?q=${encodeURIComponent(q)}&mode=${mode}${only.length ? `&d=${only.join(",")}` : ""}`, { signal: ac.signal });
-        const data = (await res.json()) as { results: Hit[]; dictionaries: DictInfo[] };
+        const data = (await res.json()) as { results: Hit[]; dictionaries: DictInfo[]; note?: string };
+        setNote(mode === "meaning" && q.trim() ? data.note ?? "" : "");
         if (!dicts.length && data.dictionaries) setDicts(data.dictionaries);
         setHits(q.trim() ? data.results ?? [] : []);
         setActive(0);
@@ -200,6 +202,8 @@ export default function DictionaryApp() {
             );
           })}
       </div>
+
+      {note && <p className="-mt-3 mb-5 text-xs text-[var(--fg-muted)]">{note}</p>}
 
       {noDicts ? (
         <div className="rounded-2xl border border-dashed border-[var(--border)] p-12 text-center">

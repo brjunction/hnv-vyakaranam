@@ -32,7 +32,7 @@ export default async function DictionariesAdmin() {
     <>
       <PageHeader
         title="Dictionaries"
-        intro="Add dictionaries in StarDict format (the same files GoldenDict uses). The files are kept as they are and read directly; only their details are stored in the database. Searching works in Devanagari, IAST, ITRANS, Harvard-Kyoto or plain letters."
+        intro="Add dictionaries in StarDict format (the same files GoldenDict uses) — one, or hundreds at once from folders or archives. The files are kept as they are in Neon Object Storage and read directly; only their details are in the database. Searching works in Devanagari, IAST, ITRANS, Harvard-Kyoto or plain letters."
         actions={
           <a href="/tools/dictionary/search" target="_blank" rel="noreferrer" className="a-btn a-btn-outline">
             <ExternalLink size={15} /> Open the dictionary
@@ -46,7 +46,10 @@ export default async function DictionariesAdmin() {
         </Panel>
       )}
 
-      <Panel title={`Installed (${list.length})`} description="Searched in this order. Switch one off to hide it without deleting.">
+      <Panel
+        title={`Installed (${list.length})`}
+        description={`Searched in this order. Switch one off to hide it without deleting. Storage used: ${(list.reduce((n, d) => n + d.totalBytes, 0) / 1073741824).toFixed(2)} GB of 5 GB.`}
+      >
         {list.length === 0 ? (
           <div className="flex flex-col items-center py-10 text-center text-[var(--a-fg-muted)]">
             <BookA size={28} strokeWidth={1.5} className="mb-3" />

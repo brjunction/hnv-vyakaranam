@@ -93,6 +93,9 @@ export default async function DictionariesAdmin() {
                         <Field label="Short name" hint="Shown on results, e.g. MW, Apte.">
                           <input name="shortName" defaultValue={d.shortName} className={inputCls} />
                         </Field>
+                        <Field label="Category" hint="Group in the dictionary picker, e.g. MW, Apte, Grammar.">
+                          <input name="category" defaultValue={d.category} className={inputCls} />
+                        </Field>
                         <Field label="Source / licence">
                           <input name="source" defaultValue={d.source} className={inputCls} placeholder="e.g. Cologne Digital Sanskrit Dictionaries" />
                         </Field>

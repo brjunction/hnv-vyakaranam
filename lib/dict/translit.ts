@@ -68,6 +68,7 @@ export function queryReadings(q: string): string[] {
     out.add(toIast(t, "itrans"));
     out.add(toIast(t, "hk"));
   }
+  if (/[."~]/.test(t)) out.add(toIast(t, "velthuis"));
   return [...out];
 }
 

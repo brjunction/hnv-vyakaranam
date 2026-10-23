@@ -465,3 +465,24 @@ body {
 .dict-article ol { list-style: decimal; padding-left: 1.4em; }
 .dict-article table { border-collapse: collapse; }
 .dict-article td, .dict-article th { border: 1px solid var(--border); padding: 0.25em 0.5em; }
+.dict-article .dict-plain { white-space: pre-wrap; }
+.dict-article .dict-table { max-width: 100%; overflow-x: auto; margin: 0.75em 0; border: 1px solid var(--border); border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.dict-article .dict-table table { width: max-content; min-width: 100%; font-size: 0.92em; }
+.dict-article .dict-table td, .dict-article .dict-table th { border: 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0.4em 0.75em; text-align: left; vertical-align: top; }
+.dict-article .dict-table tr:last-child > td, .dict-article .dict-table tr:last-child > th { border-bottom: 0; }
+.dict-article .dict-table td:last-child, .dict-article .dict-table th:last-child { border-right: 0; }
+.dict-article .dict-table tr:first-child > td, .dict-article .dict-table th { background: var(--bg-2); font-weight: 600; }
+.dict-article .dict-table tr:nth-child(even) > td { background: color-mix(in srgb, var(--bg-2) 45%, transparent); }
+.dict-article .dict-table td:has(> table), .dict-article .dict-table td:has(> .dict-table) { padding: 0; }
+.dict-article .dict-table .dict-table { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.dict-article .dc-red { color: #b42318; }
+.dict-article .dc-blue { color: #1d4ed8; }
+.dict-article .dc-green { color: #15803d; }
+.dict-article .dc-orange { color: #c2410c; }
+.dict-article .dc-muted { color: var(--fg-muted); }
+.dict-article .dc-accent { color: var(--accent); }
+.dark .dict-article .dc-red { color: #f97066; }
+.dark .dict-article .dc-blue { color: #84adff; }
+.dark .dict-article .dc-green { color: #6ce9a6; }
+.dark .dict-article .dc-orange { color: #fdb022; }
+.dict-noring:focus-visible, .dict-noring:focus { outline: none; }

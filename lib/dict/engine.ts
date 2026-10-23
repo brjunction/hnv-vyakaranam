@@ -27,8 +27,17 @@ export type DictMeta = {
   indexUrl: string;
   sts: string;
   totalBytes: number;
+  wordCount: number;
+  category: string;
   updatedAt: string;
 };
+
+/** Group for the picker: saved category, else the first folder under the uploaded root. */
+export function categoryFromRef(ifoRef: string): string {
+  const path = ifoRef.replace(/^s3:dict\/[^/]+\//, "");
+  const dirs = path.split("/").slice(0, -1);
+  return dirs.length >= 2 ? dirs[1] : "Other";
+}
 
 export const DICT_TAG = "dictionaries";
 
@@ -52,10 +61,12 @@ export const listDictionaries = unstable_cache(
         indexUrl: r.indexUrl,
         sts: (r.info as Record<string, string>).sametypesequence ?? "",
         totalBytes: r.totalBytes,
+        wordCount: r.wordCount,
+        category: r.category || categoryFromRef(r.files.ifo),
         updatedAt: r.updatedAt.toISOString(),
       }));
   },
-  ["dict:list:v2"],
+  ["dict:list:v3"],
   { tags: [DICT_TAG], revalidate: 3600 }
 );
 
@@ -242,7 +253,11 @@ export async function searchDictionaries(
     .sort((a, b) => a.score - b.score)
     .slice(0, limit)
     .map(({ h }) => ({ ...h, deva: iastToDeva(h.headword) }));
-  return { results, note, dictionaries: all.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName })) };
+  return {
+    results,
+    note,
+    dictionaries: all.map((m) => ({ slug: m.slug, name: m.name, shortName: m.shortName, category: m.category, words: m.wordCount })),
+  };
 }
 
 // Meaning (reverse) search over the definitions of a few dictionaries.
@@ -307,7 +322,7 @@ async function meaningSearch(
 export type EntryResult = {
   headword: string;
   deva: string;
-  entries: { dict: string; dictName: string; source: string; headword: string; html: string }[];
+  entries: { dict: string; dictName: string; category: string; source: string; headword: string; html: string }[];
 };
 
 export async function lookupHeadword(headword: string, opts: { dict?: string[]; metas?: DictMeta[] } = {}): Promise<EntryResult> {
@@ -334,6 +349,7 @@ export async function lookupHeadword(headword: string, opts: { dict?: string[]; 
           .then((buf) => ({
             dict: meta.slug,
             dictName: meta.name,
+            category: meta.category,
             source: meta.source,
             headword: r[1],
             html: parseEntry(buf, meta.sts || undefined).map(fieldToHtml).join(""),

@@ -282,6 +282,8 @@ export const dictionaries = pgTable("dictionaries", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   shortName: text("short_name").notNull().default(""),
+  /** Group in the dictionary picker (from the upload folder, editable). */
+  category: text("category").notNull().default(""),
   description: text("description").notNull().default(""),
   /** Source / licence note shown with entries. */
   source: text("source").notNull().default(""),

@@ -24,7 +24,7 @@ import {
   putObject,
   toRef,
 } from "@/lib/storage/neon";
-import { DICT_TAG } from "@/lib/dict/engine";
+import { DICT_TAG, categoryFromRef } from "@/lib/dict/engine";
 import { slugifyTitle } from "@/lib/hnv/slug";
 import { cleanStoragePath, guessScheme, isJunkPath, sampleIdxBytes } from "@/lib/dict/guess";
 import { parseIfo } from "@/lib/dict/stardict";
@@ -135,6 +135,7 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
         name,
         shortName: name.length <= 22 ? name : /\s/.test(name) && name.split(/\s+/).length >= 3 ? name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 8) : `${name.slice(0, 20)}…`,
         headwordScheme: scheme,
+        category: categoryFromRef(files.ifo),
         files,
         indexUrl: toRef(prefix),
         info: prepared.info,
@@ -188,6 +189,7 @@ const MetaInput = z.object({
   id: z.coerce.number().int().positive(),
   name: z.string().trim().min(1).max(160),
   shortName: z.string().trim().max(24),
+  category: z.string().trim().max(60),
   description: z.string().trim().max(1000),
   source: z.string().trim().max(500),
   isEnabled: z.boolean(),
@@ -199,6 +201,7 @@ export async function updateDictionary(_prev: ActionState, form: FormData): Prom
     id: form.get("id"),
     name: form.get("name"),
     shortName: form.get("shortName") ?? "",
+    category: form.get("category") ?? "",
     description: form.get("description") ?? "",
     source: form.get("source") ?? "",
     isEnabled: form.get("isEnabled") === "on",

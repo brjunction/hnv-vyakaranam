@@ -1,0 +1,1 @@
+ALTER TABLE "dictionaries" ADD COLUMN "category" text DEFAULT '' NOT NULL;

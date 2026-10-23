@@ -6,11 +6,11 @@ import EditionTabs from "@/components/EditionTabs";
 export default function EditionComingSoon({ slug }: { slug: Exclude<EditionSlug, "madhyama"> }) {
   const e = EDITIONS.find((x) => x.slug === slug)!;
   return (
-    <div className="max-w-4xl mx-auto px-5 py-16">
+    <div className="max-w-4xl mx-auto px-5 py-6 sm:py-8">
       <EditionTabs active={slug} />
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Table of contents</p>
-      <h1 className="text-3xl sm:text-4xl font-semibold mb-2">{e.name} Harināmāmṛta-vyākaraṇa</h1>
-      <p className="font-devanagari text-xl text-[var(--fg-muted)] mb-10">{e.deva} हरिनामामृतव्याकरणम्</p>
+      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-1">Table of contents</p>
+      <h1 className="text-xl sm:text-2xl font-semibold mb-1">{e.name} Harināmāmṛta-vyākaraṇa</h1>
+      <p className="font-devanagari text-base text-[var(--fg-muted)] mb-6">{e.deva} हरिनामामृतव्याकरणम्</p>
       <div className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center">
         <p className="text-lg font-medium mb-2">The {e.name} sūtras are being prepared.</p>
         <p className="text-[var(--fg-muted)] max-w-md mx-auto mb-6">

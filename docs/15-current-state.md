@@ -220,3 +220,21 @@ paste large content through SQL (use the in-app import).
   `/api/scriptures/loc`, `/api/scriptures/search`. `/anvyaya/**` → 308.
   The xlsx files under `content/anvyaya` and all old Anvyaya code are gone.
 - **Sitemap** lists every published book, division and verse from Neon.
+
+## 11. Update 2026-10-23 (later) — catalog, reader controls, notebook
+
+- **Migration 0007** (`main` only): `scripture_categories` + `books.category_id`.
+  12 categories in 4 sections; 97 books (SB, BG with text; the rest "coming
+  soon", each with a Translation kind and a guessed level structure the
+  editors can change in Settings). CC is published as coming soon.
+- `/scriptures`: Ready to read → jump bar → sections → category panels.
+  Admin: grouped, filterable book table; Categories page; category in book
+  settings.
+- Reader: commentary = one searchable dropdown (dots = has text);
+  per-pane text size; script picker as dropdown; new UI kit (`.ui-btn`,
+  `.ui-icon-btn`, `.ui-seg`, `.ui-trigger`, `components/ui/Select.tsx`,
+  portal popover, bottom sheet on phones), light & dark.
+- Chapter page: all verses, view switch + commentary choice + Anvaya toggle.
+- Notebook: `components/notebook/Notebook.tsx` (header button + drawer),
+  `/notes`; `/scriptures/mine` → `/notes`. Per-verse bookmarks/notes removed;
+  "Continue reading" kept.

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { BookOpen, Layers, MessageSquareText, Plus, ScrollText } from "lucide-react";
+import { BookOpen, FolderTree, Plus } from "lucide-react";
 import { hasRole, requireUser } from "@/lib/auth/session";
-import { listBooksAdmin, recentScriptureActivity } from "@/lib/data/scripturesAdmin";
+import { listBooksAdmin, listCategoriesAdmin, recentScriptureActivity } from "@/lib/data/scripturesAdmin";
+import RowFilter from "@/components/admin/scriptures/RowFilter";
 import { moveBook } from "@/lib/actions/scriptures";
 import { PageHeader, Panel, Stat } from "@/components/admin/ui";
 import { MoveButtons } from "@/components/admin/hnv/bits";
@@ -20,7 +21,11 @@ const TABLE: Record<string, string> = {
 
 export default async function ScripturesAdmin() {
   const user = await requireUser("viewer");
-  const [list, activity] = await Promise.all([listBooksAdmin(), recentScriptureActivity(12)]);
+  const [list, activity, cats] = await Promise.all([listBooksAdmin(), recentScriptureActivity(12), listCategoriesAdmin()]);
+  const groups = [
+    ...cats.map((c) => ({ key: String(c.id), name: c.name, section: c.section, books: list.filter((b) => b.categoryId === c.id) })),
+    { key: "none", name: "No category", section: "", books: list.filter((b) => !cats.some((c) => c.id === b.categoryId)) },
+  ].filter((g) => g.books.length);
   const canEdit = hasRole(user, "editor");
   const totals = list.reduce((a, b) => ({ v: a.v + b.verses, d: a.d + b.divisions, c: a.c + b.commentaries, dr: a.dr + b.drafts }), { v: 0, d: 0, c: 0, dr: 0 });
 
@@ -39,7 +44,7 @@ export default async function ScripturesAdmin() {
       />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Scriptures" value={list.length} note={`${list.filter((b) => b.status === "published").length} published`} />
+        <Stat label="Scriptures" value={list.length} note={`${list.filter((b) => b.verses > 0).length} with text · ${list.filter((b) => b.verses === 0).length} coming soon`} />
         <Stat label="Divisions" value={totals.d.toLocaleString()} note="cantos, chapters, parts …" />
         <Stat label="Verses" value={totals.v.toLocaleString()} />
         <Stat label="Commentary entries" value={totals.c.toLocaleString()} note={totals.dr ? `${totals.dr} drafts waiting` : "no drafts waiting"} />
@@ -56,52 +61,69 @@ export default async function ScripturesAdmin() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {list.map((b) => (
-            <div key={b.id} className="a-card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-[var(--a-shadow-lg)]">
-              <Link href={`/admin/scriptures/${b.code}`} className="flex flex-1 gap-4 p-5">
-                <div className="flex h-24 w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--a-border)] bg-gradient-to-br from-[#f1ead6] to-[#e2d6ae] text-[#0d1a16] shadow-sm dark:from-[#16291f] dark:to-[#0f1e19] dark:text-[#e8c766]">
-                  {b.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.coverUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="font-devanagari text-2xl">{(b.titleDeva || b.abbrev || b.title).slice(0, 2)}</span>
-                  )}
+        <>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <RowFilter target="book-table" placeholder="Filter by title or author…" />
+            <Link href="/admin/scriptures/categories" className="a-btn a-btn-outline">
+              <FolderTree size={15} /> Categories
+            </Link>
+          </div>
+          <div id="book-table" className="grid gap-5">
+            {groups.map((g) => (
+              <section key={g.key} data-group className="a-card overflow-hidden">
+                <div className="flex items-baseline justify-between gap-3 border-b border-[var(--a-border)] bg-[var(--a-muted)]/50 px-5 py-2.5">
+                  <h2 className="text-sm font-semibold">
+                    {g.section && <span className="font-normal text-[var(--a-fg-muted)]">{g.section} › </span>}
+                    {g.name}
+                  </h2>
+                  <span className="text-xs text-[var(--a-fg-muted)]">{g.books.length} books</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-semibold leading-snug">{b.title}</h2>
-                    <StatusPill status={b.status} />
-                  </div>
-                  {b.titleDeva && <p className="font-devanagari text-sm text-[var(--a-fg-muted)]">{b.titleDeva}</p>}
-                  <p className="mt-1 text-xs text-[var(--a-fg-muted)]">
-                    <code className="rounded bg-[var(--a-muted)] px-1">/{b.code}</code> · {b.levels.join(" → ")} → {b.verseLabel}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--a-fg-muted)]">
-                    <span className="inline-flex items-center gap-1">
-                      <Layers size={13} /> {b.divisions.toLocaleString()} divisions
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <ScrollText size={13} /> {b.verses.toLocaleString()} {b.verseLabelPlural.toLowerCase()}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquareText size={13} /> {b.types} commentar{b.types === 1 ? "y" : "ies"}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-              <div className="flex items-center justify-between border-t border-[var(--a-border)] bg-[var(--a-muted)]/40 px-5 py-2.5 text-xs text-[var(--a-fg-muted)]">
-                <span>{b.drafts ? `${b.drafts} draft${b.drafts === 1 ? "" : "s"} waiting` : `Updated ${b.updatedAt.toISOString().slice(0, 10)}`}</span>
-                <span className="flex items-center gap-2">
-                  <Link href={`/admin/scriptures/${b.code}/progress`} className="hover:text-[var(--a-fg)] hover:underline">
-                    Progress
-                  </Link>
-                  {canEdit && <MoveButtons action={moveBook} id={b.id} />}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+                <ul className="divide-y divide-[var(--a-border)]">
+                  {g.books.map((b) => (
+                    <li key={b.id} data-text={`${b.title} ${b.titleDeva} ${b.author} ${b.code} ${b.abbrev}`.toLowerCase()} data-state={b.verses > 0 ? "ready" : "soon"} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 hover:bg-[var(--a-muted)]/30">
+                      <Link href={`/admin/scriptures/${b.code}`} className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--a-border)] bg-[var(--a-muted)] font-devanagari text-sm">
+                          {b.coverUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={b.coverUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            (b.titleDeva || b.abbrev || b.title).replace(/^श्री\s*/, "").slice(0, 2)
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate font-medium hover:underline">{b.title}</span>
+                            <StatusPill status={b.status} />
+                          </span>
+                          <span className="block truncate text-xs text-[var(--a-fg-muted)]">
+                            {b.author ? `${b.author} · ` : ""}
+                            {b.levels.join(" → ")} → {b.verseLabel} · /{b.code}
+                          </span>
+                        </span>
+                      </Link>
+                      <span className="flex items-center gap-4 text-xs tabular-nums text-[var(--a-fg-muted)]">
+                        {b.verses > 0 ? (
+                          <span className="rounded-full bg-[var(--a-success)]/10 px-2 py-0.5 font-medium text-[var(--a-success)]">
+                            {b.verses.toLocaleString()} {b.verseLabelPlural.toLowerCase()}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-[var(--a-muted)] px-2 py-0.5">coming soon</span>
+                        )}
+                        <span className="hidden sm:inline">{b.divisions} div.</span>
+                        <span className="hidden sm:inline">{b.types} kinds</span>
+                        {b.drafts > 0 && <span className="text-amber-600">{b.drafts} drafts</span>}
+                        <Link href={`/admin/scriptures/${b.code}/progress`} className="hover:text-[var(--a-fg)] hover:underline">
+                          Progress
+                        </Link>
+                        {canEdit && <MoveButtons action={moveBook} id={b.id} />}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </>
       )}
 
       {activity.length > 0 && (

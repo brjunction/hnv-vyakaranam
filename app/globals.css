@@ -68,31 +68,6 @@ body {
   * { transition: none !important; animation: none !important; }
 }
 
-/*
- * Content pulled live from a Google Doc (sūtra notes, Miscellaneous page).
- * The doc's own colors/fonts/alignment come from a scoped <style> block
- * rendered alongside this content (see lib/googleDocs.ts) and are NOT
- * overridden here. These rules only add sane defaults/safety nets: images
- * that don't blow out their container, wide tables that scroll instead of
- * overflowing, and a little breathing room between paragraphs.
- */
-.gdoc-content img {
-  max-width: 100%;
-  height: auto;
-}
-.gdoc-content table {
-  display: block;
-  overflow-x: auto;
-  max-width: 100%;
-}
-.gdoc-content p {
-  margin-bottom: 0.75em;
-}
-.gdoc-content a {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 /* =========================================================================
  * Scripture Anvyayas — richer styling than the HNV pages
  * ========================================================================= */
@@ -540,11 +515,9 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--fg-muted);
 }
 .translation-head::before, .translation-head::after {
@@ -566,3 +539,132 @@ body {
 .verse-lg.verse-indic { font-size: 1.22em; }
 .verse-md.verse-latn { font-size: 1em; }
 .verse-md.verse-indic { font-size: 1.1em; }
+
+/* ===================================================================
+   Public UI kit — controls in the owner's palette, light AND dark.
+   (.ui-btn, .ui-icon-btn, .ui-seg, .ui-pop, .ui-opt)
+   =================================================================== */
+:root {
+  --ctl-bg: color-mix(in srgb, var(--bg) 55%, #ffffff);
+  --ctl-bg-hover: color-mix(in srgb, var(--bg-2) 70%, #ffffff);
+  --ctl-border: color-mix(in srgb, var(--border) 85%, var(--fg) 8%);
+  --ctl-shadow: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 1px 2px rgb(13 26 22 / 0.06);
+  --ctl-on-bg: color-mix(in srgb, var(--accent) 16%, var(--ctl-bg));
+  --ctl-on-border: color-mix(in srgb, var(--accent) 70%, var(--border));
+  --pop-bg: color-mix(in srgb, var(--bg) 70%, #ffffff);
+  --pop-shadow: 0 1px 2px rgb(13 26 22 / 0.06), 0 18px 44px -16px rgb(13 26 22 / 0.32);
+}
+.dark {
+  --ctl-bg: color-mix(in srgb, var(--bg-2) 85%, #000000);
+  --ctl-bg-hover: color-mix(in srgb, var(--bg-2) 70%, #ffffff 6%);
+  --ctl-border: color-mix(in srgb, var(--border) 80%, #ffffff 10%);
+  --ctl-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px rgb(0 0 0 / 0.35);
+  --ctl-on-bg: color-mix(in srgb, var(--accent) 18%, var(--ctl-bg));
+  --ctl-on-border: color-mix(in srgb, var(--accent) 65%, var(--border));
+  --pop-bg: color-mix(in srgb, var(--bg-2) 92%, #000000);
+  --pop-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 22px 50px -18px rgb(0 0 0 / 0.75);
+}
+.ui-btn, .ui-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+  height: 2.25rem; border-radius: 999px; border: 1px solid var(--ctl-border);
+  background: var(--ctl-bg); color: var(--fg); box-shadow: var(--ctl-shadow);
+  font-size: 0.875rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .05s ease;
+}
+.ui-btn { padding: 0 0.9rem; }
+.ui-icon-btn { width: 2.25rem; padding: 0; }
+.ui-btn:hover, .ui-icon-btn:hover { background: var(--ctl-bg-hover); border-color: var(--ctl-on-border); }
+.ui-btn:active, .ui-icon-btn:active { transform: translateY(0.5px); }
+.ui-btn[aria-pressed="true"], .ui-icon-btn[aria-pressed="true"], .ui-btn.is-on { background: var(--ctl-on-bg); border-color: var(--ctl-on-border); }
+.ui-btn:disabled, .ui-icon-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ui-btn svg, .ui-icon-btn svg { color: var(--fg-muted); flex-shrink: 0; }
+.ui-btn:hover svg, .ui-icon-btn:hover svg { color: var(--fg); }
+.ui-btn-sm { height: 1.9rem; font-size: 0.8rem; padding: 0 0.7rem; }
+.ui-icon-btn.ui-btn-sm { width: 1.9rem; padding: 0; }
+.ui-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--color-ink); font-weight: 600; }
+.ui-btn-primary svg { color: var(--color-ink); }
+.ui-btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, #ffffff); border-color: var(--accent); }
+
+.ui-seg {
+  display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-2) 80%, transparent); border: 1px solid var(--ctl-border);
+}
+.ui-seg > button {
+  height: 1.9rem; padding: 0 0.85rem; border-radius: 999px; font-size: 0.82rem; color: var(--fg-muted);
+  display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; transition: background-color .15s, color .15s, box-shadow .15s;
+}
+.ui-seg > button:hover { color: var(--fg); }
+.ui-seg > button[aria-pressed="true"], .ui-seg > button[aria-selected="true"] {
+  background: var(--ctl-bg); color: var(--fg); font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--ctl-on-border);
+}
+
+.ui-trigger {
+  display: inline-flex; align-items: center; gap: 0.5rem; height: 2.25rem; max-width: 100%;
+  padding: 0 0.55rem 0 0.85rem; border-radius: 999px; border: 1px solid var(--ctl-border);
+  background: var(--ctl-bg); box-shadow: var(--ctl-shadow); color: var(--fg); font-size: 0.875rem; text-align: left;
+  transition: background-color .15s, border-color .15s;
+}
+.ui-trigger:hover, .ui-trigger[aria-expanded="true"] { background: var(--ctl-bg-hover); border-color: var(--ctl-on-border); }
+.ui-trigger .ui-trigger-label { color: var(--fg-muted); font-size: 0.8rem; font-weight: 400; }
+.ui-trigger .ui-trigger-label-lg { font-size: 0.75rem; line-height: 1.1; margin-bottom: 1px; }
+.ui-trigger-lg .ui-trigger-value { font-size: 0.95rem; font-weight: 500; }
+.ui-trigger-meta { margin-left: auto; padding-left: .5rem; font-size: .78rem; color: var(--fg-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ui-trigger .ui-trigger-value { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ui-trigger .ui-chev { color: var(--fg-muted); transition: transform .15s; flex-shrink: 0; }
+.ui-trigger[aria-expanded="true"] .ui-chev { transform: rotate(180deg); }
+.ui-trigger-lg { height: auto; min-height: 3rem; border-radius: 0.9rem; padding: 0.45rem 0.7rem 0.45rem 0.9rem; width: 100%; }
+
+.ui-pop {
+  position: fixed; z-index: 90; background: var(--pop-bg); color: var(--fg);
+  border: 1px solid var(--ctl-border); border-radius: 0.9rem; box-shadow: var(--pop-shadow);
+  padding: 0.35rem; overflow: hidden; display: flex; flex-direction: column;
+  animation: ui-pop-in .12s ease-out;
+}
+@keyframes ui-pop-in { from { opacity: 0; transform: translateY(-4px) scale(.985); } to { opacity: 1; transform: none; } }
+.ui-pop-search { display: flex; align-items: center; gap: .45rem; margin: .15rem .15rem .35rem; padding: 0 .6rem; height: 2.1rem; border-radius: .6rem; background: color-mix(in srgb, var(--bg-2) 70%, transparent); border: 1px solid var(--ctl-border); }
+.ui-pop-search input { flex: 1; background: transparent; outline: none; font-size: .85rem; min-width: 0; }
+.ui-pop-list { overflow-y: auto; overscroll-behavior: contain; }
+.ui-pop-group { padding: .6rem .6rem .25rem; font-size: .78rem; font-weight: 600; color: var(--fg-muted); }
+.ui-opt {
+  display: flex; align-items: flex-start; gap: .6rem; width: 100%; text-align: left; padding: .5rem .6rem; border-radius: .6rem;
+  font-size: .875rem; color: var(--fg); cursor: pointer;
+}
+.ui-opt[data-active="true"] { background: color-mix(in srgb, var(--bg-2) 85%, transparent); }
+.ui-opt[aria-selected="true"] { background: var(--ctl-on-bg); font-weight: 600; }
+.ui-opt-sub { display: block; font-size: .72rem; font-weight: 400; color: var(--fg-muted); margin-top: .05rem; }
+.ui-opt-dot { margin-top: .42rem; width: .5rem; height: .5rem; border-radius: 999px; flex-shrink: 0; }
+.ui-opt-dot.on { background: var(--accent); }
+.ui-opt-dot.off { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--fg-muted) 55%, transparent); }
+.ui-opt-badge { margin-left: auto; font-size: .7rem; color: var(--fg-muted); padding-top: .1rem; white-space: nowrap; }
+@media (max-width: 639px) {
+  .ui-pop.ui-pop-sheet { left: 0 !important; right: 0 !important; bottom: 0 !important; top: auto !important; width: auto !important; max-height: 75dvh !important;
+    border-radius: 1.25rem 1.25rem 0 0; padding-bottom: max(.5rem, env(safe-area-inset-bottom)); animation: ui-sheet-in .18s ease-out; }
+  @keyframes ui-sheet-in { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+.ui-backdrop { position: fixed; inset: 0; z-index: 89; }
+@media (max-width: 639px) { .ui-backdrop.ui-dim { background: rgb(0 0 0 / .35); } }
+
+/* =========================================================================
+ * More page (sections from /admin/more)
+ * ========================================================================= */
+.more-badge {
+  display: inline-flex; align-items: center; border-radius: 999px; padding: 0.05rem 0.5rem;
+  font-size: 11px; font-weight: 500; line-height: 1.5;
+  background: color-mix(in srgb, var(--color-gold) 16%, transparent);
+  color: var(--fg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 40%, transparent);
+}
+.more-badge-float { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(4px); }
+.more-course-fallback, .more-post-fallback, .more-video-fallback {
+  display: block; color: color-mix(in srgb, var(--color-gold) 75%, var(--fg));
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--color-saffron) 26%, transparent), transparent 60%),
+    radial-gradient(120% 90% at 100% 100%, color-mix(in srgb, var(--color-gold) 30%, transparent), transparent 60%),
+    var(--bg-2);
+}
+.more-video-fallback { background: radial-gradient(100% 80% at 30% 20%, #3a2a1a, #0d1a16); }
+.more-stage { background: var(--bg-2); }
+.more-stage-done .more-stage-icon { color: #2f9e62; }
+.more-stage-doing .more-stage-icon { color: var(--color-saffron); }
+.more-stage-planned .more-stage-icon { color: var(--fg-muted); }
+.more-stage-doing { background: color-mix(in srgb, var(--color-saffron) 9%, var(--bg-2)); }

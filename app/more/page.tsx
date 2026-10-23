@@ -1,69 +1,46 @@
 import type { Metadata } from "next";
-import { getMiscDoc } from "@/lib/miscDoc";
+import { getMoreSections } from "@/lib/data/more";
+import PageHead from "@/components/PageHead";
+import { SectionBody, SectionHeading } from "@/components/more/Sections";
 
 export const metadata: Metadata = {
   title: "More",
-  description: "Miscellaneous — occasional blogs and reading for students of Hari-nāmāmṛta Vyākaraṇa.",
+  description: "Courses, YouTube playlists, resources, updates and the development progress of the Harināmāmṛta-Vyākaraṇam website.",
+  alternates: { canonical: "/more" },
 };
 
-// Rendered fresh on every request so Google Doc edits appear immediately.
-export const dynamic = "force-dynamic";
+// Static; rebuilt when anything is changed in /admin/more.
+export const revalidate = false;
 
 export default async function More() {
-  const doc = await getMiscDoc();
-
+  const sections = await getMoreSections();
   return (
-    <div className="max-w-5xl mx-auto px-5 py-16">
-      {doc.styleCss && <style dangerouslySetInnerHTML={{ __html: doc.styleCss }} />}
-
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">More</p>
-      <h1 className="text-3xl sm:text-4xl font-semibold mb-4">Further resources</h1>
-      <p className="text-[var(--fg-muted)] mb-12 max-w-xl">
-        Occasional blogs and reading, in progress.
-      </p>
-
-      {doc.sections.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">
-          Nothing published here yet — content is pulled live from the Miscellaneous Google Doc
-          once its link is added to <code>lib/config.ts</code>.
-        </div>
-      ) : (
-        <div className="space-y-16">
-          {doc.sections.map((section) => (
-            <section key={section.key}>
-              <h2 className="text-2xl font-semibold mb-6">{section.title}</h2>
-              <div className="grid sm:grid-cols-2 gap-6">
-                {section.extras.map((extra) => (
-                  <article
-                    key={extra.key}
-                    className="rounded-xl border border-[var(--border)] overflow-hidden flex flex-col"
-                  >
-                    {extra.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={extra.image} alt={extra.title} className="w-full h-44 object-cover" />
-                    )}
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="font-medium text-lg mb-1">{extra.title}</h3>
-                      {extra.subtitle && (
-                        <p className="text-sm text-[var(--fg-muted)] mb-4">{extra.subtitle}</p>
-                      )}
-                      {/*
-                        Rendered exactly as formatted in the Google Doc — the
-                        scoped <style> above supplies the real
-                        colors/alignment/fonts Google Docs assigned.
-                      */}
-                      <div
-                        className={`gdoc-content ${doc.scopeClass} text-sm leading-relaxed`}
-                        dangerouslySetInnerHTML={{ __html: extra.bodyHtml }}
-                      />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-    </div>
+    <>
+      <PageHead title="More" intro="Courses, playlists, resources and news around Harināmāmṛta-Vyākaraṇam." />
+      <div className="mx-auto max-w-6xl px-5 pb-16 pt-6">
+        {sections.length > 1 && (
+          <nav aria-label="Sections" className="mb-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {sections.map((s) => (
+              <a key={s.key} href={`#${s.key}`} className="ui-btn ui-btn-sm shrink-0">
+                {s.title}
+                {s.items.length > 0 && <span className="tabular-nums text-[var(--fg-muted)]">{s.items.length}</span>}
+              </a>
+            ))}
+          </nav>
+        )}
+        {sections.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">Nothing here yet.</p>
+        ) : (
+          <div className="space-y-12">
+            {sections.map((s) => (
+              <section key={s.key} id={s.key} className="scroll-mt-24">
+                <SectionHeading s={s} link={s.kind === "posts" && s.items.length > 5} />
+                <SectionBody s={s} limit={s.kind === "posts" ? 5 : undefined} />
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

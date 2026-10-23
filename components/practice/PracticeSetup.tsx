@@ -128,14 +128,14 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
   if (!chapter) {
     return (
       <div className="anv-fade">
-        <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 1 of 3</p>
-        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">Choose a chapter to practice</h2>
-        <p className="text-center text-[var(--fg-muted)] mb-8 max-w-md mx-auto">
+        <p className="text-xs font-semibold text-[var(--color-saffron)] mb-1 text-center">Step 1 of 3</p>
+        <h2 className="text-lg sm:text-xl font-semibold text-center mb-1">Choose a chapter to practice</h2>
+        <p className="text-center text-sm text-[var(--fg-muted)] mb-5 max-w-md mx-auto">
           The full HNV curriculum is listed below. Locked chapters are coming soon.
         </p>
 
         <p className="text-sm font-semibold text-[var(--fg)] max-w-4xl mx-auto mb-3">Ready now</p>
-        <div className="grid sm:grid-cols-2 gap-4 max-w-4xl mx-auto mb-10">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6">
           {PRACTICE_CHAPTERS.filter((c) => c.available).map((c) => (
             <ChapterCard key={c.slug} chapter={c} onSelect={setChapterSlug} />
           ))}
@@ -143,7 +143,7 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
         </div>
 
         <p className="text-sm font-semibold text-[var(--fg-muted)] max-w-4xl mx-auto mb-3">Coming soon</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto mb-14">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto mb-8">
           {PRACTICE_CHAPTERS.filter((c) => !c.available).map((c) => (
             <ChapterCard key={c.slug} chapter={c} onSelect={setChapterSlug} />
           ))}
@@ -180,7 +180,7 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
         ← Choose a different chapter
       </button>
 
-      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 2 of 3</p>
+      <p className="text-xs font-semibold text-[var(--color-saffron)] mb-1 text-center">Step 2 of 3</p>
       <h2 className="text-2xl font-semibold text-center mb-2">Pick a topic</h2>
       <p className="text-center text-[var(--fg-muted)] mb-8 font-devanagari text-lg">{chapter.title}</p>
 
@@ -214,7 +214,7 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
         ))}
       </div>
 
-      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Sandhi or Sandhi-viccheda?</p>
+      <p className="text-xs font-semibold text-[var(--color-saffron)] mb-1 text-center">Sandhi or Sandhi-viccheda?</p>
       <div className="flex flex-wrap justify-center gap-3 mb-10">
         {(
           [
@@ -237,7 +237,7 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
         ))}
       </div>
 
-      <p className="text-sm font-semibold text-[var(--color-saffron)] mb-3 text-center">Step 3 of 3 — difficulty</p>
+      <p className="text-xs font-semibold text-[var(--color-saffron)] mb-1 text-center">Step 3 of 3 — difficulty</p>
       <div className="flex flex-wrap justify-center gap-3 mb-10">
         {DIFFICULTIES.map((d) => (
           <button

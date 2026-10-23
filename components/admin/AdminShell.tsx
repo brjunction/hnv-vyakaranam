@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  LayoutDashboard, ListTree, Library, Dumbbell, BookA, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound,
+  LayoutDashboard, LayoutGrid, ListTree, Library, Dumbbell, BookA, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound,
   PanelLeftClose, PanelLeftOpen, Menu, X, Sun, Moon, ExternalLink, LogOut, ChevronsUpDown, type LucideIcon,
 } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
@@ -20,6 +20,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { href: "/admin/scriptures", label: "Scriptures", icon: Library },
       { href: "/admin/practice", label: "Practice", icon: Dumbbell },
       { href: "/admin/dictionaries", label: "Dictionaries", icon: BookA },
+      { href: "/admin/more", label: "More page", icon: LayoutGrid },
     ],
   },
   {

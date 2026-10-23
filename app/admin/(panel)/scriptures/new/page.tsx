@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth/session";
+import { listCategoriesAdmin } from "@/lib/data/scripturesAdmin";
 import { PageHeader } from "@/components/admin/ui";
 import { Crumbs } from "@/components/admin/hnv/bits";
 import BookForm from "@/components/admin/scriptures/BookForm";
@@ -11,7 +12,7 @@ export default async function NewBook() {
     <>
       <Crumbs items={[{ label: "Scriptures", href: "/admin/scriptures" }, { label: "New" }]} />
       <PageHeader title="New scripture" intro="Name it, choose how it is divided, and you can start adding chapters and verses right away. It stays hidden (draft) until you publish it." />
-      <BookForm isNew />
+      <BookForm isNew categories={await listCategoriesAdmin()} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TOOL_GROUPS, toolHref } from "@/lib/tools";
+import PageHead from "@/components/PageHead";
 
 export const metadata: Metadata = {
   title: "Tools",
@@ -9,13 +10,10 @@ export const metadata: Metadata = {
 
 export default function ToolsPage() {
   return (
-    <div className="max-w-6xl mx-auto px-5 py-16">
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Tools</p>
-      <h1 className="text-3xl sm:text-4xl font-semibold mb-3">Tools for study</h1>
-      <p className="text-[var(--fg-muted)] max-w-2xl mb-12">
-        Dictionaries, grammar tools that show the sūtra behind every change, and everyday text utilities.
-      </p>
-      <div className="space-y-12">
+    <>
+    <PageHead title="Tools" intro="Dictionaries, grammar tools that show the sūtra behind every change, and text utilities." />
+    <div className="max-w-6xl mx-auto px-5 py-8">
+      <div className="space-y-10">
         {TOOL_GROUPS.map((g) => (
           <section key={g.slug}>
             <h2 className="text-xl font-semibold mb-1">{g.name}</h2>
@@ -57,5 +55,6 @@ export default function ToolsPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }

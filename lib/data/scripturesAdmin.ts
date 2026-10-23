@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import {
   audioLinks,
   books,
+  scriptureCategories,
   scriptureCommentaries,
   scriptureCommentaryTypes,
   scriptureDivisions,
@@ -43,6 +44,7 @@ export async function listBooksAdmin() {
     types: n(types, b.id),
     drafts: n(drafts, b.id),
     updatedAt: b.updatedAt,
+    categoryId: b.categoryId,
   }));
 }
 
@@ -311,4 +313,19 @@ export async function recentScriptureActivity(limit = 15) {
     .where(sql`${revisions.entityTable} in ('books','scripture_divisions','scripture_verses','scripture_commentaries','scripture_commentary_types')`)
     .orderBy(sql`${revisions.createdAt} desc`)
     .limit(limit);
+}
+
+export async function listCategoriesAdmin() {
+  return getDb()
+    .select({
+      id: scriptureCategories.id,
+      key: scriptureCategories.key,
+      name: scriptureCategories.name,
+      description: scriptureCategories.description,
+      section: scriptureCategories.section,
+      sort: scriptureCategories.sort,
+      books: sql<number>`(select count(*)::int from ${books} where ${books.categoryId} = ${scriptureCategories.id})`,
+    })
+    .from(scriptureCategories)
+    .orderBy(asc(scriptureCategories.sort), asc(scriptureCategories.id));
 }

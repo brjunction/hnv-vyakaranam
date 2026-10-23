@@ -1,46 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpenText, BookmarkCheck, ChevronDown, ChevronsDownUp, ChevronsUpDown, NotebookPen } from "lucide-react";
-import { ScriptPicker, SizeControl, VerseCompanions } from "@/components/scriptures/Panes";
-import { CommentaryNav } from "@/components/scriptures/CommentaryNav";
+import { BookOpenText, MessageSquareText } from "lucide-react";
+import { AnvayaBlock, ScriptPicker, SizeControl, TranslationBlock } from "@/components/scriptures/Panes";
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
-import { useMarks, useNotes, useReaderPrefs } from "@/components/scriptures/prefs";
-import { versePath, verseRef, type DivisionData } from "@/lib/scriptures/core";
+import { useReaderPrefs } from "@/components/scriptures/prefs";
+import Select from "@/components/ui/Select";
+import { versePath, type DivisionData } from "@/lib/scriptures/core";
+
+// A whole chapter on one page: every verse at once, with a view switch —
+// Verses · + Translation · + Commentary (choose which) — and an Anvaya toggle.
 
 export default function ChapterView({ data }: { data: DivisionData }) {
   const { book, division, verses, types } = data;
   const [prefs, setPrefs] = useReaderPrefs();
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const bookmarks = useMarks("bookmarks");
-  const { notes } = useNotes();
   const verseTypes = types.filter((t) => t.appliesTo !== "division");
-  const hasComm = verseTypes.some((t) => t.pane === "commentary");
+  const anvayaT = verseTypes.filter((t) => t.pane === "anvaya");
+  const transT = verseTypes.filter((t) => t.pane === "translation");
+  const wfwT = verseTypes.filter((t) => t.pane === "verse");
+  const commT = verseTypes.filter((t) => t.pane === "commentary");
   const divTypes = types.filter((t) => t.appliesTo !== "verse" && division.c[t.id]);
-  useEffect(() => {
-    if (prefs.expandAll) setOpen(new Set(verses.map((v) => v.key)));
-  }, [prefs.expandAll, verses]);
-  // open the verse in the URL hash (#12)
-  useEffect(() => {
-    const h = decodeURIComponent(window.location.hash.slice(1));
-    if (h && verses.some((v) => v.key === h)) {
-      setOpen((o) => new Set([...o, h]));
-      setTimeout(() => document.getElementById(`v-${h}`)?.scrollIntoView({ block: "start" }), 50);
-    }
-  }, [verses]);
-
-  const toggle = (k: string) => setOpen((o) => (o.has(k) ? new Set([...o].filter((x) => x !== k)) : new Set([...o, k])));
+  const mode = commT.length ? prefs.chapterMode : prefs.chapterMode === "commentary" ? "translation" : prefs.chapterMode;
+  const commKey = prefs.chapterComm[book.code] ?? commT.find((t) => verses.some((v) => v.c[t.id]))?.key ?? commT[0]?.key;
+  const comm = commT.find((t) => t.key === commKey) ?? commT[0];
   const font = { fontSize: `${prefs.fontScale}rem` };
   const commFont = { fontSize: `${prefs.commScale}rem` };
+  const withTrans = mode !== "verse";
+  const count = (id: number) => verses.filter((v) => v.c[id]).length;
 
   return (
     <div>
       {(division.bodyHtml || divTypes.length > 0) && (
-        <div className="mb-10 space-y-8" style={font}>
-          {division.bodyHtml && <RichIn html={division.bodyHtml} english script={prefs.script} className="mx-auto max-w-3xl text-[1.05em] leading-relaxed" />}
+        <div className="mx-auto mb-10 max-w-3xl space-y-8" style={font}>
+          {division.bodyHtml && <RichIn html={division.bodyHtml} english script={prefs.script} className="text-[1.02em] leading-relaxed" />}
           {divTypes.map((t) => (
-            <section key={t.id} className="mx-auto max-w-3xl rounded-2xl border border-[var(--border)] bg-[var(--bg-2)]/50 p-5 sm:p-6">
+            <section key={t.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)]/50 p-5 sm:p-6">
               <h2 className="mb-1 font-semibold">{t.name}</h2>
               {t.author && <p className="mb-3 text-xs text-[var(--fg-muted)]">{t.author}</p>}
               <RichIn html={division.c[t.id]} english={t.language === "english"} script={prefs.script} />
@@ -51,90 +45,95 @@ export default function ChapterView({ data }: { data: DivisionData }) {
 
       {verses.length > 0 && (
         <>
-          <div className="sticky top-16 z-20 -mx-4 mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--bg)]/92 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6">
-            <span className="text-sm text-[var(--fg-muted)]">
-              {verses.length} {verses.length === 1 ? book.verseLabel.toLowerCase() : book.verseLabelPlural.toLowerCase()}
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <ScriptPicker prefs={prefs} setPrefs={setPrefs} compact />
-              <span className="inline-flex items-center gap-1.5 text-xs text-[var(--fg-muted)]">
-                Verse <SizeControl value={prefs.fontScale} onChange={(v) => setPrefs({ fontScale: v })} label="verse" />
-              </span>
-              {hasComm && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-[var(--fg-muted)]">
-                  Commentary <SizeControl value={prefs.commScale} onChange={(v) => setPrefs({ commScale: v })} label="commentary" />
-                </span>
+          <div className="sticky top-16 z-20 -mx-4 mb-8 border-b border-[var(--border)] bg-[var(--bg)]/92 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="ui-seg" role="group" aria-label="What to show">
+                <button type="button" aria-pressed={mode === "verse"} onClick={() => setPrefs({ chapterMode: "verse" })}>
+                  {book.verseLabelPlural}
+                </button>
+                {transT.length > 0 && (
+                  <button type="button" aria-pressed={mode === "translation"} onClick={() => setPrefs({ chapterMode: "translation" })}>
+                    + Translation
+                  </button>
+                )}
+                {commT.length > 0 && (
+                  <button type="button" aria-pressed={mode === "commentary"} onClick={() => setPrefs({ chapterMode: "commentary" })}>
+                    + Commentary
+                  </button>
+                )}
+              </div>
+              {mode === "commentary" && comm && (
+                <Select
+                  value={comm.key}
+                  onChange={(k) => setPrefs({ chapterComm: { ...prefs.chapterComm, [book.code]: k } })}
+                  options={commT.map((t) => ({ value: t.key, label: t.name, sub: t.author || undefined, dot: count(t.id) ? "on" : "off", badge: `${count(t.id)}/${verses.length}` }))}
+                  icon={<MessageSquareText size={15} />}
+                  width={320}
+                  searchable={commT.length > 7}
+                />
               )}
-              <button
-                onClick={() => {
-                  const all = open.size < verses.length;
-                  setOpen(all ? new Set(verses.map((v) => v.key)) : new Set());
-                  setPrefs({ expandAll: all });
-                }}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg)] px-3 text-sm hover:border-[var(--accent)]"
-              >
-                {open.size < verses.length ? <ChevronsUpDown size={15} /> : <ChevronsDownUp size={15} />}
-                {open.size < verses.length ? "Open all" : "Close all"}
-              </button>
-              {prefs.script === "iast" && (
-                <button onClick={() => setPrefs({ showDeva: !prefs.showDeva })} aria-pressed={prefs.showDeva} className={`inline-flex h-9 items-center rounded-full border px-3 text-sm ${prefs.showDeva ? "border-[var(--accent)] bg-[var(--accent)]/15" : "border-[var(--border)] bg-[var(--bg)]"}`}>
-                  + देवनागरी
+              {anvayaT.length > 0 && (
+                <button type="button" className="ui-btn" aria-pressed={prefs.chapterAnvaya} onClick={() => setPrefs({ chapterAnvaya: !prefs.chapterAnvaya })}>
+                  <span className="font-devanagari">अन्वयः</span> Anvaya
                 </button>
               )}
+              <span className="ml-auto flex flex-wrap items-center gap-2">
+                <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+                <SizeControl value={prefs.fontScale} onChange={(v) => setPrefs({ fontScale: v })} label="verse" />
+                {mode === "commentary" && <SizeControl value={prefs.commScale} onChange={(v) => setPrefs({ commScale: v })} label="commentary" />}
+              </span>
             </div>
           </div>
 
-          <ol className="space-y-3">
+          <ol className="mx-auto max-w-4xl divide-y divide-[var(--border)]">
             {verses.map((v) => {
               const href = versePath(book.code, division.path, v.key);
-              const isOpen = open.has(v.key);
-              const marked = bookmarks.has(href);
-              const note = notes[href];
               return (
-                <li key={v.key} id={`v-${v.key}`} className="scroll-mt-32 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg)] shadow-sm transition-shadow hover:shadow-[var(--shadow-lift)]">
-                  <button onClick={() => toggle(v.key)} aria-expanded={isOpen} className="flex w-full items-start gap-4 px-4 py-4 text-left sm:px-6">
-                    <span className="mt-1 shrink-0 rounded-full bg-[var(--bg-2)] px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-saffron)]">{v.verseNo}</span>
-                    <span className="min-w-0 flex-1" style={font}>
-                      {v.speaker && <span className="mb-1 block text-sm italic text-[var(--fg-muted)]">{v.speaker}</span>}
-                      <VerseLinesIn devanagari={v.devanagari} iast={v.iast} script={prefs.script} size="md" />
-                      {prefs.script === "iast" && prefs.showDeva && v.devanagari && v.iast && (
-                        <VerseLinesIn devanagari={v.devanagari} iast="" script="devanagari" size="md" className="mt-2 text-[var(--fg-muted)]" />
-                      )}
-                      {!v.iast && !v.devanagari && <span className="text-sm text-[var(--fg-muted)]">Text not yet added.</span>}
-                    </span>
-                    <span className="mt-1 flex shrink-0 items-center gap-1.5 text-[var(--fg-muted)]">
-                      {marked && <BookmarkCheck size={15} className="text-[var(--accent)]" aria-label="Bookmarked" />}
-                      {note && <NotebookPen size={15} className="text-[var(--accent)]" aria-label="Has your note" />}
-                      <ChevronDown size={18} className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                    </span>
-                  </button>
-                  {isOpen && (
-                    <div className="border-t border-[var(--border)] px-4 pb-5 pt-4 sm:px-6">
-                      <div className="-mt-3 mb-6" style={font}>
-                        <VerseCompanions types={verseTypes} c={v.c} script={prefs.script} compact />
-                      </div>
-                      {hasComm && <div style={commFont}><CommentaryNav bookCode={book.code} c={v.c} types={verseTypes} prefs={prefs} setPrefs={setPrefs} variant="compact" /></div>}
-                      {note && (
-                        <p className="mt-5 whitespace-pre-wrap rounded-xl border border-dashed border-[var(--accent)]/60 bg-[var(--bg-2)]/60 p-3 text-sm">
-                          <span className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--fg-muted)]">
-                            <NotebookPen size={12} /> My note
-                          </span>
-                          {note.text}
-                        </p>
-                      )}
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <Link href={href} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-1.5 text-sm font-semibold text-[var(--color-ink)]">
-                          <BookOpenText size={15} /> Open in reader
-                        </Link>
-                        <button
-                          onClick={() => bookmarks.toggle({ book: book.code, ref: verseRef(book, v.verseNo), href, title: book.title })}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-sm hover:border-[var(--accent)]"
-                        >
-                          <BookmarkCheck size={15} /> {marked ? "Bookmarked" : "Bookmark"}
-                        </button>
-                      </div>
+                <li key={v.key} id={`v-${v.key}`} className="scroll-mt-36 py-8 first:pt-0">
+                  <div className="grid gap-x-6 gap-y-3 sm:grid-cols-[4.5rem_1fr]">
+                    <div className="flex items-start gap-2 sm:flex-col">
+                      <Link href={href} className="rounded-full bg-[var(--bg-2)] px-2.5 py-1 text-xs font-semibold tabular-nums text-[var(--color-saffron)] ring-1 ring-[var(--border)] hover:ring-[var(--accent)]" title="Open in the reader">
+                        {v.verseNo}
+                      </Link>
+                      <Link href={href} className="ui-icon-btn ui-btn-sm sm:mt-1" aria-label={`Open ${v.verseNo} in the reader`} title="Open in the reader">
+                        <BookOpenText size={14} />
+                      </Link>
                     </div>
-                  )}
+                    <div className="min-w-0">
+                      <div style={font}>
+                        {v.speaker && <p className="mb-1 text-sm italic text-[var(--fg-muted)]">{v.speaker}</p>}
+                        {v.iast || v.devanagari ? (
+                          <VerseLinesIn devanagari={v.devanagari} iast={v.iast} script={prefs.script} size="md" />
+                        ) : (
+                          <p className="text-sm italic text-[var(--fg-muted)]">Text not yet added.</p>
+                        )}
+                        {prefs.script === "iast" && prefs.showDeva && v.devanagari && v.iast && (
+                          <VerseLinesIn devanagari={v.devanagari} iast="" script="devanagari" size="md" className="mt-2 text-[var(--fg-muted)]" />
+                        )}
+                        {prefs.chapterAnvaya && anvayaT.map((t) => <AnvayaBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
+                        {withTrans &&
+                          wfwT
+                            .filter((t) => v.c[t.id])
+                            .map((t) => (
+                              <section key={t.id} className="mt-4">
+                                <h3 className="mb-1 text-[0.8rem] font-medium text-[var(--fg-muted)]">{t.name}</h3>
+                                <RichIn html={v.c[t.id]} english={t.language === "english"} script={prefs.script} className="text-[0.95em]" />
+                              </section>
+                            ))}
+                        {withTrans && transT.map((t) => <TranslationBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
+                      </div>
+                      {mode === "commentary" && comm && (
+                        <section className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--bg-2)]/40 p-4 sm:p-5" style={commFont}>
+                          <p className="mb-2 text-[0.8rem] font-medium text-[var(--fg-muted)]">{comm.name}{comm.author ? <span className="font-normal"> · {comm.author}</span> : null}</p>
+                          {v.c[comm.id] ? (
+                            <RichIn html={v.c[comm.id]} english={comm.language === "english"} script={prefs.script} className="leading-relaxed" />
+                          ) : (
+                            <p className="text-sm italic text-[var(--fg-muted)]">Nothing for this verse yet.</p>
+                          )}
+                        </section>
+                      )}
+                    </div>
+                  </div>
                 </li>
               );
             })}

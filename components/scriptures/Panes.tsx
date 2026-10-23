@@ -2,28 +2,31 @@
 
 import { AArrowDown, AArrowUp, ChevronDown, Headphones, Languages } from "lucide-react";
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
+import Select from "@/components/ui/Select";
 import type { ReaderPrefs } from "@/components/scriptures/prefs";
 import { SCRIPT_LABELS, type CommentaryType, type ScriptName, type VerseData } from "@/lib/scriptures/core";
 
 type SetPrefs = (p: Partial<ReaderPrefs>) => void;
 
-export function ScriptPicker({ prefs, setPrefs, compact = false }: { prefs: ReaderPrefs; setPrefs: SetPrefs; compact?: boolean }) {
+const SCRIPT_OPTS = [
+  { value: "iast", label: "IAST", short: "IAST", sub: "Roman transliteration · kṛṣṇa" },
+  { value: "devanagari", label: "देवनागरी", short: "देवनागरी", sub: "Devanagari · कृष्ण" },
+  { value: "bengali", label: "বাংলা", short: "বাংলা", sub: "Bengali · কৃষ্ণ" },
+  { value: "oriya", label: "ଓଡ଼ିଆ", short: "ଓଡ଼ିଆ", sub: "Odia · କୃଷ୍ଣ" },
+];
+
+export function ScriptPicker({ prefs, setPrefs }: { prefs: ReaderPrefs; setPrefs: SetPrefs; compact?: boolean }) {
   return (
-    <label className={`inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg)] text-sm ${compact ? "h-9 px-2.5" : "h-10 px-3"}`} title="Script">
-      <Languages size={15} className="text-[var(--fg-muted)]" aria-hidden />
-      <span className="sr-only">Script</span>
-      <select
-        value={prefs.script}
-        onChange={(e) => setPrefs({ script: e.target.value as ScriptName })}
-        className="cursor-pointer bg-transparent pr-1 outline-none"
-      >
-        {(Object.keys(SCRIPT_LABELS) as ScriptName[]).map((s) => (
-          <option key={s} value={s}>
-            {SCRIPT_LABELS[s]}
-          </option>
-        ))}
-      </select>
-    </label>
+    <Select
+      value={prefs.script}
+      onChange={(v) => setPrefs({ script: v as ScriptName })}
+      options={SCRIPT_OPTS}
+      icon={<Languages size={15} />}
+      width={240}
+      align="right"
+      title="Script — English is never changed"
+      searchable={false}
+    />
   );
 }
 
@@ -31,15 +34,15 @@ export function ScriptPicker({ prefs, setPrefs, compact = false }: { prefs: Read
 export function SizeControl({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   const step = (d: number) => onChange(Math.min(1.6, Math.max(0.8, Math.round((value + d) * 100) / 100)));
   return (
-    <span className="inline-flex h-7 items-center rounded-full border border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)]" role="group" aria-label={`${label} text size`}>
-      <button type="button" onClick={() => step(-0.06)} className="px-2 hover:text-[var(--fg)]" aria-label={`Smaller ${label} text`} title={`Smaller ${label} text`}>
-        <AArrowDown size={14} />
+    <span className="ui-seg" role="group" aria-label={`${label} text size`}>
+      <button type="button" onClick={() => step(-0.06)} aria-label={`Smaller ${label} text`} title={`Smaller ${label} text`} className="!px-2">
+        <AArrowDown size={15} />
       </button>
-      <button type="button" onClick={() => onChange(1)} className="min-w-[2.6rem] border-x border-[var(--border)] px-1 text-[10px] tabular-nums hover:text-[var(--fg)]" title="Reset">
+      <button type="button" onClick={() => onChange(1)} className="!px-1.5 tabular-nums !text-[11px]" title="Reset to 100%">
         {Math.round(value * 100)}%
       </button>
-      <button type="button" onClick={() => step(0.06)} className="px-2 hover:text-[var(--fg)]" aria-label={`Larger ${label} text`} title={`Larger ${label} text`}>
-        <AArrowUp size={14} />
+      <button type="button" onClick={() => step(0.06)} aria-label={`Larger ${label} text`} title={`Larger ${label} text`} className="!px-2">
+        <AArrowUp size={15} />
       </button>
     </span>
   );
@@ -72,7 +75,7 @@ export function AnvayaBlock({ type, html, script, compact = false }: { type: Com
       <header className="anvaya-head">
         <span className="font-devanagari text-[1.05em] leading-none">{type.nameDeva || "अन्वयः"}</span>
         <span className="anvaya-rule" aria-hidden />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.25em]">{type.name} · prose order</span>
+        <span className="text-[0.8rem] font-medium">{type.name} <span className="font-normal text-[var(--fg-muted)]">· prose order</span></span>
       </header>
       {html ? (
         <RichIn html={html} english={type.language === "english"} script={script} className="anvaya-body" />
@@ -113,7 +116,7 @@ export function VerseCompanions({ types, c, script, compact = false }: { types: 
             <TranslationBlock key={t.id} type={t} html={c[t.id]} script={script} compact={compact} />
           ) : c[t.id] ? (
             <section key={t.id} className={`${compact ? "mt-4" : "mt-6"} border-t border-[var(--border)] pt-4`}>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--fg-muted)]">{t.name}</h3>
+              <h3 className="mb-2 text-[0.8rem] font-medium text-[var(--fg-muted)]">{t.name}</h3>
               <RichIn html={c[t.id]} english={t.language === "english"} script={script} className="text-[0.95em]" />
             </section>
           ) : null
@@ -142,7 +145,7 @@ export function VersePane({
   const second = prefs.script === "iast" && verse.devanagari && verse.iast;
   return (
     <div>
-      <p className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-[var(--color-saffron)]">{refLabel}</p>
+      <p className="mb-4 text-[0.85rem] font-semibold tabular-nums text-[var(--color-saffron)]">{refLabel}</p>
       {verse.speaker && <p className="mb-2 text-sm italic text-[var(--fg-muted)]">{verse.speaker}</p>}
       {hasText ? (
         <VerseLinesIn
@@ -161,9 +164,9 @@ export function VersePane({
             type="button"
             onClick={() => setPrefs({ showDeva: !prefs.showDeva })}
             aria-expanded={prefs.showDeva}
-            className="inline-flex items-center gap-1 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)]"
+            className="ui-btn ui-btn-sm"
           >
-            <ChevronDown size={15} className={`transition-transform ${prefs.showDeva ? "" : "-rotate-90"}`} />
+            <ChevronDown size={14} className={`transition-transform ${prefs.showDeva ? "" : "-rotate-90"}`} />
             {prefs.showDeva ? "Hide Devanagari" : "Show Devanagari"}
           </button>
           {prefs.showDeva && (

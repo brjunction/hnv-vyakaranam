@@ -16,7 +16,7 @@ export default function PracticeApp({ chapters, questions }: { chapters: Practic
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-5 py-16">
+    <div className="max-w-3xl mx-auto px-5 py-6 sm:py-8">
       {stage.step === "setup" && <PracticeSetup chapters={chapters} questions={questions} onStart={start} />}
       {stage.step === "quiz" && (
         <QuizRunner questions={stage.questions} onFinish={(answers) => setStage({ step: "results", answers })} />

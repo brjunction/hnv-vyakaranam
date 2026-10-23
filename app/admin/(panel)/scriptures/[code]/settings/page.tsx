@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { hasRole, requireUser } from "@/lib/auth/session";
-import { getBookAdmin } from "@/lib/data/scripturesAdmin";
+import { getBookAdmin, listCategoriesAdmin } from "@/lib/data/scripturesAdmin";
 import { deleteBook } from "@/lib/actions/scriptures";
 import { Panel } from "@/components/admin/ui";
 import { Crumbs } from "@/components/admin/hnv/bits";
@@ -23,7 +23,7 @@ export default async function BookSettings({ params }: { params: Promise<{ code:
       <Crumbs items={[{ label: "Scriptures", href: "/admin/scriptures" }, { label: book.title, href: `/admin/scriptures/${book.code}` }, { label: "Settings" }]} />
       <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">{book.title}</h1>
       <BookTabs code={book.code} active="settings" />
-      <BookForm book={book} />
+      <BookForm book={book} categories={await listCategoriesAdmin()} />
       {hasRole(user, "owner") && (
         <div className="mt-10">
           <Panel title="Delete this scripture" description="Removes the book with all its divisions, verses, commentaries and audio links. This cannot be undone from the admin.">

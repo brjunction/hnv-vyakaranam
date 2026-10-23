@@ -8,10 +8,10 @@ export const metadata: Metadata = {
 
 export default function About() {
   return (
-    <div className="max-w-3xl mx-auto px-5 py-16">
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">About</p>
-      <h1 className="text-3xl sm:text-4xl font-semibold mb-2">Hari-nāmāmṛta Vyākaraṇa</h1>
-      <p className="text-[var(--fg-muted)] mb-10">About this text and this edition</p>
+    <div className="max-w-3xl mx-auto px-5 py-6 sm:py-8">
+      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-1">About</p>
+      <h1 className="text-xl sm:text-2xl font-semibold mb-1">Hari-nāmāmṛta Vyākaraṇa</h1>
+      <p className="text-sm text-[var(--fg-muted)] mb-6">About this text and this edition</p>
 
       <div className="space-y-10 leading-relaxed text-[var(--fg)]">
         <section>

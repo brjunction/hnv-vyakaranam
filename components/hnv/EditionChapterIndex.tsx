@@ -11,11 +11,11 @@ export default async function EditionChapterIndex({ edition }: { edition: Editio
   if (list.length === 0 && edition !== "madhyama") return <EditionComingSoon slug={edition} />;
 
   return (
-    <div className="max-w-4xl mx-auto px-5 py-16">
+    <div className="max-w-4xl mx-auto px-5 py-6 sm:py-8">
       <EditionTabs active={edition} />
-      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Table of contents</p>
-      <h1 className="text-3xl sm:text-4xl font-semibold mb-4">The full {e.name} curriculum</h1>
-      <p className="text-[var(--fg-muted)] mb-12 max-w-xl">
+      <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-1">Table of contents</p>
+      <h1 className="text-xl sm:text-2xl font-semibold mb-1">The full {e.name} curriculum</h1>
+      <p className="text-sm text-[var(--fg-muted)] mb-6 max-w-xl">
         Every prakaraṇa of Hari-nāmāmṛta Vyākaraṇa, {e.name} version, sūtra by sūtra.
       </p>
 

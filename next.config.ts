@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/hnvwiki", destination: "/hnv-wiki", permanent: true },
       { source: "/wiki", destination: "/hnv-wiki", permanent: true },
+      { source: "/scriptures/mine", destination: "/notes", permanent: true },
       { source: "/anvyaya", destination: "/scriptures", permanent: true },
       { source: "/anvyaya/:path*", destination: "/scriptures/:path*", permanent: true },
       { source: "/api/anvyaya/:path*", destination: "/scriptures", permanent: true },

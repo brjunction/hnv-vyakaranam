@@ -12,6 +12,7 @@ import Reader from "@/components/scriptures/Reader";
 import RichText from "@/components/RichText";
 import Shelf from "@/components/scriptures/Shelf";
 import ScriptureSearch from "@/components/scriptures/ScriptureSearch";
+import PageHead, { MetaChip } from "@/components/PageHead";
 
 // One route for every scripture address:
 //   /scriptures/sb             → the book
@@ -179,35 +180,45 @@ export default async function ScripturePage({ params }: { params: Promise<Params
     const total = tree.reduce((s, n) => s + n.verses, 0);
     return (
       <>
-        <section className="relative overflow-hidden border-b border-[var(--border)]">
-          <div className="anv-hero-bg absolute inset-0" aria-hidden />
-          <div className="relative mx-auto max-w-5xl px-5 pb-14 pt-16 text-center">
-            {book.coverUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={book.coverUrl} alt="" className="mx-auto mb-6 h-40 w-auto rounded-xl border border-[var(--border)] shadow-[var(--shadow-lift)]" />
-            )}
-            {book.abbrev && <p className="mb-4 text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.abbrev}</p>}
-            {book.titleDeva && <h1 className="mb-3 font-devanagari text-4xl leading-tight sm:text-6xl">{book.titleDeva}</h1>}
-            <p className={book.titleDeva ? "text-2xl font-semibold" : "text-4xl font-semibold"}>{book.title}</p>
-            {book.tagline && <p className="mt-3 text-lg italic text-[var(--fg-muted)]">{book.tagline}</p>}
-            {book.author && <p className="mt-2 text-sm text-[var(--fg-muted)]">{book.author}</p>}
-            <div className="anv-ornament my-6" aria-hidden>
-              ◆
-            </div>
-            <p className="text-sm text-[var(--fg-muted)]">
-              {top.length} {book.levels[0].toLowerCase()}
-              {top.length === 1 ? "" : "s"} · {total.toLocaleString()} {book.verseLabelPlural.toLowerCase()} so far
-            </p>
-            <div className="mx-auto mt-8 max-w-xl text-left">
+        <PageHead
+          eyebrow={book.abbrev || "Scripture"}
+          deva={book.titleDeva || undefined}
+          title={book.title}
+          image={book.coverUrl || undefined}
+          intro={[book.tagline, book.author].filter(Boolean).join(" · ") || undefined}
+          meta={
+            total > 0 ? (
+              <>
+                <MetaChip n={top.length} label={`${book.levels[0].toLowerCase()}${top.length === 1 ? "" : "s"}`} />
+                <MetaChip n={total.toLocaleString()} label={book.verseLabelPlural.toLowerCase()} />
+              </>
+            ) : (
+              <span className="rounded-full border border-[var(--border)] px-2.5 py-1">Coming soon</span>
+            )
+          }
+        >
+          {total > 0 && (
+            <div className="max-w-xl">
               <ScriptureSearch books={[{ code: book.code, title: book.title }]} initialBook={book.code} compact />
             </div>
-          </div>
-        </section>
-        <section className="mx-auto max-w-6xl px-5 py-12">
+          )}
+        </PageHead>
+        <section className="mx-auto max-w-6xl px-5 py-8">
           <Shelf book={book.code} />
           {book.introHtml && <RichText value={book.introHtml} className="mx-auto mb-12 max-w-3xl text-[1.05rem] leading-relaxed" />}
-          <h2 className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[0]}s</h2>
-          {top.length ? <DivisionGrid book={book} tree={tree} nodes={top} /> : <p className="text-[var(--fg-muted)]">This scripture is being prepared.</p>}
+          {total > 0 && <h2 className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[0]}s</h2>}
+          {total === 0 && !tree.some((n) => n.hasBody) ? (
+            <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-[var(--border)] p-10 text-center">
+              <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)]">Coming soon</p>
+              <p className="text-lg font-semibold">{book.title} is being prepared.</p>
+              <p className="mt-2 text-sm text-[var(--fg-muted)]">Its text will appear here as our editors add it.</p>
+              <Link href="/scriptures" className="ui-btn mt-6">
+                <ArrowLeft size={15} /> All scriptures
+              </Link>
+            </div>
+          ) : (
+            <DivisionGrid book={book} tree={tree} nodes={top} />
+          )}
         </section>
       </>
     );
@@ -245,21 +256,20 @@ export default async function ScripturePage({ params }: { params: Promise<Params
   return (
     <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6">
       <Crumbs book={book} nodes={nodes.slice(0, -1)} extra={`${levelName(book, node.depth)} ${node.number}`} />
-      <header className="mb-10 text-center">
-        <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)]">
+      <header className="mb-6">
+        <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--color-saffron)]">
           {book.title} · {levelName(book, node.depth)} {node.path.join(".")}
         </p>
-        {node.titleDeva && <p className="mb-2 font-devanagari text-3xl sm:text-4xl">{node.titleDeva}</p>}
-        <h1 className="text-2xl font-semibold sm:text-4xl">{node.title || `${levelName(book, node.depth)} ${node.number}`}</h1>
-        {node.subtitle && <p className="mt-2 text-lg italic text-[var(--fg-muted)]">{node.subtitle}</p>}
-        <div className="anv-ornament mt-6" aria-hidden>
-          ◆
-        </div>
+        <h1 className="flex flex-wrap items-baseline gap-x-3 text-xl font-semibold leading-tight sm:text-2xl">
+          {node.titleDeva && <span className="font-devanagari font-normal">{node.titleDeva}</span>}
+          <span>{node.title || `${levelName(book, node.depth)} ${node.number}`}</span>
+        </h1>
+        {node.subtitle && <p className="mt-1 text-sm italic text-[var(--fg-muted)]">{node.subtitle}</p>}
       </header>
 
       {kids.length > 0 && (
-        <section className="mb-12">
-          <h2 className="mb-5 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[node.depth + 1] ?? "Parts"}s</h2>
+        <section className="mb-8">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[node.depth + 1] ?? "Parts"}s</h2>
           <DivisionGrid book={book} tree={tree} nodes={kids} />
         </section>
       )}

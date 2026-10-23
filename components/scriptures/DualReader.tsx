@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link2, Loader2, Repeat2, X } from "lucide-react";
 import Reader from "@/components/scriptures/Reader";
+import Select from "@/components/ui/Select";
 import { readingOrder, type BookInfo, type DivisionData, type TreeNode } from "@/lib/scriptures/core";
 
 type Loc = { book: string; path: string[]; verse?: string };
@@ -69,18 +70,9 @@ export default function DualReader({ books }: { books: { code: string; title: st
     <div className={`min-w-0 ${tab === name ? "" : "hidden lg:block"}`}>
       <div className="mb-3 flex items-center gap-2">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent)] text-xs font-bold text-[var(--color-ink)]">{name.toUpperCase()}</span>
-        <select
-          value={S.loc.book}
-          onChange={(e) => S.setLoc({ book: e.target.value, path: [] })}
-          className="h-9 flex-1 rounded-full border border-[var(--border)] bg-[var(--bg)] px-3 text-sm font-semibold"
-          aria-label={`Scripture ${name.toUpperCase()}`}
-        >
-          {books.map((b) => (
-            <option key={b.code} value={b.code}>
-              {b.title}
-            </option>
-          ))}
-        </select>
+        <div className="min-w-0 flex-1">
+          <Select value={S.loc.book} onChange={(v) => S.setLoc({ book: v, path: [] })} options={books.map((b) => ({ value: b.code, label: b.title }))} label="Scripture" width={320} className="w-full" />
+        </div>
         {S.loading && <Loader2 size={16} className="animate-spin text-[var(--fg-muted)]" />}
       </div>
       {S.state?.data ? (
@@ -124,7 +116,7 @@ export default function DualReader({ books }: { books: { code: string; title: st
           <button
             onClick={() => setLinked((l) => !l)}
             aria-pressed={linked}
-            className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm ${linked ? "border-[var(--accent)] bg-[var(--accent)]/15" : "border-[var(--border)]"}`}
+            className="ui-btn"
             title="Move both sides together, verse by verse"
           >
             <Link2 size={15} /> {linked ? "Linked" : "Link both"}
@@ -135,7 +127,7 @@ export default function DualReader({ books }: { books: { code: string; title: st
               A.setLoc(B.loc);
               B.setLoc(a);
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[var(--border)] px-3 text-sm"
+            className="ui-btn"
           >
             <Repeat2 size={15} /> Swap
           </button>
@@ -145,18 +137,18 @@ export default function DualReader({ books }: { books: { code: string; title: st
               setCopied(true);
               setTimeout(() => setCopied(false), 1500);
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[var(--border)] px-3 text-sm"
+            className="ui-btn"
           >
             {copied ? "Copied" : "Copy link"}
           </button>
-          <a href={A.state ? `/scriptures/${locStr(A.state)}` : "/scriptures"} className="inline-flex h-9 items-center gap-1 rounded-full px-2 text-sm text-[var(--fg-muted)]" title="Close dual reading">
+          <a href={A.state ? `/scriptures/${locStr(A.state)}` : "/scriptures"} className="ui-icon-btn" title="Close dual reading">
             <X size={16} />
           </a>
         </div>
       </div>
-      <div className="mb-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--bg-2)] p-1 lg:hidden" role="tablist">
+      <div className="ui-seg mb-4 lg:hidden" role="tablist">
         {(["a", "b"] as const).map((k) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`min-h-[40px] rounded-full px-5 text-sm ${tab === k ? "bg-[var(--accent)] font-semibold text-[var(--color-ink)]" : ""}`}>
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className="!h-9 !px-4">
             {k.toUpperCase()} · {(k === "a" ? A : B).state?.book.abbrev || (k === "a" ? A : B).state?.book.title || "…"} {(k === "a" ? A : B).state?.data?.division.path.join(".")}
             {(k === "a" ? A : B).state?.verse ? "." + (k === "a" ? A : B).state?.verse : ""}
           </button>

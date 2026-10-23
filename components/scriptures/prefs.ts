@@ -28,6 +28,11 @@ export type ReaderPrefs = {
   hidden: Record<string, string[]>;
   /** Commentary list: only those with text for this verse. */
   onlyAvail: boolean;
+  /** Chapter page view: verses only, + translation, + a chosen commentary. */
+  chapterMode: "verse" | "translation" | "commentary";
+  chapterAnvaya: boolean;
+  /** Commentary shown on the chapter page, per book. */
+  chapterComm: Record<string, string>;
 };
 
 const DEFAULTS: ReaderPrefs = {
@@ -43,6 +48,9 @@ const DEFAULTS: ReaderPrefs = {
   favs: {},
   hidden: {},
   onlyAvail: true,
+  chapterMode: "translation",
+  chapterAnvaya: false,
+  chapterComm: {},
 };
 const KEY = "scr:prefs";
 const EVENT = "scr-prefs";
@@ -133,77 +141,3 @@ export function useMarks(key: "bookmarks" | "history") {
   return { items, toggle, push, clear, has: (href: string) => items.some((x) => x.href === href) };
 }
 
-// ------------------------------------------------------------ my notes ----
-export type Note = { href: string; book: string; ref: string; text: string; at: number };
-const NOTES = "scr:notes";
-
-function readNotes(): Record<string, Note> {
-  try {
-    return JSON.parse(localStorage.getItem(NOTES) ?? "{}") as Record<string, Note>;
-  } catch {
-    return {};
-  }
-}
-
-export function useNotes() {
-  const [notes, setNotes] = useState<Record<string, Note>>({});
-  useEffect(() => {
-    setNotes(readNotes());
-    const sync = () => setNotes(readNotes());
-    window.addEventListener(EVENT + NOTES, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(EVENT + NOTES, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, []);
-  const save = useCallback((n: Omit<Note, "at">) => {
-    const all = readNotes();
-    if (n.text.trim()) all[n.href] = { ...n, at: Date.now() };
-    else delete all[n.href];
-    try {
-      localStorage.setItem(NOTES, JSON.stringify(all));
-    } catch {}
-    window.dispatchEvent(new Event(EVENT + NOTES));
-  }, []);
-  return { notes, save };
-}
-
-/** Everything a reader keeps on this device, for backup / moving to another device. */
-export function exportPersonal(): string {
-  const get = (k: string) => {
-    try {
-      return JSON.parse(localStorage.getItem(k) ?? "null");
-    } catch {
-      return null;
-    }
-  };
-  return JSON.stringify(
-    { app: "hnv-scriptures", version: 1, exportedAt: new Date().toISOString(), bookmarks: get(BM) ?? [], history: get(HIST) ?? [], notes: get(NOTES) ?? {}, prefs: get(KEY) ?? {} },
-    null,
-    2
-  );
-}
-
-/** Merge a backup into this device (nothing here is deleted). Returns counts. */
-export function importPersonal(json: string): { bookmarks: number; notes: number } {
-  const data = JSON.parse(json) as { app?: string; bookmarks?: Mark[]; notes?: Record<string, Note>; history?: Mark[] };
-  if (data.app !== "hnv-scriptures") throw new Error("That file is not a Scriptures backup.");
-  const bm = list(BM);
-  const addBm = (data.bookmarks ?? []).filter((m) => m?.href && !bm.some((x) => x.href === m.href));
-  store(BM, [...bm, ...addBm].sort((a, b) => b.at - a.at));
-  const notes = readNotes();
-  let n = 0;
-  for (const [k, v] of Object.entries(data.notes ?? {})) {
-    if (!v?.text) continue;
-    if (!notes[k] || notes[k].at < v.at) {
-      notes[k] = v;
-      n++;
-    }
-  }
-  try {
-    localStorage.setItem(NOTES, JSON.stringify(notes));
-  } catch {}
-  window.dispatchEvent(new Event(EVENT + NOTES));
-  return { bookmarks: addBm.length, notes: n };
-}

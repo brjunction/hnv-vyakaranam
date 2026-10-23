@@ -326,6 +326,20 @@ export const BOOK_STRUCTURES = ["canto_chapter_verse", "chapter_verse"] as const
 /** Language of a text (verses, commentary kinds). Only Sanskrit is ever re-scripted freely. */
 export const TEXT_LANGUAGES = ["sanskrit", "english", "hindi", "bengali", "nepali", "odia", "other"] as const;
 
+/** Sections → categories of the scripture library (Primary · Gauḍīya · Vyākaraṇa …). Edited in the admin. */
+export const scriptureCategories = pgTable("scripture_categories", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  nameDeva: text("name_deva").notNull().default(""),
+  description: text("description").notNull().default(""),
+  /** Section heading the category is listed under, e.g. "Primary scriptures", "Gauḍīya". */
+  section: text("section").notNull().default(""),
+  sort: integer("sort").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   /** Lowercase URL code: "sb", "bg", "cc" … (any number of books). */
@@ -350,6 +364,7 @@ export const books = pgTable("books", {
   coverUrl: text("cover_url").notNull().default(""),
   /** Rich-text introduction shown on the book page. */
   introHtml: text("intro_html").notNull().default(""),
+  categoryId: integer("category_id").references(() => scriptureCategories.id, { onDelete: "set null" }),
   sort: integer("sort").notNull().default(0),
   status: status(),
   createdAt: createdAt(),
@@ -680,6 +695,65 @@ export const posts = pgTable("posts", {
   updatedAt: updatedAt(),
   updatedBy: updatedBy(),
 });
+
+// ---------------------------------------------------------------------------
+// The "More" page: any number of sections, each a kind with its own design.
+//   posts    — blog / updates, each item has its own page
+//   progress — website development timeline (stage: done / doing / planned)
+//   courses  — online courses (person = teacher)
+//   videos   — YouTube playlists / videos (url = YouTube link)
+//   links    — resources: books, PDFs, websites, apps
+// ---------------------------------------------------------------------------
+export const MORE_KINDS = ["posts", "progress", "courses", "videos", "links"] as const;
+export type MoreKind = (typeof MORE_KINDS)[number];
+export const MORE_STAGES = ["done", "doing", "planned"] as const;
+
+export const moreSections = pgTable("more_sections", {
+  id: serial("id").primaryKey(),
+  /** URL slug: /more/<key>. */
+  key: text("key").notNull().unique(),
+  title: text("title").notNull(),
+  intro: text("intro").notNull().default(""),
+  kind: text("kind", { enum: MORE_KINDS }).notNull().default("posts"),
+  sort: integer("sort").notNull().default(0),
+  isVisible: boolean("is_visible").notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+  updatedBy: updatedBy(),
+});
+
+export const moreItems = pgTable(
+  "more_items",
+  {
+    id: serial("id").primaryKey(),
+    sectionId: integer("section_id")
+      .notNull()
+      .references(() => moreSections.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull().default(""),
+    bodyHtml: text("body_html").notNull().default(""),
+    /** Main link: course page, YouTube playlist, resource … */
+    url: text("url").notNull().default(""),
+    linkLabel: text("link_label").notNull().default(""),
+    imageUrl: text("image_url").notNull().default(""),
+    /** Teacher / author / speaker. */
+    person: text("person").notNull().default(""),
+    /** Small label: "Free", "PDF", "Hindi", "v2.0" … */
+    badge: text("badge").notNull().default(""),
+    /** Progress items only. */
+    stage: text("stage", { enum: ["", ...MORE_STAGES] }).notNull().default(""),
+    /** Shown as the item's date (posts, progress). */
+    date: date("date", { mode: "string" }),
+    pinned: boolean("pinned").notNull().default(false),
+    sort: integer("sort").notNull().default(0),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [uniqueIndex("more_items_section_slug_uq").on(t.sectionId, t.slug), index("more_items_section_sort_idx").on(t.sectionId, t.sort)]
+);
 
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),

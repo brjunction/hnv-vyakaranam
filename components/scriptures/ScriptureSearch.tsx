@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Search, X } from "lucide-react";
 import type { SearchHit } from "@/lib/data/scriptures";
+import Select from "@/components/ui/Select";
 
 type Book = { code: string; title: string };
 
@@ -65,7 +66,7 @@ export default function ScriptureSearch({ books, initialBook = "", initialQ = ""
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search verses & commentaries — dharma, धर्म, kRShNa…"
             aria-label="Search the scriptures"
-            className="h-12 w-full rounded-full border border-[var(--border)] bg-[var(--bg)] pl-11 pr-11 text-base shadow-sm outline-none focus:border-[var(--accent)]"
+            className="h-12 w-full rounded-full border border-[var(--ctl-border)] bg-[var(--ctl-bg)] pl-11 pr-11 text-base shadow-[var(--ctl-shadow)] outline-none transition-colors focus:border-[var(--ctl-on-border)]"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2">
             {loading ? (
@@ -78,14 +79,14 @@ export default function ScriptureSearch({ books, initialBook = "", initialQ = ""
           </span>
         </div>
         {books.length > 1 && (
-          <select value={book} onChange={(e) => setBook(e.target.value)} className="h-12 rounded-full border border-[var(--border)] bg-[var(--bg)] px-4 text-sm" aria-label="Which scripture">
-            <option value="">All scriptures</option>
-            {books.map((b) => (
-              <option key={b.code} value={b.code}>
-                {b.title}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={book}
+            onChange={setBook}
+            options={[{ value: "", label: "All scriptures" }, ...books.map((b) => ({ value: b.code, label: b.title }))]}
+            width={280}
+            align="right"
+            triggerClassName="!h-12"
+          />
         )}
       </div>
       {hits && (
@@ -102,7 +103,7 @@ export default function ScriptureSearch({ books, initialBook = "", initialQ = ""
                         {h.abbrev || h.bookTitle} {h.verseNo}
                       </span>
                       {h.title && <span>{h.title}</span>}
-                      <span className="text-xs uppercase tracking-wider text-[var(--color-saffron)]">{h.where}</span>
+                      <span className="rounded-full bg-[var(--bg-2)] px-2 py-0.5 text-xs text-[var(--fg-muted)]">{h.where}</span>
                     </span>
                     {h.snippet && <span className="mt-1 block text-sm text-[var(--fg-muted)]">{h.snippet}</span>}
                   </Link>

@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import {
   audioLinks,
   books,
+  scriptureCategories,
   scriptureCommentaries,
   scriptureCommentaryTypes,
   scriptureDivisions,
@@ -45,6 +46,7 @@ export function toBookInfo(b: BookRow): BookInfo {
     coverUrl: b.coverUrl,
     introHtml: b.introHtml,
     status: b.status,
+    categoryId: b.categoryId,
   };
 }
 
@@ -76,7 +78,19 @@ export const getBooks = unstable_cache(
       expected: null,
     }));
   },
-  ["scr:books:v1"],
+  ["scr:books:v2"],
+  { tags: [tags.scrAll] }
+);
+
+export type Category = { id: number; key: string; name: string; description: string; section: string; sort: number };
+
+export const getCategories = unstable_cache(
+  async (): Promise<Category[]> => {
+    if (!isDbConfigured) return [];
+    const rows = await getDb().select().from(scriptureCategories).orderBy(asc(scriptureCategories.sort), asc(scriptureCategories.id));
+    return rows.map((c) => ({ id: c.id, key: c.key, name: c.name, description: c.description, section: c.section, sort: c.sort }));
+  },
+  ["scr:cats:v1"],
   { tags: [tags.scrAll] }
 );
 

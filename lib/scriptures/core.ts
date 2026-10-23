@@ -18,6 +18,7 @@ export type BookInfo = {
   coverUrl: string;
   introHtml: string;
   status: string;
+  categoryId: number | null;
 };
 
 /** One division in a book's tree (canto, chapter, part …). */

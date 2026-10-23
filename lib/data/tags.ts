@@ -11,6 +11,7 @@ export const tags = {
   daily: "daily",
   practice: "practice",
   posts: "posts",
+  more: "more",
   settings: "settings",
   admin: "admin",
 } as const;

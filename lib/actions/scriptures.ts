@@ -9,6 +9,7 @@ import {
   books,
   dailyItems,
   revisions,
+  scriptureCategories,
   scriptureCommentaries,
   scriptureCommentaryTypes,
   scriptureDivisions,
@@ -110,6 +111,7 @@ const BookInput = z.object({
   verseLabelPlural: Plain(30).min(1),
   verseLanguage: z.enum(["sanskrit", "english", "hindi", "bengali", "nepali", "odia", "other"]),
   coverUrl: z.union([z.literal(""), z.string().trim().url().max(1000)]),
+  categoryId: z.union([z.literal("").transform(() => null), z.coerce.number().int().positive()]),
   introHtml: z.string().max(400_000).transform(sanitizeRich),
   status: Status,
 });
@@ -130,6 +132,7 @@ export async function saveBook(_prev: ActionState, form: FormData): Promise<Acti
     verseLabelPlural: str(form, "verseLabelPlural") || "Verses",
     verseLanguage: str(form, "verseLanguage") || "sanskrit",
     coverUrl: str(form, "coverUrl"),
+    categoryId: str(form, "categoryId"),
     introHtml: str(form, "introHtml"),
     status: str(form, "status") || "published",
   });
@@ -209,6 +212,67 @@ export async function deleteBook(_prev: ActionState, form: FormData): Promise<Ac
   await log(user, "books", id, "delete", b, null, `${verseIds.length} verses, ${divIds.length} divisions`);
   revalidateScriptures();
   redirect("/admin/scriptures");
+}
+
+// ========================================================== categories ===
+const CategoryInput = z.object({
+  id: Id.optional(),
+  name: Plain(120).min(1, "Give the category a name."),
+  section: Plain(120),
+  description: Plain(500),
+});
+
+export async function saveCategory(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser("editor");
+  const p = CategoryInput.safeParse({ id: str(form, "id") || undefined, name: str(form, "name"), section: str(form, "section"), description: str(form, "description") });
+  if (!p.success) return err(p.error);
+  const { id, ...fields } = p.data;
+  const db = getDb();
+  if (id) {
+    const [before] = await db.select().from(scriptureCategories).where(eq(scriptureCategories.id, id)).limit(1);
+    if (!before) return fail("Not found.");
+    await db.update(scriptureCategories).set(fields).where(eq(scriptureCategories.id, id));
+    await log(user, "scripture_categories", id, "update", before, { ...before, ...fields });
+    revalidateScriptures();
+    return ok("Category saved.");
+  }
+  const all = await db.select({ key: scriptureCategories.key, sort: scriptureCategories.sort }).from(scriptureCategories);
+  let key = slugKey(fields.name).replace(/_/g, "-");
+  for (let i = 2; all.some((c) => c.key === key); i++) key = `${slugKey(fields.name).replace(/_/g, "-")}-${i}`;
+  const [created] = await db
+    .insert(scriptureCategories)
+    .values({ ...fields, key, sort: Math.max(0, ...all.map((c) => c.sort)) + 10 })
+    .returning();
+  await log(user, "scripture_categories", created.id, "create", null, created);
+  revalidateScriptures();
+  return ok(`“${fields.name}” added.`);
+}
+
+export async function moveCategory(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireUser("editor");
+  const id = Id.parse(str(form, "id"));
+  const up = str(form, "dir") === "up";
+  const db = getDb();
+  const list = await db.select({ id: scriptureCategories.id }).from(scriptureCategories).orderBy(asc(scriptureCategories.sort), asc(scriptureCategories.id));
+  const i = list.findIndex((x) => x.id === id);
+  const j = up ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= list.length) return ok("");
+  [list[i], list[j]] = [list[j], list[i]];
+  await db.batch(list.map((x, k) => db.update(scriptureCategories).set({ sort: (k + 1) * 10 }).where(eq(scriptureCategories.id, x.id))) as never);
+  revalidateScriptures();
+  return ok("Order saved.");
+}
+
+export async function deleteCategory(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser("editor");
+  const id = Id.parse(str(form, "id"));
+  const db = getDb();
+  const [c] = await db.select().from(scriptureCategories).where(eq(scriptureCategories.id, id)).limit(1);
+  if (!c) return fail("Not found.");
+  await db.delete(scriptureCategories).where(eq(scriptureCategories.id, id)); // books keep existing (category set to none)
+  await log(user, "scripture_categories", id, "delete", c, null);
+  revalidateScriptures();
+  return ok(`“${c.name}” deleted — its books are now uncategorised.`);
 }
 
 // ===================================================== commentary kinds ===

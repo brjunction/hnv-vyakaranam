@@ -16,7 +16,7 @@ const PRESETS: { label: string; levels: string; verse: [string, string] }[] = [
   { label: "Section only (prose)", levels: "Section", verse: ["Paragraph", "Paragraphs"] },
 ];
 
-export default function BookForm({ book, isNew }: { book?: BookInfo; isNew?: boolean }) {
+export default function BookForm({ book, isNew, categories = [] }: { book?: BookInfo; isNew?: boolean; categories?: { id: number; name: string; section: string }[] }) {
   const [levels, setLevels] = useState(book?.levels.join(", ") ?? "Chapter");
   const [vl, setVl] = useState(book?.verseLabel ?? "Verse");
   const [vlp, setVlp] = useState(book?.verseLabelPlural ?? "Verses");
@@ -96,6 +96,17 @@ export default function BookForm({ book, isNew }: { book?: BookInfo; isNew?: boo
           </Field>
           <Field label="Author / compiler">
             <input name="author" defaultValue={book?.author} placeholder="Kṛṣṇadāsa Kavirāja Gosvāmī" className={inputCls} />
+          </Field>
+          <Field label="Category" hint="Where it is listed in the library. Manage categories on the Scriptures page.">
+            <select name="categoryId" defaultValue={book?.categoryId ?? ""} className={inputCls}>
+              <option value="">— none —</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.section ? `${c.section} › ` : ""}
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Status">
             <select name="status" defaultValue={book?.status ?? (isNew ? "draft" : "published")} className={inputCls}>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeToggle from "./ThemeToggle";
+import NotebookButton from "@/components/notebook/Notebook";
 import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
 import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown } from "lucide-react";
@@ -43,6 +44,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       </div>
       <nav className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-1">
         {links.map((l) => {
+          if (l.href === "/more") return null;
           const Icon = l.icon;
           const active =
             pathname === l.href ||
@@ -76,6 +78,14 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             <ToolsGrid compact onNavigate={onClose} />
           </div>
         )}
+        <Link
+          href="/more"
+          className={`flex items-center gap-4 px-4 py-4 rounded-2xl text-lg transition-colors ${
+            pathname?.startsWith("/more") ? "text-[var(--accent)] bg-[var(--bg-2)]" : "text-[var(--fg)] hover:bg-[var(--bg-2)]"
+          }`}
+        >
+          <LayoutGrid size={22} strokeWidth={1.75} /> More
+        </Link>
       </nav>
     </div>,
     document.body
@@ -108,7 +118,8 @@ export default function Header() {
 
         {/* Desktop nav: icon only, label on hover via title + tooltip */}
         <nav className="hidden md:flex items-center gap-1">
-          {links.map((l) => {
+          {[...links.filter((l) => l.href !== "/more"), "tools" as const, ...links.filter((l) => l.href === "/more")].map((l) => {
+            if (l === "tools") return <ToolsMenu key="tools" />;
             const Icon = l.icon;
             const active =
             pathname === l.href ||
@@ -135,13 +146,14 @@ export default function Header() {
               </Link>
             );
           })}
-          <ToolsMenu />
+          <NotebookButton />
           <span className="w-px h-5 bg-[var(--border)] mx-2" />
           <ThemeToggle />
         </nav>
 
         {/* Mobile: theme toggle + hamburger */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-1">
+          <NotebookButton />
           <ThemeToggle />
           <button
             onClick={() => setOpen(true)}

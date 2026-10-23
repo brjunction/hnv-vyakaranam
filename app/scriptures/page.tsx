@@ -1,91 +1,174 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Columns2, NotebookPen } from "lucide-react";
-import { getBooks } from "@/lib/data/scriptures";
+import { ArrowRight, Columns2, NotebookPen } from "lucide-react";
+import { getBooks, getCategories, type BookCard } from "@/lib/data/scriptures";
 import Shelf from "@/components/scriptures/Shelf";
 import ScriptureSearch from "@/components/scriptures/ScriptureSearch";
+import PageHead, { MetaChip } from "@/components/PageHead";
 
 export const metadata: Metadata = {
   title: "Scriptures",
-  description: "Read the scriptures verse by verse — Sanskrit in Devanagari, IAST, Bengali or Odia, with anvaya (prose order), translation and commentaries.",
+  description:
+    "The scripture library: Śrīmad-Bhāgavatam, Bhagavad-gītā, the Upaniṣads and the Gauḍīya granthas — verse by verse in Devanagari, IAST, Bengali or Odia, with anvaya, translation and commentaries.",
   alternates: { canonical: "/scriptures" },
 };
 
+const slug = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+function BookRow({ b }: { b: BookCard }) {
+  const ready = b.verses > 0;
+  return (
+    <li>
+      <Link href={`/scriptures/${b.code}`} className={`group flex items-center gap-3 rounded-xl px-3 py-1.5 transition-colors hover:bg-[var(--bg-2)] ${ready ? "" : "opacity-80"}`}>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-baseline gap-x-2">
+            <span className={`font-medium ${ready ? "" : "text-[var(--fg)]/85"}`}>{b.title}</span>
+            {b.titleDeva && <span className="font-devanagari text-sm text-[var(--fg-muted)]">{b.titleDeva}</span>}
+          </span>
+          {b.author && <span className="block truncate text-xs text-[var(--fg-muted)]">{b.author}</span>}
+        </span>
+        {ready ? (
+          <span className="shrink-0 rounded-full bg-[var(--accent)]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--fg)] ring-1 ring-[var(--accent)]/40">
+            {b.verses.toLocaleString()} {b.verses === 1 ? b.verseLabel.toLowerCase() : b.verseLabelPlural.toLowerCase()}
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] text-[var(--fg-muted)] ring-1 ring-[var(--border)]">Coming soon</span>
+        )}
+        <ArrowRight size={14} className="shrink-0 text-[var(--fg-muted)] opacity-0 transition-opacity group-hover:opacity-100" />
+      </Link>
+    </li>
+  );
+}
+
 export default async function ScripturesHome() {
-  const books = await getBooks();
+  const [books, cats] = await Promise.all([getBooks(), getCategories()]);
+  const ready = books.filter((b) => b.verses > 0);
+  const byCat = new Map<number | null, BookCard[]>();
+  for (const b of books) {
+    const k = cats.some((c) => c.id === b.categoryId) ? b.categoryId : null;
+    byCat.set(k, [...(byCat.get(k) ?? []), b]);
+  }
+  const sections: { name: string; cats: { key: string; name: string; description: string; books: BookCard[] }[] }[] = [];
+  for (const c of cats) {
+    const list = byCat.get(c.id) ?? [];
+    if (!list.length) continue;
+    let s = sections.find((x) => x.name === (c.section || "Library"));
+    if (!s) sections.push((s = { name: c.section || "Library", cats: [] }));
+    s.cats.push({ key: c.key, name: c.name, description: c.description, books: list });
+  }
+  const loose = byCat.get(null) ?? [];
+  if (loose.length) sections.push({ name: "More", cats: [{ key: "more", name: "More scriptures", description: "", books: loose }] });
+
   return (
     <>
-      <section className="relative overflow-hidden border-b border-[var(--border)]">
-        <div className="anv-hero-bg absolute inset-0" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-5 pb-16 pt-20 text-center">
-          <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)]">Scriptures</p>
-          <h1 className="mb-5 font-devanagari text-4xl leading-tight sm:text-6xl">शास्त्राणि</h1>
-          <div className="anv-ornament mb-6" aria-hidden>
-            ◆
-          </div>
-          <p className="mx-auto max-w-2xl text-lg leading-relaxed sm:text-xl">
-            Read the great scriptures verse by verse — in Devanagari, IAST, Bengali or Odia — with the anvaya, the translation and the ācāryas’ commentaries side by side.
-          </p>
-          <div className="mx-auto mt-10 max-w-2xl text-left">
-            <ScriptureSearch books={books.map((b) => ({ code: b.code, title: b.title }))} compact />
-          </div>
+      <PageHead
+        deva="शास्त्राणि"
+        title="Scriptures"
+        intro="Verse by verse, with anvaya, translation and the ācāryas’ commentaries."
+        meta={
+          <>
+            <MetaChip n={books.length} label="scriptures" />
+            <MetaChip n={ready.length} label="ready to read" />
+          </>
+        }
+      >
+        <div className="max-w-2xl">
+          <ScriptureSearch books={ready.map((b) => ({ code: b.code, title: b.title }))} compact />
         </div>
-      </section>
+      </PageHead>
 
-      <section className="mx-auto max-w-6xl px-5 py-14">
+      <div className="mx-auto max-w-6xl px-5 py-8">
         <Shelf />
-        {books.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">The scriptures are being prepared and will appear here soon.</p>
-        ) : (
-          <div className={`grid gap-8 ${books.length > 2 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2"}`}>
-            {books.map((b) => (
-              <Link key={b.code} href={`/scriptures/${b.code}`} className="anv-card group p-8">
-                <div className="flex gap-5">
-                  {b.coverUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.coverUrl} alt="" className="h-32 w-24 shrink-0 rounded-lg border border-[var(--border)] object-cover shadow-sm" />
-                  )}
-                  <div className="min-w-0">
-                    {b.abbrev && <p className="anv-label mb-4">{b.abbrev}</p>}
-                    {b.titleDeva && <p className="mb-2 font-devanagari text-3xl leading-snug transition-colors group-hover:text-[var(--accent)] sm:text-4xl">{b.titleDeva}</p>}
-                    <h2 className="mb-2 text-xl font-semibold">{b.title}</h2>
-                    {b.tagline && <p className="mb-4 text-sm italic text-[var(--fg-muted)]">{b.tagline}</p>}
+
+        {ready.length > 0 && (
+          <section className="mb-8">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">Ready to read</h2>
+            <div className={`grid gap-4 ${ready.length > 2 ? "md:grid-cols-2 xl:grid-cols-3" : "md:grid-cols-2"}`}>
+              {ready.map((b) => (
+                <Link key={b.code} href={`/scriptures/${b.code}`} className="anv-card group p-4 sm:p-5">
+                  <div className="flex gap-4">
+                    {b.coverUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={b.coverUrl} alt="" className="h-20 w-14 shrink-0 rounded-lg border border-[var(--border)] object-cover shadow-sm" />
+                    )}
+                    <div className="min-w-0">
+                      {b.abbrev && <p className="anv-label mb-1.5">{b.abbrev}</p>}
+                      {b.titleDeva && <p className="mb-0.5 font-devanagari text-xl leading-snug transition-colors group-hover:text-[var(--accent)]">{b.titleDeva}</p>}
+                      <h3 className="text-base font-semibold">{b.title}</h3>
+                      {b.tagline && <p className="mt-0.5 line-clamp-1 text-sm italic text-[var(--fg-muted)]">{b.tagline}</p>}
+                    </div>
                   </div>
-                </div>
-                {b.description && <p className="mb-6 text-sm leading-relaxed text-[var(--fg-muted)]">{b.description}</p>}
-                <div className="mb-6 flex flex-wrap items-center gap-2">
-                  <span className="anv-pill">
-                    {b.divisions} {b.levels[0]}
-                    {b.divisions === 1 ? "" : "s"}
-                  </span>
-                  <span className="anv-pill">
-                    {b.verses.toLocaleString()} {b.verses === 1 ? b.verseLabel.toLowerCase() : b.verseLabelPlural.toLowerCase()}
-                  </span>
-                  {b.author && <span className="anv-pill">{b.author}</span>}
-                </div>
-                <span className="text-sm font-medium text-[var(--color-vermillion)]">Open the book →</span>
-              </Link>
-            ))}
-          </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="anv-pill">
+                      {b.divisions} {b.levels[0]}
+                      {b.divisions === 1 ? "" : "s"}
+                    </span>
+                    <span className="anv-pill">
+                      {b.verses.toLocaleString()} {b.verses === 1 ? b.verseLabel.toLowerCase() : b.verseLabelPlural.toLowerCase()}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
-        <div className="mt-14 grid gap-4 sm:grid-cols-2">
-          <Link href="/scriptures/read" className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5 transition-colors hover:border-[var(--accent)]">
+        {/* jump bar */}
+        <nav aria-label="Library sections" className="mb-6 flex flex-wrap gap-2">
+          {sections.flatMap((s) => s.cats).map((c) => (
+            <a key={c.key} href={`#${slug(c.key)}`} className="ui-btn ui-btn-sm">
+              {c.name} <span className="tabular-nums text-[var(--fg-muted)]">{c.books.length}</span>
+            </a>
+          ))}
+        </nav>
+
+        {sections.map((s) => (
+          <section key={s.name} className="mb-8">
+            <div className="mb-3 flex items-center gap-4">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{s.name}</h2>
+              <span className="h-px flex-1 bg-[var(--border)]" />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {s.cats.map((c) => (
+                <div key={c.key} id={slug(c.key)} className="scroll-mt-24 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-sm sm:p-4">
+                  <div className="mb-2 px-3">
+                    <h3 className="text-base font-semibold">{c.name}</h3>
+                    {c.description && <p className="text-sm text-[var(--fg-muted)]">{c.description}</p>}
+                  </div>
+                  <ul className="grid">
+                    {[...c.books].sort((a, b) => Number(b.verses > 0) - Number(a.verses > 0)).map((b) => (
+                      <BookRow key={b.code} b={b} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Link href="/scriptures/read" className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 transition-colors hover:border-[var(--accent)]">
             <Columns2 className="shrink-0 text-[var(--accent)]" />
             <span>
               <span className="block font-semibold">Dual reading</span>
               <span className="text-sm text-[var(--fg-muted)]">Two places side by side — two books, or two verses of one.</span>
             </span>
           </Link>
-          <Link href="/scriptures/mine" className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-5 transition-colors hover:border-[var(--accent)]">
+          <Link href="/notes" className="flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 transition-colors hover:border-[var(--accent)]">
             <NotebookPen className="shrink-0 text-[var(--accent)]" />
             <span>
-              <span className="block font-semibold">My bookmarks & notes</span>
-              <span className="text-sm text-[var(--fg-muted)]">Everything you saved while reading, with backup.</span>
+              <span className="block font-semibold">Notebook</span>
+              <span className="text-sm text-[var(--fg-muted)]">Write your own notes while you read — on any page.</span>
             </span>
           </Link>
         </div>
-      </section>
+      </div>
     </>
   );
 }

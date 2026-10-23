@@ -5,6 +5,21 @@ Never delete an entry; supersede it with a new one.
 
 ---
 
+### D-017 — 2026-10-23 · Library catalog, simple commentary dropdown, site-wide notebook
+**Decision (owner):** the scripture library is organised in sections →
+categories (`scripture_categories`, migration 0007; editable in
+`/admin/scriptures/categories`), seeded with Primary scriptures, the
+Gauḍīya granthas (list based on Gaudiya Grantha Mandira) and Śāstra;
+books without text show as "Coming soon". In the reader, commentaries are
+ONE dropdown (no side rail). The chapter page shows all verses at once
+with a view switch (Verses / + Translation / + Commentary ▾, Anvaya
+toggle). Per-verse bookmarks and notes are removed; instead a site-wide
+**Notebook** (header button, drawer on every page, `/notes`) kept on the
+device, with backup/restore. Controls use one UI kit (`.ui-*` CSS +
+`components/ui/Select`) that follows light/dark mode.
+**Why:** the side rail overflowed; owner wants simple, organised, polished
+controls; per-verse saving was not wanted.
+
 ### D-016 — 2026-10-23 · Scriptures in Neon: unlimited books, roles, script rule
 **Decision:** the "exactly two scriptures" rule is lifted (owner: "ever
 expanding"). Books have their own level names (`books.levels`), divisions

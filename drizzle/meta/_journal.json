@@ -50,6 +50,20 @@
       "when": 1792744481057,
       "tag": "0006_verse_language",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792746874864,
+      "tag": "0007_scripture_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792747752606,
+      "tag": "0008_more",
+      "breakpoints": true
     }
   ]
 }

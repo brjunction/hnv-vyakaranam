@@ -6,6 +6,7 @@ import PageHead, { MetaChip } from "@/components/PageHead";
 export const revalidate = 86400; // admin saves refresh it immediately
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/practice" },
   title: "Practice",
   description: "Practice Sandhi and Sandhi-viccheda from Hari-nāmāmṛta Vyākaraṇa — choose a chapter, topic, and difficulty, then test yourself.",
 };

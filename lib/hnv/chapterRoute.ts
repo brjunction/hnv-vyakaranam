@@ -18,5 +18,6 @@ export async function chapterMetadata(edition: EditionSlug, slug: string): Promi
   return {
     title: `${ch.title} — ${ch.titleEn}`,
     description: `${ch.summary}${range} Hari-nāmāmṛta Vyākaraṇa.`.trim(),
+    alternates: { canonical: `${edition === "madhyama" ? "" : `/${edition}`}/chapters/${slug}` },
   };
 }

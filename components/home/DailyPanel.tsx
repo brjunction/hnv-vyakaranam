@@ -18,7 +18,7 @@ function prettyDate(iso: string) {
 
 function DailyCard({ title, entry, icon: Icon, script }: { title: string; entry: DailyEntry; icon: typeof Quote; script: ScriptName }) {
   return (
-    <article className="daily-card flex flex-col p-5 sm:p-6">
+    <article className="daily-card flex h-full flex-col p-5 sm:p-6">
       <header className="mb-3 flex items-center gap-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--accent)]">
           <Icon size={16} strokeWidth={1.75} />
@@ -27,8 +27,10 @@ function DailyCard({ title, entry, icon: Icon, script }: { title: string; entry:
         {entry.source && <p className="ml-auto truncate text-xs text-[var(--fg-muted)]">{entry.source}</p>}
       </header>
       {/* ONE script — the reader's choice (header switcher); made from whichever text was entered */}
-      <VerseLinesIn devanagari={entry.sanskrit} iast={entry.iast} script={script} size="md" className="mb-3" />
-      {entry.translation && <p className="border-l-2 border-[var(--color-vermillion)] pl-3 text-[0.95rem] leading-relaxed">{entry.translation}</p>}
+      <div className="daily-verse mb-4">
+        <VerseLinesIn devanagari={entry.sanskrit} iast={entry.iast} script={script} size="md" />
+      </div>
+      {entry.translation && <p className="daily-tr mt-auto">{entry.translation}</p>}
     </article>
   );
 }
@@ -75,7 +77,7 @@ export default function DailyPanel() {
           <div className="anv-skeleton !h-40" />
         </div>
       ) : (
-        <div className={`grid items-start gap-4 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : "max-w-2xl mx-auto"}`}>
+        <div className={`grid gap-5 ${state.data.verseOfDay && state.data.subhashita ? "md:grid-cols-2" : "max-w-2xl mx-auto"}`}>
           {state.data.verseOfDay && <DailyCard title="Verse of the Day" entry={state.data.verseOfDay} icon={BookOpenText} script={prefs.script} />}
           {state.data.subhashita && <DailyCard title="Subhāṣita of the day" entry={state.data.subhashita} icon={Quote} script={prefs.script} />}
         </div>

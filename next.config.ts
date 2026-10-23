@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
   // Other spellings of the wiki address → the wiki page (inside the site layout).
   async redirects() {
     return [
+      // ONE address for search engines: the old *.vercel.app copy moves permanently to www.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "harinamamrta-vyakaranam.vercel.app" }],
+        destination: "https://www.harinamamrta-vyakaranam.com/:path*",
+        permanent: true,
+      },
       { source: "/hnvwiki", destination: "/hnv-wiki", permanent: true },
       { source: "/wiki", destination: "/hnv-wiki", permanent: true },
       { source: "/scriptures/mine", destination: "/notes", permanent: true },

@@ -4,6 +4,7 @@ import { TOOL_GROUPS, toolHref } from "@/lib/tools";
 import PageHead from "@/components/PageHead";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/tools" },
   title: "Tools",
   description: "Sanskrit dictionaries, HNV grammar tools and text utilities.",
 };

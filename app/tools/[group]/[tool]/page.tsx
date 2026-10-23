@@ -12,7 +12,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ group: string; tool: string }> }): Promise<Metadata> {
   const { group, tool } = await params;
   const f = findTool(group, tool);
-  return f ? { title: f.tool.name, description: f.tool.blurb } : {};
+  return f ? { title: f.tool.name, description: f.tool.blurb, alternates: { canonical: `/tools/${group}/${tool}` } } : {};
 }
 
 export default async function ComingSoon({ params }: { params: Promise<{ group: string; tool: string }> }) {

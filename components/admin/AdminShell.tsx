@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  LayoutDashboard, LayoutGrid, Music, ListTree, Library, Dumbbell, BookA, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound,
+  LayoutDashboard, LayoutGrid, Music, House, ListTree, Library, Dumbbell, BookA, BookOpenText, Quote, CalendarDays, Users, Wrench, UserRound,
   PanelLeftClose, PanelLeftOpen, Menu, X, Sun, Moon, ExternalLink, LogOut, ChevronsUpDown, type LucideIcon,
 } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
@@ -21,7 +21,8 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { href: "/admin/songs", label: "Songs", icon: Music },
       { href: "/admin/practice", label: "Practice", icon: Dumbbell },
       { href: "/admin/dictionaries", label: "Dictionaries", icon: BookA },
-      { href: "/admin/more", label: "More page", icon: LayoutGrid },
+      { href: "/admin/more", label: "More & About pages", icon: LayoutGrid },
+      { href: "/admin/home-page", label: "Home page", icon: House },
     ],
   },
   {

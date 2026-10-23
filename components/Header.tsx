@@ -10,7 +10,6 @@ import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
 import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown, Music, GraduationCap, Landmark, type LucideIcon } from "lucide-react";
 import NavMenu, { isActive, type NavItem } from "@/components/NavMenu";
-import HeaderScript from "@/components/HeaderScript";
 
 // Header groups. Desktop: Study · Scriptures · Tools · About, then icons (More, Notebook, Theme).
 const STUDY: NavItem[] = [
@@ -128,10 +127,6 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         <p className="px-4 pb-1 pt-3 text-xs font-semibold text-[var(--color-saffron)]">More</p>
         <MobileLink href="/more" icon={LayoutGrid} label="More — courses & resources" active={isActive(pathname, ["/more"])} />
         <MobileLink href="/about" icon={Info} label="About" active={isActive(pathname, ["/about"])} />
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--bg-2)] px-4 py-3">
-          <span className="text-sm text-[var(--fg-muted)]">Script</span>
-          <HeaderScript />
-        </div>
       </nav>
     </div>,
     document.body
@@ -162,7 +157,7 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Desktop: Study · Scriptures · Tools · More · About | Notebook · Theme · Script */}
+        {/* Desktop: Study · Scriptures · Tools · More · About | Notebook · Theme */}
         <nav className="hidden md:flex items-center gap-0.5 lg:gap-1" aria-label="Main">
           <NavMenu label="Study" icon={GraduationCap} items={STUDY} prefixes={STUDY_PREFIXES} title="Study" intro="Learn Harināmāmṛta-vyākaraṇam, step by step." />
           <NavMenu label="Scriptures" icon={SquareLibrary} items={SCRIPTURES} prefixes={SCRIPTURE_PREFIXES} title="Scriptures" intro="Read śāstra and sing the songs of the ācāryas." />
@@ -178,9 +173,6 @@ export default function Header() {
           <span className="w-px h-6 bg-[var(--border)] mx-1.5" />
           <NotebookButton />
           <ThemeToggle />
-          <span className="hidden lg:block">
-            <HeaderScript />
-          </span>
         </nav>
 
         {/* Mobile: theme toggle + hamburger */}

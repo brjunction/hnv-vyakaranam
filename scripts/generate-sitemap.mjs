@@ -47,6 +47,10 @@ add("/songs", { changefreq: "weekly", priority: 0.85 });
 add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.join(ROOT, "public/hnv-wiki.html")) });
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
+add("/practice", { changefreq: "weekly", priority: 0.8 });
+add("/tools", { changefreq: "monthly", priority: 0.7 });
+add("/tools/dictionary/search", { changefreq: "weekly", priority: 0.9 });
+add("/scriptures/search", { changefreq: "monthly", priority: 0.5 });
 
 // ---------------------------------------------------------------------------
 // HNV chapters — read from the database (Neon) when DATABASE_URL is set,
@@ -158,6 +162,28 @@ async function songUrls() {
   }
 }
 for (const u of await songUrls()) add(u.loc, u);
+
+// More page — every section and every item with its own page.
+async function moreUrls() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return [];
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(url);
+    const secs = await sql`select id, key, kind, to_char(updated_at, 'YYYY-MM-DD') as lastmod from more_sections where is_visible`;
+    const items = await sql`select section_id, slug, body_html, to_char(updated_at, 'YYYY-MM-DD') as lastmod from more_items where status = 'published'`;
+    const out = secs.map((s) => ({ loc: `/more/${s.key}`, lastmod: s.lastmod, priority: 0.6, changefreq: "weekly" }));
+    for (const i of items) {
+      const s = secs.find((x) => x.id === i.section_id);
+      if (s && (s.kind === "posts" || (i.body_html ?? "").trim())) out.push({ loc: `/more/${s.key}/${i.slug}`, lastmod: i.lastmod, priority: 0.5, changefreq: "monthly" });
+    }
+    return out;
+  } catch (err) {
+    console.warn("[sitemap] more not reachable:", err.message);
+    return [];
+  }
+}
+for (const u of await moreUrls()) add(u.loc, u);
 
 // ---------------------------------------------------------------------------
 // Write files

@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SiteChrome from "@/components/SiteChrome";
 import { SITE_URL } from "@/lib/site";
+import SeoJsonLd from "@/components/SeoJsonLd";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
     template: "%s | Harināmāmṛtam Vyākaraṇam",
   },
   description:
-    "An extensive web platform for everything you need to study Srila Jiva Goswami's Harināmāmṛta Vyākaraṇam: all sūtras with vṛtti, Anvaya analysis, Sūtra Notes, multi-script, audio recitations, various tools for research and learning, practice section to practice all 7 chapters, Sanskrit wikipedia, further resources and a growing scripture library.",
+    "Study Śrīla Jīva Gosvāmī's Harināmāmṛta-vyākaraṇam online: every sūtra with vṛtti and commentaries in Madhyama, Bṛhat and Laghu editions, a library of scriptures verse by verse in any script, Vaiṣṇava bhajans, a Sanskrit dictionary of 40 dictionaries, practice and tools.",
+  applicationName: "Harināmāmṛta-Vyākaraṇam",
   keywords: [
     "Harinamamrta Vyakaranam",
   "Harinamamrita Vyakaranam",
@@ -120,11 +122,15 @@ export const metadata: Metadata = {
     "Panini grammar alternative",
   ],
   openGraph: {
-    title: "Harinamamrta Vyakaranam: The Masterpiece on Sanskrit Grammar",
+    title: "Harināmāmṛta-Vyākaraṇam — Śrīla Jīva Gosvāmī's Sanskrit grammar",
     description:
-      "An extensive web platform for everything you need to study Srila Jiva Goswami's Harināmāmṛta Vyākaraṇam: all sūtras with vṛtti, Anvaya analysis, Sūtra Notes, multi-script, audio, practice sessions, Sanskrit wikipedia, and a growing scripture library.",
+      "Every sūtra of Harināmāmṛta-vyākaraṇam, a library of scriptures verse by verse, Vaiṣṇava bhajans and a Sanskrit dictionary — in Devanagari, IAST, Bengali or Odia.",
     type: "website",
+    siteName: "Harināmāmṛta-Vyākaraṇam",
+    images: [{ url: "/hero-cover.jpg", alt: "The Ṣaḍ-Gosvāmīs of Vṛndāvana" }],
   },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" } },
 };
 
 export const viewport: Viewport = {
@@ -147,6 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="google-site-verification" content="A0wYp6OHY16TtZb5ua8xmcSaN4D1YiLzLHOfULCdFZw" />
       </head>
       <body className="antialiased">
+        <SeoJsonLd />
         <SiteChrome header={<Header />} footer={<Footer />}>
           {children}
         </SiteChrome>

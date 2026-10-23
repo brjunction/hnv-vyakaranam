@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "About — Śrī Harinamamrita Vyakarana",
   description: "About Hari-nāmāmṛta Vyākaraṇa, Śrīla Jīva Gosvāmī's grammar of the holy names.",
 };

@@ -138,3 +138,31 @@ paste large content through SQL (use the in-app import).
 - **Data fixes:** sūtra 728 added (start of Kṛdanta), 729 corrected
   (owner-supplied text). Google-Doc notes code removed.
 - **Wiki:** sūtras 53–60 added; example rows for 54/55 corrected.
+
+## 8. Update 2026-10-23 — Tools, dictionaries, admin redesign
+
+- **Tools menu** (`lib/tools.ts`): every tool from the spec in three groups
+  (Dictionary & Lexicon, HNV Grammar Tools, Text Utilities) with Lucide
+  icons. Desktop: hover/focus dropdown in the header; mobile: "Tools"
+  accordion in the menu. `/tools` lists all; unfinished tools show a
+  "coming soon" page at `/tools/<group>/<tool>`.
+- **Dictionary** (`/tools/dictionary/search`), GoldenDict-style: StarDict
+  files (.ifo/.idx/.dict.dz/.syn) live in Vercel Blob and are read
+  directly — `lib/dict/stardict.ts` does dictzip random access (HTTP Range,
+  only the needed chunk is inflated). Only metadata is in Neon
+  (`dictionaries`, migration 0003). When a dictionary is added, a search
+  index (headwords → IAST, offsets) is prepared once and stored as
+  gzipped JSON in Blob (`lib/dict/prepare.ts`).
+  Search (`lib/dict/engine.ts`): any input script (Devanagari, IAST,
+  ITRANS, HK, plain letters) → folded keys; exact → prefix → similar
+  (edit distance) → inside compounds; English "meaning" search over the
+  definitions. APIs: `/api/dict/search`, `/api/dict/entry`.
+  Note: Sanscript reads ITRANS "R" as Tamil ṟ; `fixItrans` maps it to ṛ.
+- **Admin › Dictionaries**: upload files, a folder, or a .zip (unzipped in
+  the browser, uploaded straight to Blob via `/api/admin/dict-upload`);
+  headword scheme guessed and editable; re-prepare, rename, order,
+  switch off, delete (also deletes the files).
+- **Admin redesign**: neutral shadcn-style system scoped to `.admin-ui`
+  (tokens `--a-*` in `globals.css`; the site's own tokens are remapped
+  inside it), collapsible sidebar (remembered), mobile drawer, light/dark
+  toggle, user menu. Components: `AdminShell`, `ui.tsx`, `ActionForm`.

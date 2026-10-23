@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ThemeToggle from "./ThemeToggle";
+import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
-import { BookSearch, ScrollText, SquareLibrary, Dumbbell, Info, LayoutGrid, Menu, X, Goal, Earth, CircleDot, LandPlot } from "lucide-react";
+import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown } from "lucide-react";
 
 const links = [
   { href: "/chapters", label: "Chapters", icon: BookSearch },
@@ -21,6 +22,7 @@ const links = [
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
+  const [toolsOpen, setToolsOpen] = useState(pathname?.startsWith("/tools") ?? false);
   // Rendered via a portal straight into <body> — deliberately NOT a
   // descendant of <header>. A header with backdrop-blur (backdrop-filter)
   // creates a CSS containing block for any `position: fixed` descendant,
@@ -59,6 +61,21 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             </Link>
           );
         })}
+        <button
+          onClick={() => setToolsOpen((v) => !v)}
+          aria-expanded={toolsOpen}
+          className={`flex items-center gap-4 px-4 py-4 rounded-2xl text-lg transition-colors text-left ${
+            pathname?.startsWith("/tools") ? "text-[var(--accent)] bg-[var(--bg-2)]" : "text-[var(--fg)] hover:bg-[var(--bg-2)]"
+          }`}
+        >
+          <Wrench size={22} strokeWidth={1.75} /> Tools
+          <ChevronDown size={18} className={`ml-auto transition-transform ${toolsOpen ? "rotate-180" : ""}`} />
+        </button>
+        {toolsOpen && (
+          <div className="px-2 pb-4">
+            <ToolsGrid compact onNavigate={onClose} />
+          </div>
+        )}
       </nav>
     </div>,
     document.body
@@ -118,6 +135,7 @@ export default function Header() {
               </Link>
             );
           })}
+          <ToolsMenu />
           <span className="w-px h-5 bg-[var(--border)] mx-2" />
           <ThemeToggle />
         </nav>

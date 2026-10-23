@@ -17,7 +17,7 @@ export default async function EditQuestion({ params }: { params: Promise<{ id: s
   return (
     <>
       <Crumbs items={[{ label: "Practice", href: "/admin/practice" }, { label: topic.title, href: `/admin/practice/topics/${topic.id}` }, { label: `Question ${q.code}` }]} />
-      <h1 className="mb-6 text-4xl font-semibold">Edit question</h1>
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">Edit question</h1>
       <ActionForm action={saveQuestion}>
         <input type="hidden" name="id" value={q.id} />
         <input type="hidden" name="topicId" value={q.topicId} />

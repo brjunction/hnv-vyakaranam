@@ -48,7 +48,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <p className="mb-6 rounded-xl border border-[var(--danger)]/40 bg-[var(--danger)]/5 p-4 text-sm">Your access level doesn&apos;t allow that.</p>
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {perEdition.map((e) => (
           <Stat key={e.edition} label={`${e.edition} sūtras`} value={Number(e.total)} note={Number(e.total) ? undefined : "not added yet"} />
         ))}

@@ -59,13 +59,13 @@ export default async function NewSutra({ searchParams }: { searchParams: Promise
           { label: `New ${word}` },
         ]}
       />
-      <h1 className="mb-2 text-4xl font-semibold">New {word}</h1>
+      <h1 className="mb-2 text-2xl font-semibold tracking-tight sm:text-3xl">New {word}</h1>
       <p className="mb-6 text-[var(--fg-muted)]">
         In “{sec.title}”, {before ? <>right after <strong className="sutra-number">{before.number}</strong></> : "at the start"}.{" "}
         <Link href={`/admin/hnv/${ed}/chapters/${ch.id}#sec-${sec.id}`} className="underline">Cancel</Link>
       </p>
 
-      <ActionForm action={createSutra} className="pb-24">
+      <ActionForm action={createSutra} className="pb-4">
         <input type="hidden" name="afterId" value={afterId || ""} />
         <Panel title={word === "verse" ? "Verse" : "Sūtra"}>
           <SutraFields
@@ -99,8 +99,8 @@ export default async function NewSutra({ searchParams }: { searchParams: Promise
             <CommentaryFields types={types} entries={[]} canPublish />
           </Panel>
         )}
-        <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur lg:left-[248px]">
-          <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-3">
+        <div className="sticky bottom-4 z-20 mt-2">
+          <div className="a-card flex items-center gap-4 px-4 py-3 shadow-[var(--a-shadow-lg)]">
             <SubmitButton>Add {word}</SubmitButton>
           </div>
         </div>

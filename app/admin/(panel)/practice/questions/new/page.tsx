@@ -18,7 +18,7 @@ export default async function NewQuestion({ searchParams }: { searchParams: Prom
   return (
     <>
       <Crumbs items={[{ label: "Practice", href: "/admin/practice" }, { label: topic.title, href: `/admin/practice/topics/${topic.id}` }, { label: "New question" }]} />
-      <h1 className="mb-6 text-4xl font-semibold">New question</h1>
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">New question</h1>
       <ActionForm action={saveQuestion}>
         <input type="hidden" name="topicId" value={topic.id} />
         <Panel>

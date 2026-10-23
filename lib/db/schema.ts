@@ -267,6 +267,40 @@ export const mediaFiles = pgTable("media_files", {
   createdAt: createdAt(),
 });
 
+// ---------------------------------------------------------------------------
+// Dictionaries (GoldenDict-style). Only metadata lives here: the StarDict
+// files (.ifo/.idx/.dict.dz/.syn) stay in Vercel Blob and are read directly
+// (lib/dict/*). `indexUrl` points to a prepared search index (gzipped JSON)
+// built from the .idx when the dictionary is added.
+// ---------------------------------------------------------------------------
+export const DICT_SCHEMES = ["iast", "itrans", "hk", "slp1", "velthuis", "devanagari", "english"] as const;
+export type DictScheme = (typeof DICT_SCHEMES)[number];
+export type DictFiles = { ifo: string; idx: string; dict: string; syn?: string };
+
+export const dictionaries = pgTable("dictionaries", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  shortName: text("short_name").notNull().default(""),
+  description: text("description").notNull().default(""),
+  /** Source / licence note shown with entries. */
+  source: text("source").notNull().default(""),
+  format: text("format").notNull().default("stardict"),
+  /** How headwords are written in the files (for search + Devanagari display). */
+  headwordScheme: text("headword_scheme", { enum: DICT_SCHEMES }).notNull().default("iast"),
+  files: jsonb("files").$type<DictFiles>().notNull(),
+  indexUrl: text("index_url").notNull().default(""),
+  /** Parsed .ifo fields (bookname, wordcount, sametypesequence …). */
+  info: jsonb("info").$type<Record<string, string>>().notNull().default({}),
+  wordCount: integer("word_count").notNull().default(0),
+  totalBytes: integer("total_bytes").notNull().default(0),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+  updatedBy: updatedBy(),
+});
+
 /** No longer used: notes are now the "Notes" commentary (sutra_commentaries). */
 export const sutraNotes = pgTable("sutra_notes", {
   sutraId: integer("sutra_id")

@@ -360,3 +360,108 @@ body {
 .rich-editor img.ProseMirror-selectednode, .rich-editor [data-resize-handle] { outline: 2px solid var(--accent); }
 .rich-editor p.is-editor-empty:first-child::before,
 .rich-editor:has(> p:only-child:empty)::before { content: attr(data-placeholder); color: var(--fg-faint); pointer-events: none; float: left; height: 0; }
+
+/* ========================================================================
+   Admin UI — neutral, shadcn-style design system (owner request 2026-10-23).
+   Scoped to .admin-ui so the public site's palette is untouched. The site's
+   own tokens are remapped inside the admin, so every admin page picks this
+   up automatically; --a-* are the admin's named tokens.
+   ======================================================================== */
+.admin-ui {
+  --a-bg: #fafafa;
+  --a-card: #ffffff;
+  --a-muted: #f4f4f5;
+  --a-border: #e4e4e7;
+  --a-input: #e4e4e7;
+  --a-fg: #09090b;
+  --a-fg-muted: #71717a;
+  --a-primary: #18181b;
+  --a-primary-fg: #fafafa;
+  --a-ring: #a1a1aa;
+  --a-brand: #c2862d;
+  --a-success: #16a34a;
+  --a-danger: #dc2626;
+  --a-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --a-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --a-shadow-lg: 0 12px 32px -12px rgb(0 0 0 / 0.18), 0 4px 10px -6px rgb(0 0 0 / 0.08);
+
+  /* remap the site tokens used by existing admin markup */
+  --bg: var(--a-bg);
+  --bg-2: var(--a-muted);
+  --surface: var(--a-card);
+  --border: var(--a-border);
+  --border-strong: var(--a-input);
+  --fg: var(--a-fg);
+  --fg-muted: var(--a-fg-muted);
+  --fg-faint: #a1a1aa;
+  --accent: var(--a-primary);
+  --accent-fg: var(--a-primary-fg);
+  --ring: var(--a-ring);
+  --success: var(--a-success);
+  --danger: var(--a-danger);
+  --highlight: #fde68a;
+  --color-saffron: var(--a-brand);
+
+  background: var(--a-bg);
+  color: var(--a-fg);
+  font-feature-settings: "cv11", "ss01";
+}
+.dark .admin-ui {
+  --a-bg: #09090b;
+  --a-card: #111113;
+  --a-muted: #1c1c1f;
+  --a-border: #27272a;
+  --a-input: #303035;
+  --a-fg: #fafafa;
+  --a-fg-muted: #a1a1aa;
+  --a-primary: #fafafa;
+  --a-primary-fg: #18181b;
+  --a-ring: #52525b;
+  --a-brand: #e0a54a;
+  --a-success: #4ade80;
+  --a-danger: #f87171;
+  --a-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --a-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --a-shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --fg-faint: #71717a;
+  --highlight: #854d0e;
+}
+.admin-ui .a-card { background: var(--a-card); border: 1px solid var(--a-border); border-radius: 0.75rem; box-shadow: var(--a-shadow); }
+.admin-ui .a-input {
+  display: block; width: 100%; height: 2.25rem; border-radius: 0.5rem; border: 1px solid var(--a-input);
+  background: var(--a-card); padding: 0 0.75rem; font-size: 0.875rem; color: var(--a-fg); box-shadow: var(--a-shadow-sm);
+  transition: border-color .15s, box-shadow .15s;
+}
+.admin-ui textarea.a-input { height: auto; padding: 0.5rem 0.75rem; line-height: 1.5; }
+.admin-ui .a-input:focus { outline: none; border-color: var(--a-ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--a-ring) 30%, transparent); }
+.admin-ui .a-input:disabled { opacity: .6; cursor: not-allowed; }
+.admin-ui .a-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 2.25rem; padding: 0 1rem;
+  border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; white-space: nowrap; transition: background .15s, color .15s, box-shadow .15s, opacity .15s;
+  box-shadow: var(--a-shadow-sm);
+}
+.admin-ui .a-btn:disabled { opacity: .5; pointer-events: none; }
+.admin-ui .a-btn-primary { background: var(--a-primary); color: var(--a-primary-fg); }
+.admin-ui .a-btn-primary:hover { opacity: .9; }
+.admin-ui .a-btn-outline { background: var(--a-card); border: 1px solid var(--a-border); color: var(--a-fg); }
+.admin-ui .a-btn-outline:hover { background: var(--a-muted); }
+.admin-ui .a-btn-danger { background: var(--a-card); border: 1px solid color-mix(in srgb, var(--a-danger) 45%, transparent); color: var(--a-danger); }
+.admin-ui .a-btn-danger:hover { background: var(--a-danger); color: #fff; }
+/* existing admin markup: softer controls everywhere */
+.admin-ui select, .admin-ui input[type="text"], .admin-ui input:not([type]), .admin-ui input[type="number"], .admin-ui input[type="email"], .admin-ui input[type="password"], .admin-ui input[type="date"] { color-scheme: light; }
+.dark .admin-ui select, .dark .admin-ui input { color-scheme: dark; }
+.admin-ui input[type="checkbox"], .admin-ui input[type="radio"] { accent-color: var(--a-primary); width: 1rem; height: 1rem; }
+.admin-ui ::selection { background: color-mix(in srgb, var(--a-brand) 35%, transparent); }
+.admin-ui details > summary { list-style: none; }
+.admin-ui details > summary::-webkit-details-marker { display: none; }
+
+/* Dictionary articles (public) */
+.dict-article { overflow-wrap: anywhere; }
+.dict-article a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.dict-article b, .dict-article strong { font-weight: 600; }
+.dict-article i, .dict-article em { color: var(--fg-muted); }
+.dict-article p + p, .dict-article div + div { margin-top: 0.5em; }
+.dict-article ul { list-style: disc; padding-left: 1.4em; }
+.dict-article ol { list-style: decimal; padding-left: 1.4em; }
+.dict-article table { border-collapse: collapse; }
+.dict-article td, .dict-article th { border: 1px solid var(--border); padding: 0.25em 0.5em; }

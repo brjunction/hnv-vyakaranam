@@ -44,7 +44,7 @@ export default async function EditSutra({
       />
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-4xl font-semibold">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           {word} <span className="sutra-number">{s.number}</span>
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -79,7 +79,7 @@ export default async function EditSutra({
         </p>
       )}
 
-      <ActionForm action={saveSutra} className="pb-24">
+      <ActionForm action={saveSutra} className="pb-4">
         <input type="hidden" name="id" value={s.id} />
         <Panel title={word}>
           <SutraFields
@@ -117,8 +117,8 @@ export default async function EditSutra({
         </Panel>
 
         {canWrite && (
-          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur lg:left-[248px]">
-            <div className="mx-auto flex max-w-5xl items-center gap-4 px-5 py-3">
+          <div className="sticky bottom-4 z-20 mt-2">
+            <div className="a-card flex items-center gap-4 px-4 py-3 shadow-[var(--a-shadow-lg)]">
               <SubmitButton>Save {word.toLowerCase()} {s.number}</SubmitButton>
               <span className="text-xs text-[var(--fg-muted)]">The public page updates as soon as you save.</span>
             </div>

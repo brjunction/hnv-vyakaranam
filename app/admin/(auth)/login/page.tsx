@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const missing = [!isDbConfigured && "DATABASE_URL", !isAuthConfigured && "AUTH_SECRET"].filter(Boolean);
 
   return (
-    <div className="min-h-dvh grid lg:grid-cols-[1.1fr_1fr]">
+    <div className="admin-ui min-h-dvh grid lg:grid-cols-[1.1fr_1fr]">
       <aside className="hero-night hidden lg:flex flex-col justify-between p-12">
         <div className="flex items-center gap-3">
           <Image src="/hnvlogo.png" alt="" width={40} height={40} />
@@ -37,9 +37,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </aside>
 
       <main className="flex items-center justify-center px-5 py-16">
-        <div className="w-full max-w-sm">
-          <h1 className="font-semibold text-4xl mb-2">Sign in</h1>
-          <p className="text-[var(--fg-muted)] mb-8">Manage the sūtras, the Verse of the Day and Subhāṣitas.</p>
+        <div className="a-card w-full max-w-sm p-8 shadow-[var(--a-shadow-lg)]">
+          <span className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--a-muted)] ring-1 ring-[var(--a-border)]">
+            <Image src="/hnvlogo.png" alt="" width={28} height={28} />
+          </span>
+          <h1 className="mb-1.5 text-2xl font-semibold tracking-tight">Sign in</h1>
+          <p className="mb-7 text-sm text-[var(--a-fg-muted)]">Harināmāmṛta-vyākaraṇam editors&apos; dashboard.</p>
           {missing.length > 0 ? (
             <div className="rounded-xl border border-[var(--danger)]/40 bg-[var(--danger)]/5 p-4 text-sm">
               This deployment is missing {missing.join(" and ")}. Add {missing.length > 1 ? "them" : "it"} in

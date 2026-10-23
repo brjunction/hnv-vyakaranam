@@ -44,7 +44,11 @@ export function ActionForm({
       {state && (
         <p
           role="status"
-          className={`mt-3 text-sm ${state.ok ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
+          className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
+            state.ok
+              ? "border-[var(--a-success)]/30 bg-[var(--a-success)]/10 text-[var(--a-success)]"
+              : "border-[var(--a-danger)]/30 bg-[var(--a-danger)]/10 text-[var(--a-danger)]"
+          }`}
         >
           {state.message}
         </p>
@@ -67,34 +71,22 @@ export function SubmitButton({
   value?: string;
 }) {
   const { pending } = useFormStatus();
-  const styles =
-    variant === "primary"
-      ? "bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90"
-      : variant === "danger"
-        ? "border border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white"
-        : "border border-[var(--border-strong)] hover:border-[var(--fg)]";
+  const styles = variant === "primary" ? "a-btn-primary" : variant === "danger" ? "a-btn-danger" : "a-btn-outline";
   return (
-    <button
-      type="submit"
-      name={name}
-      value={value}
-      disabled={pending}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${styles} ${className}`}
-    >
+    <button type="submit" name={name} value={value} disabled={pending} className={`a-btn ${styles} ${className}`}>
       {pending ? "Working…" : children}
     </button>
   );
 }
 
-export const inputCls =
-  "w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] px-3 py-2 text-[0.95rem] text-[var(--fg)] placeholder:text-[var(--fg-faint)] focus:outline-none focus:border-[var(--ring)] focus:ring-2 focus:ring-[var(--ring)]/25";
+export const inputCls = "a-input placeholder:text-[var(--fg-faint)]";
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-sm font-semibold mb-1.5">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium">{label}</span>
       {children}
-      {hint && <span className="block text-xs text-[var(--fg-muted)] mt-1">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-xs leading-relaxed text-[var(--a-fg-muted)]">{hint}</span>}
     </label>
   );
 }

@@ -1,33 +1,49 @@
-// Small presentational helpers for admin pages (server-safe).
-export function PageHeader({ title, intro }: { title: string; intro?: string }) {
+// Presentational helpers for admin pages (server-safe), shadcn-style.
+export function PageHeader({ title, intro, actions }: { title: string; intro?: string; actions?: React.ReactNode }) {
   return (
-    <header className="mb-8">
-      <h1 className="font-semibold text-4xl mb-2">{title}</h1>
-      {intro && <p className="text-[var(--fg-muted)] max-w-2xl">{intro}</p>}
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+        {intro && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--a-fg-muted)]">{intro}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </header>
   );
 }
 
-export function Panel({ title, children, aside }: { title?: string; children: React.ReactNode; aside?: React.ReactNode }) {
+export function Panel({
+  title,
+  description,
+  children,
+  aside,
+}: {
+  title?: string;
+  description?: string;
+  children: React.ReactNode;
+  aside?: React.ReactNode;
+}) {
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6 mb-6">
+    <section className="a-card mb-6 overflow-visible">
       {(title || aside) && (
-        <div className="flex items-baseline justify-between gap-4 mb-4">
-          {title && <h2 className="font-semibold text-2xl">{title}</h2>}
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--a-border)] px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            {title && <h2 className="text-base font-semibold leading-tight">{title}</h2>}
+            {description && <p className="mt-1 text-sm text-[var(--a-fg-muted)]">{description}</p>}
+          </div>
           {aside}
         </div>
       )}
-      {children}
+      <div className="px-5 py-5 sm:px-6">{children}</div>
     </section>
   );
 }
 
 export function Stat({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-      <p className="text-sm text-[var(--fg-muted)] mb-1">{label}</p>
-      <p className="font-semibold text-4xl sutra-number">{value}</p>
-      {note && <p className="text-xs text-[var(--fg-faint)] mt-1">{note}</p>}
+    <div className="a-card p-5">
+      <p className="text-sm font-medium text-[var(--a-fg-muted)]">{label}</p>
+      <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+      {note && <p className="mt-1 text-xs text-[var(--a-fg-muted)]">{note}</p>}
     </div>
   );
 }

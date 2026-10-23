@@ -13,7 +13,9 @@ export async function GET(req: Request) {
   const dict = (sp.get("d") ?? "").split(",").filter(Boolean);
   try {
     const data = q.trim() ? await searchDictionaries(q, { mode, dict, limit: 60 }) : await searchDictionaries("", { dict, limit: 0 });
-    return NextResponse.json(data, { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400" } });
+    // Never cache while no dictionary is installed (the first upload must show at once).
+    const cache = data.dictionaries.length ? "public, s-maxage=600, stale-while-revalidate=86400" : "no-store";
+    return NextResponse.json(data, { headers: { "Cache-Control": cache } });
   } catch (err) {
     console.error("[dict/search]", err);
     return NextResponse.json({ error: "Search failed." }, { status: 500 });

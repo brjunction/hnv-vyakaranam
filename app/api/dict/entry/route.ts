@@ -13,7 +13,8 @@ export async function GET(req: Request) {
   const dict = (sp.get("d") ?? "").split(",").filter(Boolean);
   try {
     const data = await lookupHeadword(h, { dict });
-    return NextResponse.json(data, { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=86400" } });
+    const cache = data.entries.length ? "public, s-maxage=600, stale-while-revalidate=86400" : "no-store";
+    return NextResponse.json(data, { headers: { "Cache-Control": cache } });
   } catch (err) {
     console.error("[dict/entry]", err);
     return NextResponse.json({ error: "Lookup failed." }, { status: 500 });

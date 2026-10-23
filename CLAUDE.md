@@ -29,8 +29,11 @@ must never be forgotten.
 5. **No Vedabase or other third-party links and no external credit
    paragraphs** on verse/sūtra content.
 6. **Audio = links only.** Never upload or store audio files.
-7. **Exactly two scriptures** for now: Śrīmad-Bhāgavatam and Bhagavad-gītā.
-   The schema supports more; adding one needs a requirements change.
+7. **Any number of scriptures** (owner, 2026-10-23, D-016) — added in
+   `/admin/scriptures`. Verse text, Anvaya, Translation and Commentary are
+   four different things with their own design. Script switching converts
+   everything (Devanagari/IAST/Bengali/Odia) EXCEPT English, which is
+   marked (whole kind = English, or `<span lang="en">` in the editor).
 8. **Parity first.** Every URL that works today keeps working (directly or
    via a permanent redirect).
 9. **Public pages are static/ISR.** A visitor's request never waits on a

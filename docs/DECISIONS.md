@@ -5,6 +5,24 @@ Never delete an entry; supersede it with a new one.
 
 ---
 
+### D-016 — 2026-10-23 · Scriptures in Neon: unlimited books, roles, script rule
+**Decision:** the "exactly two scriptures" rule is lifted (owner: "ever
+expanding"). Books have their own level names (`books.levels`), divisions
+form a tree (`scripture_divisions`), verses hang on any division
+(`scripture_verses`), and texts of a verse are "commentary kinds"
+(`scripture_commentary_types`) with a ROLE (`pane`): `anvaya` and
+`translation` belong to the verse (own design, under the verse),
+`verse` = word-for-word, `commentary` = purports/ṭīkās (commentary pane,
+navigator built for 20+). Script switching converts all Devanagari,
+Bengali, Odia and IAST; only English is protected (kind language =
+English, or `<span lang="en">` marked in the editor; IAST terms in English
+can be marked `lang="sa"`). Audio is not shown in Scriptures (owner).
+Personal bookmarks/notes/history are local-first (on the device, with
+JSON backup) until reader accounts (Phase 9).
+**Why:** owner's instructions during the build.
+**Alternatives:** fixed canto/chapter tables (old `cantos` /
+`scripture_chapters` / `verses` — empty, kept unused, drop later).
+
 ### D-015 — 2026-10-23 · Sūtras live only in Neon; any number of rich-text commentaries
 **Decision:** the chapter spreadsheets (`content/chapters/*.xlsx`) and the
 sūtra-notes Google Doc are retired. All chapters, sections, sūtras,

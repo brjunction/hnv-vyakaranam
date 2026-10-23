@@ -16,10 +16,6 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import * as XLSXNS from "xlsx";
-// Plain Node ESM interop with xlsx's CJS build can land the real exports on
-// `.default` instead of the namespace itself — cover both.
-const XLSX = XLSXNS.readFile ? XLSXNS : XLSXNS.default;
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url)) + "/..";
 const SITE_URL = JSON.parse(fs.readFileSync(path.join(ROOT, "site.config.json"), "utf-8")).siteUrl;
@@ -44,7 +40,8 @@ function fileDate(p) {
 // ---------------------------------------------------------------------------
 add("/", { changefreq: "weekly", priority: 1.0 });
 add("/chapters", { changefreq: "weekly", priority: 0.9 });
-add("/anvyaya", { changefreq: "weekly", priority: 0.9 });
+add("/scriptures", { changefreq: "weekly", priority: 0.9 });
+add("/scriptures/read", { changefreq: "monthly", priority: 0.4 });
 add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.join(ROOT, "public/hnv-wiki.html")) });
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
@@ -99,134 +96,48 @@ for (const c of await hnvChapterUrls()) {
 }
 
 // ---------------------------------------------------------------------------
-// Scripture Anvyayas — content/anvyaya/{sb,bg}/*.xlsx
-// Every canto/chapter page AND every individual verse page is a real,
-// separate URL, so every verse ends up in the sitemap and is individually
-// indexable by Google.
+// Scriptures — from the database: every book, every division (canto,
+// chapter …) and every verse is its own indexable URL.
 // ---------------------------------------------------------------------------
-const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-const COLS = {
-  chapterNo: ["chapterno", "chapternumber", "chno"],
-  verseNo: ["verseno", "versenumber", "verse"],
-};
-function columnMap(headerRow) {
-  const cells = headerRow.map(norm);
-  const map = {};
-  for (const [key, names] of Object.entries(COLS)) {
-    const idx = cells.findIndex((c) => names.includes(c));
-    if (idx !== -1) map[key] = idx;
-  }
-  return map;
-}
-
-function readVerseKeys(filePath, hasChapters, fileDivision) {
-  let wb;
+async function scriptureUrls() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return [];
   try {
-    wb = XLSX.readFile(filePath);
-  } catch {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(url);
+    const books = await sql`select id, code, to_char(updated_at, 'YYYY-MM-DD') as lastmod from books where status = 'published' order by sort, id`;
+    const out = [];
+    for (const b of books) {
+      out.push({ loc: `/scriptures/${b.code}`, lastmod: b.lastmod, priority: 0.85, changefreq: "weekly" });
+      const divs = await sql`select id, parent_id, key, to_char(updated_at, 'YYYY-MM-DD') as lastmod from scripture_divisions where book_id = ${b.id} and status = 'published' order by position, id`;
+      const byId = new Map(divs.map((d) => [d.id, d]));
+      const pathOf = (id) => {
+        const parts = [];
+        let cur = byId.get(id);
+        for (let i = 0; cur && i < 20; i++) {
+          parts.unshift(cur.key);
+          if (cur.parent_id == null) return parts;
+          cur = byId.get(cur.parent_id);
+        }
+        return null; // an ancestor is unpublished
+      };
+      for (const d of divs) {
+        const p = pathOf(d.id);
+        if (p) out.push({ loc: `/scriptures/${b.code}/${p.join("/")}`, lastmod: d.lastmod, priority: 0.75, changefreq: "weekly" });
+      }
+      const verses = await sql`select division_id, key, to_char(updated_at, 'YYYY-MM-DD') as lastmod from scripture_verses where book_id = ${b.id} and status = 'published'`;
+      for (const v of verses) {
+        const p = pathOf(v.division_id);
+        if (p) out.push({ loc: `/scriptures/${b.code}/${p.join("/")}/${v.key}`, lastmod: v.lastmod, priority: 0.6, changefreq: "monthly" });
+      }
+    }
+    return out;
+  } catch (err) {
+    console.warn("[sitemap] scriptures not reachable:", err.message);
     return [];
   }
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  if (!sheet || !sheet["!ref"]) return [];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: true, defval: "" });
-  if (rows.length < 2) return [];
-  const col = columnMap(rows[0]);
-  if (col.verseNo === undefined) return [];
-
-  const out = [];
-  for (let i = 1; i < rows.length; i++) {
-    const raw = String(rows[i][col.verseNo] ?? "").trim();
-    if (!raw) continue;
-    const parts = raw.split(".").map((p) => p.trim()).filter(Boolean);
-    if (!parts.length) continue;
-
-    if (hasChapters) {
-      // SB: division.chapter.verse, or chapter.verse (division from file name)
-      let division = fileDivision;
-      let chapter;
-      let verseKey;
-      if (parts.length >= 3) {
-        division = parseInt(parts[0], 10);
-        chapter = parseInt(parts[1], 10);
-        verseKey = parts.slice(2).join(".");
-      } else if (parts.length === 2) {
-        chapter = parseInt(parts[0], 10);
-        verseKey = parts[1];
-      } else {
-        const chCol = col.chapterNo !== undefined ? parseInt(String(rows[i][col.chapterNo]).trim(), 10) : NaN;
-        chapter = Number.isFinite(chCol) ? chCol : fileDivision;
-        verseKey = parts[0];
-      }
-      if (!Number.isFinite(division) || !Number.isFinite(chapter)) continue;
-      out.push({ division, chapter, verseKey });
-    } else {
-      // BG: chapter.verse
-      let chapter;
-      let verseKey;
-      if (parts.length >= 2) {
-        chapter = parseInt(parts[0], 10);
-        verseKey = parts.slice(1).join(".");
-      } else {
-        chapter = fileDivision;
-        verseKey = parts[0];
-      }
-      if (!Number.isFinite(chapter)) continue;
-      out.push({ division: chapter, chapter, verseKey });
-    }
-  }
-  return out;
 }
-
-const BOOKS = [
-  { code: "SB", dir: "sb", hasChapters: true, divisionCount: 12 },
-  { code: "BG", dir: "bg", hasChapters: false, divisionCount: 18 },
-];
-
-for (const book of BOOKS) {
-  const dir = path.join(ROOT, "content/anvyaya", book.dir);
-  if (!fs.existsSync(dir)) continue;
-
-  const bookLastmod = fs
-    .readdirSync(dir)
-    .filter((f) => /\.xlsx$/i.test(f))
-    .reduce((latest, f) => {
-      const d = fileDate(path.join(dir, f));
-      return d > latest ? d : latest;
-    }, today.slice(0, 4) + "-01-01");
-
-  add(`/anvyaya/${book.code}`, { changefreq: "weekly", priority: 0.85, lastmod: bookLastmod });
-
-  for (let n = 1; n <= book.divisionCount; n++) {
-    const re = new RegExp(`^${book.dir}[-_ ]?0*${n}(?!\\d)`, "i");
-    const files = fs
-      .readdirSync(dir)
-      .filter((f) => /\.xlsx$/i.test(f) && !f.startsWith("~$") && re.test(f))
-      .map((f) => path.join(dir, f));
-    if (files.length === 0) continue;
-
-    const divisionLastmod = files.reduce((latest, f) => {
-      const d = fileDate(f);
-      return d > latest ? d : latest;
-    }, bookLastmod);
-
-    add(`/anvyaya/${book.code}/${n}`, { changefreq: "weekly", priority: 0.8, lastmod: divisionLastmod });
-
-    const verses = files.flatMap((f) => readVerseKeys(f, book.hasChapters, n));
-    const chapters = new Set(verses.map((v) => v.chapter));
-
-    if (book.hasChapters) {
-      for (const ch of chapters) {
-        add(`/anvyaya/${book.code}/${n}/${ch}`, { changefreq: "monthly", priority: 0.7, lastmod: divisionLastmod });
-      }
-    }
-    for (const v of verses) {
-      const p = book.hasChapters
-        ? `/anvyaya/${book.code}/${v.division}/${v.chapter}/${v.verseKey}`
-        : `/anvyaya/${book.code}/${v.chapter}/${v.verseKey}`;
-      add(p, { changefreq: "monthly", priority: 0.6, lastmod: divisionLastmod });
-    }
-  }
-}
+for (const u of await scriptureUrls()) add(u.loc, u);
 
 // ---------------------------------------------------------------------------
 // Write files

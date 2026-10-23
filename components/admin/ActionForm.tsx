@@ -16,7 +16,9 @@ export function ActionForm({
   className,
   resetOnSuccess = false,
   confirm,
+  id,
 }: {
+  id?: string;
   action: Action;
   children: React.ReactNode;
   className?: string;
@@ -34,6 +36,7 @@ export function ActionForm({
   return (
     <form
       ref={ref}
+      id={id}
       action={formAction}
       className={className}
       onSubmit={(e) => {

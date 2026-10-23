@@ -25,7 +25,7 @@ const OPTIONS: sanitizeHtml.IOptions = {
     table: ["style"],
     ol: ["start", "type"],
     mark: ["data-color", "style"],
-    "*": ["style"],
+    "*": ["style", "lang"],
   },
   allowedStyles: {
     "*": {

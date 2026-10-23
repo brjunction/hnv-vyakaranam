@@ -18,8 +18,13 @@ export function revalidateHnv() {
   revalidatePath("/laghu/chapters", "layout");
 }
 
+export function revalidateScriptures() {
+  revalidateTag(tags.scrAll);
+  revalidatePath("/scriptures", "layout");
+}
+
 export function revalidateEverything() {
-  for (const t of [tags.hnvAll, tags.daily, tags.home, tags.practice, tags.posts, tags.settings]) revalidateTag(t);
+  for (const t of [tags.hnvAll, tags.scrAll, tags.daily, tags.home, tags.practice, tags.posts, tags.settings]) revalidateTag(t);
   revalidatePath("/", "layout");
 }
 

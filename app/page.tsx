@@ -22,7 +22,7 @@ const EXPLORE_CARDS = [
     cta: "View the table of contents",
   },
   {
-    href: "/anvyaya",
+    href: "/scriptures",
     icon: ScrollText,
     label: "Scriptures",
     title: "Śrīmad-Bhāgavatam & Bhagavad-gītā",
@@ -321,7 +321,7 @@ export default async function Home() {
             Devanagari and a link to Śrīla Prabhupāda&apos;s purport.
           </p>
           <Link
-            href="/anvyaya"
+            href="/scriptures"
             className="inline-block px-8 py-3 rounded-full border border-[var(--accent)] text-[var(--accent)] font-medium hover:bg-[var(--accent)] hover:text-[var(--color-ink)] transition-colors"
           >
             Explore the Scriptures

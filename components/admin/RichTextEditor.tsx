@@ -18,6 +18,7 @@ import {
   Trash2, TableCellsMerge, TableCellsSplit, PanelTop, Maximize2, Minimize2,
 } from "lucide-react";
 import { isHtml } from "@/components/RichText";
+import { LangMark, TEXT_LANGS, markIastTerms } from "@/components/admin/langMark";
 
 // Rich-text editor for vṛtti, translation and commentaries. Produces HTML
 // (stored in a hidden <input name={name}>, so it submits with the form) —
@@ -85,9 +86,11 @@ function Toolbar({
       right: e.isActive({ textAlign: "right" }), justify: e.isActive({ textAlign: "justify" }),
       canUndo: e.can().undo(), canRedo: e.can().redo(),
       canMerge: e.can().mergeCells(), canSplit: e.can().splitCell(),
+      lang: e.isActive("lang") ? ((e.getAttributes("lang").lang as string) ?? "sa") : "",
     }),
   });
-  const [palette, setPalette] = useState<"color" | "highlight" | null>(null);
+  const [palette, setPalette] = useState<"color" | "highlight" | "lang" | null>(null);
+  const [langNote, setLangNote] = useState("");
   const c = () => editor.chain().focus();
 
   function setLink() {
@@ -173,12 +176,61 @@ function Toolbar({
           <TableIcon size={16} />
         </Btn>
         <Sep />
+        <span className="relative">
+          <Btn title="Language mark: English (never converted) or Sanskrit/IAST" active={palette === "lang" || Boolean(s.lang)} onClick={() => setPalette(palette === "lang" ? null : "lang")}>
+            <span className="font-devanagari text-[13px] leading-none">{TEXT_LANGS.find((l) => l.code === s.lang)?.short ?? "En"}</span>
+            <span className="ml-0.5 text-[10px]">▾</span>
+          </Btn>
+          {palette === "lang" && (
+            <span className="absolute left-0 top-9 z-20 grid w-64 gap-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1.5 text-sm shadow-lg">
+              <span className="px-2 pb-1 pt-0.5 text-[11px] leading-snug text-[var(--fg-muted)]">Readers can switch Devanagari / IAST / Bengali / Odia. Mark English so it is never converted (it looks like IAST).</span>
+              {TEXT_LANGS.map((l) => (
+                <button
+                  key={l.code}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    c().setLang(l.code).run();
+                    setPalette(null);
+                  }}
+                  className={`flex items-center gap-2 rounded px-2 py-1 text-left hover:bg-[var(--bg-2)] ${s.lang === l.code ? "font-semibold" : ""}`}
+                >
+                  <span className="w-6 text-center font-devanagari">{l.short}</span> {l.label}
+                  <span className="ml-auto text-[10px] text-[var(--fg-muted)]">{l.hint}</span>
+                </button>
+              ))}
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => (c().unsetLang().run(), setPalette(null))} className="rounded px-2 py-1 text-left hover:bg-[var(--bg-2)]">
+                Remove language mark
+              </button>
+              <span className="my-1 h-px bg-[var(--border)]" />
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  const n = markIastTerms(editor);
+                  setLangNote(n ? `Marked ${n} IAST term${n === 1 ? "" : "s"} as Sanskrit — please check.` : "No words with Sanskrit diacritics found.");
+                  setPalette(null);
+                }}
+                className="rounded px-2 py-1 text-left hover:bg-[var(--bg-2)]"
+              >
+                Auto-mark IAST terms in English (ā ṛ ṣ …)
+              </button>
+            </span>
+          )}
+        </span>
+        <Sep />
         <Btn title="Clear formatting" onClick={() => c().unsetAllMarks().clearNodes().run()}><RemoveFormatting size={16} /></Btn>
         <Btn title={full ? "Exit full screen" : "Full screen"} onClick={() => setFull(!full)}>
           {full ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </Btn>
       </div>
 
+      {langNote && (
+        <div className="flex items-center justify-between gap-2 border-t border-[var(--border)] bg-[var(--bg-2)] px-3 py-1.5 text-xs">
+          <span>{langNote}</span>
+          <button type="button" onClick={() => setLangNote("")} className="text-[var(--fg-muted)]">✕</button>
+        </div>
+      )}
       {s.table && (
         <div className="flex flex-wrap items-center gap-0.5 border-t border-[var(--border)] bg-[var(--bg-2)] p-1.5 text-xs">
           <span className="px-2 font-semibold text-[var(--fg-muted)]">Table</span>
@@ -207,6 +259,7 @@ export default function RichTextEditor({
   placeholder,
   minHeight = 140,
   devanagari = false,
+  onChange,
 }: {
   /** Form field name; the HTML is submitted under it. */
   name: string;
@@ -215,9 +268,13 @@ export default function RichTextEditor({
   minHeight?: number;
   /** Use the Devanagari font for the body (vṛtti). */
   devanagari?: boolean;
+  /** Called with the HTML after every change (live previews). */
+  onChange?: (html: string) => void;
 }) {
   const initial = toInitialHtml(defaultValue);
   const [html, setHtml] = useState(initial);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [full, setFull] = useState(false);
@@ -257,6 +314,7 @@ export default function RichTextEditor({
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Image.configure({ resize: { enabled: true, minWidth: 60, minHeight: 40, alwaysPreserveAspectRatio: true } }),
       Table.configure({ resizable: true }),
+      LangMark,
       TableRow,
       TableHeader,
       TableCell,
@@ -288,7 +346,11 @@ export default function RichTextEditor({
     onCreate: ({ editor: e }) => {
       editorRef.current = e;
     },
-    onUpdate: ({ editor: e }) => setHtml(e.isEmpty ? "" : e.getHTML()),
+    onUpdate: ({ editor: e }) => {
+      const next = e.isEmpty ? "" : e.getHTML();
+      setHtml(next);
+      onChangeRef.current?.(next);
+    },
   });
 
   return (

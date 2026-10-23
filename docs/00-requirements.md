@@ -34,9 +34,10 @@ unchanged. What v7 changes:
    links** on core verse/sūtra content.
 5. **Audio is links only.** No audio file is uploaded to or stored by this
    site.
-6. **Exactly two Scriptures:** Śrīmad-Bhāgavatam and Bhagavad-gītā. The data
-   model is generic; adding a third book is a requirements change, not a
-   code change.
+6. **Any number of Scriptures** (superseded 2026-10-23, D-016): books are
+   added in the admin, each with its own levels (Canto → Chapter, Līlā →
+   Chapter, Chapter …). Śrīmad-Bhāgavatam and Bhagavad-gītā are published;
+   Śrī Caitanya-caritāmṛta exists as a hidden draft.
 7. **Parity first.** Every URL that works today keeps working.
    `/anvyaya/...` permanently (308) redirects to `/scriptures/...`.
 8. **Mobile-first**, the Scriptures reader most of all.

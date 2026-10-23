@@ -11,7 +11,7 @@ import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, 
 
 const links = [
   { href: "/chapters", label: "Chapters", icon: BookSearch },
-  { href: "/anvyaya", label: "Scriptures", icon: SquareLibrary },
+  { href: "/scriptures", label: "Scriptures", icon: SquareLibrary },
   { href: "/practice", label: "Practice", icon: LandPlot },
   // Served as a raw static HTML page (its own full document), not a Next
   // route — a plain <a> forces a normal browser navigation to it.

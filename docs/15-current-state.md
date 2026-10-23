@@ -188,3 +188,35 @@ paste large content through SQL (use the in-app import).
   ~600 MB). Meaning search runs on the chosen dictionaries (default: first
   two; dictionaries > 80 MB are skipped).
 - `GET /api/dict/health` checks storage reachability (and sets CORS).
+
+## 10. Update 2026-10-23 — Scriptures in Neon (any number of books)
+
+- **Schema** (migrations `0005_scriptures`, `0006_verse_language`, applied
+  to `main` only — `dev` still lacks 0004–0006): `books` + `levels`,
+  `verse_label(_plural)`, `abbrev`, `author`, `cover_url`, `intro_html`,
+  `verse_language`; `scripture_divisions` (tree), `scripture_verses`,
+  `scripture_commentary_types` (role `pane`: anvaya | translation | verse |
+  commentary; language), `scripture_commentaries` (verse OR division).
+  Old empty tables `cantos`, `scripture_chapters`, `verses` are unused.
+- **Content:** SB (12 cantos, published), BG (18 chapters + BG 1.1 text,
+  published), CC (3 līlās, 62 chapters, **draft**). Kinds: Anvaya
+  (Sanskrit), Translation, Purport (English, Śrīla Prabhupāda).
+- **Admin** `/admin/scriptures`: books (new/settings/delete), Structure
+  tree, **Progress** (completion per kind, chapters behind, work queue),
+  Commentaries (kinds: role, language, target, visibility, order),
+  Spreadsheet (template = current content, per book or per top division;
+  upload parsed in the browser, chunked; dry run then apply; never erases
+  or deletes), division workspace (verses table with coverage dots,
+  insert-with-renumber, reorder, bulk publish/hide, paste a chapter,
+  chapter text and chapter-level commentaries), verse editor (editor |
+  live preview, commentary list + one editor, Ctrl+S / Ctrl+Enter,
+  "Add to Verse of the Day"), recent activity.
+- **Public** `/scriptures` (search, shelf), `/scriptures/[book]/[...path]`
+  (book, divisions, chapter list, two-pane verse reader: resizable, hide
+  panes, per-pane text size, script switcher, commentary navigator with
+  favourites/hide/compare/read-all, bookmarks, My Notes, copy/share,
+  keys ← → j d b n [ ] ?), `/scriptures/read` (dual, linked navigation),
+  `/scriptures/search`, `/scriptures/mine` (backup/restore). APIs:
+  `/api/scriptures/loc`, `/api/scriptures/search`. `/anvyaya/**` → 308.
+  The xlsx files under `content/anvyaya` and all old Anvyaya code are gone.
+- **Sitemap** lists every published book, division and verse from Neon.

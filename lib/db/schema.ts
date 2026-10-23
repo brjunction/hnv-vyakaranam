@@ -20,6 +20,7 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -322,16 +323,33 @@ export const sutraNotes = pgTable("sutra_notes", {
 // Scriptures: books → (cantos) → chapters → verses
 // ---------------------------------------------------------------------------
 export const BOOK_STRUCTURES = ["canto_chapter_verse", "chapter_verse"] as const;
+/** Language of a text (verses, commentary kinds). Only Sanskrit is ever re-scripted freely. */
+export const TEXT_LANGUAGES = ["sanskrit", "english", "hindi", "bengali", "nepali", "odia", "other"] as const;
 
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
-  /** Lowercase URL code: "sb" | "bg". */
+  /** Lowercase URL code: "sb", "bg", "cc" … (any number of books). */
   code: text("code").notNull().unique(),
   title: text("title").notNull(),
   titleDeva: text("title_deva").notNull().default(""),
   tagline: text("tagline").notNull().default(""),
   description: text("description").notNull().default(""),
-  structure: text("structure", { enum: BOOK_STRUCTURES }).notNull(),
+  /** Legacy (pre-0005); the real shape is `levels`. */
+  structure: text("structure", { enum: BOOK_STRUCTURES }).notNull().default("chapter_verse"),
+  /** Names of the division levels, top to bottom, e.g. ["Canto", "Chapter"] or ["Chapter"]. */
+  levels: jsonb("levels").$type<string[]>().notNull().default(["Chapter"]),
+  /** Singular / plural name of the smallest unit: "Verse", "Text", "Śloka", "Sūtra". */
+  verseLabel: text("verse_label").notNull().default("Verse"),
+  verseLabelPlural: text("verse_label_plural").notNull().default("Verses"),
+  /** Language of the verses (CC: Bengali). A verse can override it. */
+  verseLanguage: text("verse_language", { enum: TEXT_LANGUAGES }).notNull().default("sanskrit"),
+  /** Short reference prefix: "SB" → "SB 1.12.1". */
+  abbrev: text("abbrev").notNull().default(""),
+  author: text("author").notNull().default(""),
+  /** Cover picture (uploaded through the admin). */
+  coverUrl: text("cover_url").notNull().default(""),
+  /** Rich-text introduction shown on the book page. */
+  introHtml: text("intro_html").notNull().default(""),
   sort: integer("sort").notNull().default(0),
   status: status(),
   createdAt: createdAt(),
@@ -413,10 +431,139 @@ export const verses = pgTable(
   ]
 );
 
+/**
+ * Generic scripture structure (0005): any book, any number of levels.
+ * A division is a canto, chapter, part, section … (`depth` 0 = top level).
+ * A division can hold sub-divisions, verses, prose (`bodyHtml`), or a mix.
+ */
+export const scriptureDivisions = pgTable(
+  "scripture_divisions",
+  {
+    id: serial("id").primaryKey(),
+    bookId: integer("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    parentId: integer("parent_id").references((): AnyPgColumn => scriptureDivisions.id, { onDelete: "cascade" }),
+    depth: integer("depth").notNull().default(0),
+    /** URL segment, e.g. "12". */
+    key: text("key").notNull(),
+    /** Displayed number, exactly as typed. */
+    number: text("number").notNull().default(""),
+    title: text("title").notNull().default(""),
+    titleDeva: text("title_deva").notNull().default(""),
+    subtitle: text("subtitle").notNull().default(""),
+    /** Prose of the division itself (a chapter that is text, an introduction …). */
+    bodyHtml: text("body_html").notNull().default(""),
+    /** Known total of sub-divisions (or verses on the last level), shown as progress. */
+    expectedChildren: integer("expected_children"),
+    position: integer("position").notNull().default(0),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [
+    uniqueIndex("scripture_divisions_parent_key_uq").on(t.bookId, sql`coalesce(${t.parentId}, 0)`, t.key),
+    index("scripture_divisions_parent_idx").on(t.bookId, t.parentId, t.position),
+  ]
+);
+
+export const scriptureVerses = pgTable(
+  "scripture_verses",
+  {
+    id: serial("id").primaryKey(),
+    bookId: integer("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    divisionId: integer("division_id")
+      .notNull()
+      .references(() => scriptureDivisions.id, { onDelete: "cascade" }),
+    /** Last URL segment: "1", "16-18". */
+    key: text("key").notNull(),
+    /** Full displayed number: "1.12.1", "18.6", "1.16-18". */
+    verseNo: text("verse_no").notNull(),
+    verseFrom: integer("verse_from").notNull(),
+    verseTo: integer("verse_to").notNull(),
+    position: integer("position").notNull().default(0),
+    devanagari: text("devanagari").notNull().default(""),
+    iast: text("iast").notNull().default(""),
+    /** Language of this verse; "" = the book's verse language. */
+    language: text("language").notNull().default(""),
+    /** Who speaks ("śrī-bhagavān uvāca"), when kept apart from the verse. */
+    speaker: text("speaker").notNull().default(""),
+    dailyEligible: boolean("daily_eligible").notNull().default(false),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [
+    uniqueIndex("scripture_verses_division_key_uq").on(t.divisionId, t.key),
+    index("scripture_verses_division_position_idx").on(t.divisionId, t.position),
+    index("scripture_verses_book_idx").on(t.bookId),
+  ]
+);
+
+export const COMMENTARY_TARGETS = ["verse", "division", "both"] as const;
+/** anvaya = the prose order, shown in its own block right under the verse (not a commentary tab). */
+export const COMMENTARY_PANES = ["commentary", "verse", "anvaya", "translation"] as const;
+
+/** Kinds of commentary a book carries: Anvaya, Translation, Word for word, a ṭīkā … any number. */
+export const scriptureCommentaryTypes = pgTable(
+  "scripture_commentary_types",
+  {
+    id: serial("id").primaryKey(),
+    bookId: integer("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    nameDeva: text("name_deva").notNull().default(""),
+    author: text("author").notNull().default(""),
+    description: text("description").notNull().default(""),
+    /** Only Sanskrit text is shown in other scripts; any other language stays as typed (except parts marked lang="sa"). */
+    language: text("language", { enum: TEXT_LANGUAGES }).notNull().default("english"),
+    /** verse | division (chapter-level, e.g. a summary) | both */
+    appliesTo: text("applies_to", { enum: COMMENTARY_TARGETS }).notNull().default("verse"),
+    /** Where the reader shows it: commentary pane, under the verse (word-for-word), or as the Anvaya block. */
+    pane: text("pane", { enum: COMMENTARY_PANES }).notNull().default("commentary"),
+    sort: integer("sort").notNull().default(0),
+    isVisible: boolean("is_visible").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [uniqueIndex("scripture_commentary_types_book_key_uq").on(t.bookId, t.key)]
+);
+
+/** One commentary's text for one verse OR one division. Sanitized HTML. */
+export const scriptureCommentaries = pgTable(
+  "scripture_commentaries",
+  {
+    id: serial("id").primaryKey(),
+    typeId: integer("type_id")
+      .notNull()
+      .references(() => scriptureCommentaryTypes.id, { onDelete: "cascade" }),
+    verseId: integer("verse_id").references(() => scriptureVerses.id, { onDelete: "cascade" }),
+    divisionId: integer("division_id").references(() => scriptureDivisions.id, { onDelete: "cascade" }),
+    html: text("html").notNull().default(""),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [
+    uniqueIndex("scripture_commentaries_verse_uq").on(t.typeId, t.verseId).where(sql`${t.verseId} is not null`),
+    uniqueIndex("scripture_commentaries_division_uq").on(t.typeId, t.divisionId).where(sql`${t.divisionId} is not null`),
+    index("scripture_commentaries_verse_idx").on(t.verseId),
+    index("scripture_commentaries_division_idx").on(t.divisionId),
+  ]
+);
+
 // ---------------------------------------------------------------------------
 // Cross-cutting: script overrides, audio
 // ---------------------------------------------------------------------------
-export const ENTITY_TYPES = ["sutra", "verse", "chapter", "scripture_chapter", "daily_item"] as const;
+export const ENTITY_TYPES = ["sutra", "verse", "chapter", "scripture_chapter", "daily_item", "scripture_verse", "scripture_division"] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 export const SCRIPTS = ["devanagari", "iast", "bengali", "odia"] as const;
 export type Script = (typeof SCRIPTS)[number];

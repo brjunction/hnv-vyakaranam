@@ -486,3 +486,83 @@ body {
 .dark .dict-article .dc-green { color: #6ce9a6; }
 .dark .dict-article .dc-orange { color: #fdb022; }
 .dict-noring:focus-visible, .dict-noring:focus { outline: none; }
+
+/* Admin live preview: show the PUBLIC palette inside the admin (scriptures editor). */
+.admin-ui .site-tokens {
+  --bg: var(--color-parchment);
+  --bg-2: var(--color-parchment-dim);
+  --fg: var(--color-ink);
+  --fg-muted: #4a4f6b;
+  --accent: var(--color-gold);
+  --border: #e2d6ae;
+  --color-saffron: #d9622b;
+  background: var(--bg);
+  color: var(--fg);
+}
+.dark .admin-ui .site-tokens {
+  --bg: #0f1e19;
+  --bg-2: #16291f;
+  --fg: #edf3ea;
+  --fg-muted: #b7c9bc;
+  --accent: var(--color-gold-light);
+  --border: #26402f;
+}
+
+/* Anvaya (prose order) — its own design, right under the verse; not a commentary. */
+.anvaya-block {
+  position: relative;
+  border-radius: 1rem;
+  padding: 1rem 1.15rem 1.05rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+    var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.anvaya-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+  color: var(--color-saffron);
+}
+.anvaya-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, transparent), transparent);
+}
+.anvaya-body { font-size: 1em; line-height: 1.7; }
+.anvaya-body:lang(sa-Deva), .anvaya-body .font-devanagari { font-family: var(--font-serif); }
+
+/* Translation — belongs with the verse; clear and prominent, not a commentary. */
+.translation-block { padding-top: 0.25rem; }
+.translation-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.translation-head::before, .translation-head::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+.translation-body { font-size: 1em; line-height: 1.7; font-weight: 500; color: var(--fg); }
+
+/* Language marks in the admin editor: visible so editors can review them. */
+.admin-ui .ProseMirror span[lang="sa"] { background: color-mix(in srgb, #c9a227 18%, transparent); border-bottom: 1px dotted #c2862d; border-radius: 2px; }
+.admin-ui .ProseMirror span[lang]:not([lang="sa"]) { border-bottom: 1px dashed var(--a-ring); }
+
+/* Verse text — one fixed scale. Indic scripts a step larger so they read the same size as IAST. */
+.verse-text { line-height: 1.65; }
+.verse-latn { font-style: italic; }
+.verse-lg.verse-latn { font-size: 1.1em; }
+.verse-lg.verse-indic { font-size: 1.22em; }
+.verse-md.verse-latn { font-size: 1em; }
+.verse-md.verse-indic { font-size: 1.1em; }

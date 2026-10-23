@@ -36,6 +36,20 @@
       "when": 1792733436625,
       "tag": "0004_dictionary_category",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792742855514,
+      "tag": "0005_scriptures",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792744481057,
+      "tag": "0006_verse_language",
+      "breakpoints": true
     }
   ]
 }

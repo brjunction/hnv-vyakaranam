@@ -4,6 +4,7 @@ export const tags = {
   hnvAll: "hnv",
   hnvChapter: (edition: string, slug: string) => `hnv:${edition}:ch:${slug}`,
   hnvSutra: (edition: string, num: string) => `hnv:${edition}:su:${num}`,
+  scrAll: "scr",
   scriptureBook: (code: string) => `scr:${code}`,
   scriptureChapter: (code: string, canto: number, ch: number) => `scr:${code}:${canto}:${ch}`,
   home: "home",

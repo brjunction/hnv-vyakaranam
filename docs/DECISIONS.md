@@ -5,6 +5,22 @@ Never delete an entry; supersede it with a new one.
 
 ---
 
+### D-015 — 2026-10-23 · Sūtras live only in Neon; any number of rich-text commentaries
+**Decision:** the chapter spreadsheets (`content/chapters/*.xlsx`) and the
+sūtra-notes Google Doc are retired. All chapters, sections, sūtras,
+vṛtti, translations and commentaries are edited in `/admin/hnv`.
+Commentary kinds are rows in `commentary_types` (per edition, unlimited);
+each sūtra has at most one entry per kind in `sutra_commentaries`.
+Vṛtti, translation, synonyms and commentaries are **rich HTML** (TipTap
+editor: headings, colours, lists, links, tables, pictures), sanitized on
+the server (`lib/html/sanitize.ts`). Pictures are uploaded to Vercel Blob
+(`hnv-images` store) and logged in `media_files`.
+Inserting a sūtra whose number is taken shifts every following number
+(same prefix) +1; deleting can shift them −1. Gaps are preserved.
+**Why:** owner: "Forget excel sheets… editors will add sūtras, vṛttis,
+various commentaries… rich text, tables and pictures, not markdown."
+**Supersedes** the xlsx/Google-Doc content pipeline and `sutra_notes`.
+
 ### D-014 — 2026-10-22 · Verse of the Day is entered scripture verses
 **Decision:** both daily features use admin-entered `daily_items`
 (`verse_of_day`, `subhashita`); sūtras are not daily verses.

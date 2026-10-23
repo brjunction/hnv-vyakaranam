@@ -50,11 +50,12 @@ add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
 
 // ---------------------------------------------------------------------------
-// HNV chapters — content/chapters/<slug>.xlsx
-// (Mirrors the CHAPTER_META list in lib/content.ts. If you add a chapter
-// there, add its slug here too so it gets into the sitemap.)
+// HNV chapters — read from the database (Neon) when DATABASE_URL is set,
+// which it is on every Vercel build. Falls back to the known Madhyama
+// chapters so the sitemap can never come out empty.
 // ---------------------------------------------------------------------------
-const HNV_SLUGS = [
+const EDITION_BASE = { madhyama: "/chapters", brhat: "/brhat/chapters", laghu: "/laghu/chapters" };
+const FALLBACK_SLUGS = [
   "mangalacarana",
   "samjna-sandhi-prakarana",
   "nama-prakarana",
@@ -65,11 +66,36 @@ const HNV_SLUGS = [
   "taddhita-prakarana",
   "afterword",
 ];
-const HNV_DIR = path.join(ROOT, "content/chapters");
-for (const slug of HNV_SLUGS) {
-  const file = path.join(HNV_DIR, `${slug}.xlsx`);
-  if (!fs.existsSync(file)) continue;
-  add(`/chapters/${slug}`, { changefreq: "weekly", priority: 0.8, lastmod: fileDate(file) });
+
+async function hnvChapterUrls() {
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    try {
+      const { neon } = await import("@neondatabase/serverless");
+      const sql = neon(url);
+      const rows = await sql`
+        select e.slug as edition, c.slug, to_char(greatest(c.updated_at, coalesce(max(s.updated_at), c.updated_at)), 'YYYY-MM-DD') as lastmod
+        from chapters c
+        join editions e on e.id = c.edition_id and e.is_published
+        left join sutras s on s.chapter_id = c.id
+        where c.status = 'published'
+        group by e.slug, e.sort, c.slug, c.sort, c.updated_at
+        order by e.sort, c.sort`;
+      const out = rows
+        .filter((r) => EDITION_BASE[r.edition])
+        .map((r) => ({ loc: `${EDITION_BASE[r.edition]}/${r.slug}`, lastmod: r.lastmod }));
+      if (out.length) return out;
+    } catch (err) {
+      console.warn("[sitemap] database not reachable, using the fallback chapter list:", err.message);
+    }
+  }
+  return FALLBACK_SLUGS.map((slug) => ({ loc: `/chapters/${slug}`, lastmod: today }));
+}
+
+add("/brhat/chapters", { changefreq: "weekly", priority: 0.6 });
+add("/laghu/chapters", { changefreq: "weekly", priority: 0.6 });
+for (const c of await hnvChapterUrls()) {
+  add(c.loc, { changefreq: "weekly", priority: 0.8, lastmod: c.lastmod });
 }
 
 // ---------------------------------------------------------------------------

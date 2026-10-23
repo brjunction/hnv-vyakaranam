@@ -324,3 +324,39 @@ body {
   .hnv-wiki.hnv-wiki #main { padding: 16px 16px 96px; max-width: 100%; }
   .hnv-wiki.hnv-wiki h2 { font-size: 1.3rem; }
 }
+
+/* ------------------------------------------------------------------------
+   Rich text (vṛtti, translation, commentaries) — written in the admin editor,
+   shown on chapter pages. Additive; uses the site's own tokens.
+   ------------------------------------------------------------------------ */
+.rich-content { line-height: 1.7; overflow-wrap: anywhere; }
+.rich-content > * + * { margin-top: 0.75em; }
+.rich-content h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1.2em; }
+.rich-content h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1em; }
+.rich-content h4 { font-weight: 600; margin-top: 1em; }
+.rich-content ul { list-style: disc; padding-left: 1.5em; }
+.rich-content ol { list-style: decimal; padding-left: 1.5em; }
+.rich-content li + li { margin-top: 0.25em; }
+.rich-content li > p { margin: 0; }
+.rich-content blockquote { border-left: 3px solid var(--color-saffron); padding-left: 1em; color: var(--fg-muted); font-style: italic; }
+.rich-content a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.rich-content hr { border: 0; border-top: 1px solid var(--border); margin: 1.25em 0; }
+.rich-content mark { border-radius: 2px; padding: 0 0.1em; color: inherit; }
+.rich-content img { max-width: 100%; height: auto; border-radius: 0.5rem; display: inline-block; }
+.rich-content code { font-size: 0.9em; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 0.3em; }
+.rich-content table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; font-size: 0.95em; }
+.rich-content th, .rich-content td { border: 1px solid var(--border-strong, var(--border)); padding: 0.4em 0.6em; vertical-align: top; min-width: 3em; }
+.rich-content th { background: var(--bg); font-weight: 600; text-align: left; }
+.rich-content td > p, .rich-content th > p { margin: 0; }
+
+/* The editor itself (admin) */
+.rich-editor { min-height: inherit; }
+.rich-editor table { display: table; table-layout: fixed; }
+.rich-editor .selectedCell { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.rich-editor .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: var(--accent); pointer-events: none; }
+.rich-editor .tableWrapper { overflow-x: auto; }
+.rich-editor td, .rich-editor th { position: relative; }
+.rich-editor.resize-cursor { cursor: col-resize; }
+.rich-editor img.ProseMirror-selectednode, .rich-editor [data-resize-handle] { outline: 2px solid var(--accent); }
+.rich-editor p.is-editor-empty:first-child::before,
+.rich-editor:has(> p:only-child:empty)::before { content: attr(data-placeholder); color: var(--fg-faint); pointer-events: none; float: left; height: 0; }

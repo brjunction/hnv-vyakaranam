@@ -5,7 +5,7 @@ import { logout } from "@/lib/actions/auth";
 import AdminNav from "@/components/admin/AdminNav";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser("contributor");
+  const user = await requireUser("viewer");
   return (
     <div className="lg:grid lg:grid-cols-[248px_1fr] min-h-dvh">
       <aside className="hero-night lg:sticky lg:top-0 lg:h-dvh flex lg:flex-col gap-4 px-4 py-3 lg:p-5 items-center lg:items-stretch">

@@ -5,7 +5,7 @@ import PasswordForm from "./PasswordForm";
 export const metadata = { title: "Account" };
 
 export default async function Account() {
-  const user = await requireUser("contributor");
+  const user = await requireUser("viewer");
   return (
     <>
       <PageHeader title="Account" intro={`${user.name} — ${user.email} (${user.role})`} />

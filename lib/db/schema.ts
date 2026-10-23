@@ -206,6 +206,68 @@ export const sutras = pgTable(
   ]
 );
 
+/**
+ * Kinds of commentary an edition carries (Notes, a named ṭīkā, an English
+ * explanation …). Editors add any number of them in the admin; each sūtra can
+ * then have one rich-text entry per commentary.
+ */
+export const commentaryTypes = pgTable(
+  "commentary_types",
+  {
+    id: serial("id").primaryKey(),
+    editionId: integer("edition_id")
+      .notNull()
+      .references(() => editions.id, { onDelete: "cascade" }),
+    /** Stable machine key, e.g. "notes", "balabodhini". */
+    key: text("key").notNull(),
+    name: text("name").notNull(),
+    author: text("author").notNull().default(""),
+    description: text("description").notNull().default(""),
+    sort: integer("sort").notNull().default(0),
+    isVisible: boolean("is_visible").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [uniqueIndex("commentary_types_edition_key_uq").on(t.editionId, t.key)]
+);
+
+/** One commentary's text for one sūtra. Sanitized HTML (tables, images allowed). */
+export const sutraCommentaries = pgTable(
+  "sutra_commentaries",
+  {
+    id: serial("id").primaryKey(),
+    sutraId: integer("sutra_id")
+      .notNull()
+      .references(() => sutras.id, { onDelete: "cascade" }),
+    commentaryTypeId: integer("commentary_type_id")
+      .notNull()
+      .references(() => commentaryTypes.id, { onDelete: "cascade" }),
+    html: text("html").notNull().default(""),
+    status: status(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    updatedBy: updatedBy(),
+  },
+  (t) => [
+    uniqueIndex("sutra_commentaries_sutra_type_uq").on(t.sutraId, t.commentaryTypeId),
+    index("sutra_commentaries_type_idx").on(t.commentaryTypeId),
+  ]
+);
+
+/** Images uploaded through the rich-text editor (files live in Vercel Blob). */
+export const mediaFiles = pgTable("media_files", {
+  id: serial("id").primaryKey(),
+  url: text("url").notNull().unique(),
+  pathname: text("pathname").notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  alt: text("alt").notNull().default(""),
+  uploadedBy: integer("uploaded_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
+/** No longer used: notes are now the "Notes" commentary (sutra_commentaries). */
 export const sutraNotes = pgTable("sutra_notes", {
   sutraId: integer("sutra_id")
     .primaryKey()

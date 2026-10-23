@@ -3,10 +3,8 @@ import { and, count, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { dailyItems, dailyPins, editions, sutras } from "@/lib/db/schema";
 import { getDailyFor } from "@/lib/data/daily";
-import { requireUser, hasRole } from "@/lib/auth/session";
+import { requireUser } from "@/lib/auth/session";
 import { PageHeader, Panel, Stat, todayInNepal } from "@/components/admin/ui";
-import { ActionForm, SubmitButton } from "@/components/admin/ActionForm";
-import { runHnvImport } from "@/lib/actions/daily";
 
 export const metadata = { title: "Dashboard" };
 
@@ -50,18 +48,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <p className="mb-6 rounded-xl border border-[var(--danger)]/40 bg-[var(--danger)]/5 p-4 text-sm">Your access level doesn&apos;t allow that.</p>
       )}
 
-      {madhyama && Number(madhyama.total) === 0 && hasRole(user, "owner") && (
-        <Panel title="Import the Madhyama sūtras">
-          <p className="text-[var(--fg-muted)] mb-4">
-            The database has no sūtras yet. This copies all nine Madhyama chapters from the spreadsheets the site uses today
-            (content/chapters/*.xlsx). It never deletes anything and is safe to run again.
-          </p>
-          <ActionForm action={runHnvImport}>
-            <SubmitButton>Import sūtras from the spreadsheets</SubmitButton>
-          </ActionForm>
-        </Panel>
-      )}
-
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {perEdition.map((e) => (
           <Stat key={e.edition} label={`${e.edition} sūtras`} value={Number(e.total)} note={Number(e.total) ? undefined : "not added yet"} />
@@ -103,7 +89,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <li>Vṛtti: {Number(madhyama.total) - madhyama.withVrtti} of {Number(madhyama.total)} rows empty</li>
             <li>Translation: {Number(madhyama.total) - madhyama.withTranslation} of {Number(madhyama.total)} rows empty</li>
           </ul>
-          <p className="text-sm text-[var(--fg-faint)] mt-3">Sūtra editing arrives in the next admin release.</p>
+          <p className="text-sm mt-3">
+            <Link href="/admin/hnv/madhyama" className="underline">Open Chapters &amp; sūtras</Link> to fill them in.
+          </p>
         </Panel>
       )}
     </>

@@ -89,3 +89,35 @@ Note for the AI assistant: this cloud workspace **cannot open network
 connections to Neon or to the live site** (egress policy). Use the Neon
 connector for SQL and the Vercel connector for deployments/env vars; never
 paste large content through SQL (use the in-app import).
+
+## 6. Update 2026-10-23 — sūtra editing (Phase 1.8–1.9 done)
+
+- **Content source:** Neon only. The xlsx files, `lib/content.ts` and the
+  spreadsheet importer were removed (parity verified first: all 1,290 rows
+  matched the xlsx byte-for-byte by md5). Sūtra **728 is missing** in the
+  source data (Kāraka ends at 727, Kṛdanta starts at 729) — an editor can
+  add it in the admin.
+- **Public pages** read Neon through `lib/data/hnv.ts` (cached, tag
+  `hnv`): `/`, `/chapters`, `/chapters/[slug]`, and the same for
+  `/brhat/chapters` and `/laghu/chapters` (show "being prepared" until an
+  edition has chapters). Sūtra ranges ("1–86") are calculated from the
+  numbers. Saving in the admin revalidates them immediately.
+- **Admin → Chapters & sūtras** (`/admin/hnv/[edition]`): add/edit/reorder/
+  delete chapters; add/rename/reorder/delete (or merge) sections; add,
+  insert-after, edit, delete sūtras with automatic renumbering; go-to-sūtra
+  box; prev/next on the edit page; commentary kinds per edition
+  (`/admin/hnv/[edition]/commentaries`); rich-text editor with tables and
+  picture upload (`/api/admin/upload` → Vercel Blob, 4 MB max).
+- **Roles:** editors/owners change everything; contributors edit
+  commentary text only (saved as draft, an editor publishes); viewers read.
+  The panel layout now admits viewers (it used to redirect them in a loop).
+- **Old Google-Doc notes:** Tools → "Import notes from the Google Doc"
+  copies them into the "Notes" commentary once (sūtras 1 and 104 had notes).
+  The chapter pages no longer read the Doc.
+- **Migrations:** `0001_commentaries` (already applied earlier, file now
+  committed — same hash) and `0002_media_files`, applied to `main` and `dev`.
+- **Sitemap:** chapter URLs come from Neon at build time (fallback list if
+  the DB is unreachable).
+- Not done yet: per-sūtra pages (`05` §4), script switcher, revision
+  history UI (revisions are recorded), practice references don't follow
+  renumbering automatically (`lib/practiceData.ts` cites numbers).

@@ -1,20 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Chapter } from "@/lib/content";
-import SutraCard, { type SutraWithNotes } from "@/components/SutraCard";
+import type { PublicChapter } from "@/lib/data/hnv";
+import SutraCard from "@/components/SutraCard";
 
-export type ChapterWithNotes = Omit<Chapter, "sections"> & {
-  sections: { slug: string; title: string; sutras: SutraWithNotes[] }[];
-};
-
-export default function ChapterView({
-  chapter,
-  notesScopeClass,
-}: {
-  chapter: ChapterWithNotes;
-  notesScopeClass: string;
-}) {
+export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   const allSectionSlugs = useMemo(() => chapter.sections.map((s) => s.slug), [chapter]);
 
   // Which sections are expanded. Starts with the first section open (if any).
@@ -29,7 +19,7 @@ export default function ChapterView({
 
   const totalSutras = chapter.sections.reduce((n, s) => n + s.sutras.length, 0);
   const notesCount = chapter.sections.reduce(
-    (n, s) => n + s.sutras.filter((x) => x.notesHtml).length,
+    (n, s) => n + s.sutras.filter((x) => x.commentaries.length > 0).length,
     0
   );
 
@@ -93,11 +83,11 @@ export default function ChapterView({
                 : "border-[var(--border)] hover:border-[var(--accent)]"
             }`}
           >
-            {showNotes ? "Notes: shown" : "Notes: hidden"}
+            {showNotes ? "Commentaries: shown" : "Commentaries: hidden"}
           </button>
           {notesCount > 0 && (
             <span className="text-xs text-[var(--fg-muted)]">
-              {notesCount} of {totalSutras} sūtras have notes
+              {notesCount} of {totalSutras} sūtras have commentaries
             </span>
           )}
         </div>
@@ -144,11 +134,10 @@ export default function ChapterView({
                     <div className="space-y-3 mb-4">
                       {section.sutras.map((s) => (
                         <SutraCard
-                          key={s.number}
+                          key={s.id}
                           sutra={s}
                           forceOpen={forceAllSutras}
                           showNotes={showNotes}
-                          notesScopeClass={notesScopeClass}
                         />
                       ))}
                     </div>

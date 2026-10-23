@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ScrollText, Library, BookOpen, ArrowRight, Leaf, Gauge, Flame } from "lucide-react";
 import VarnaBoard from "@/components/home/VarnaBoard";
 import DailyPanel from "@/components/home/DailyPanel";
-import { chapters } from "@/lib/content";
+import { getChapterList } from "@/lib/data/hnv";
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -106,7 +106,10 @@ function AmrtaPrayers({ align = "center" }: { align?: "center" | "left" }) {
   );
 }
 
-export default function Home() {
+export const revalidate = 86400; // admin saves refresh it immediately
+
+export default async function Home() {
+  const chapters = await getChapterList("madhyama");
   return (
     <>
 
@@ -280,15 +283,15 @@ export default function Home() {
         <h2 className="text-2xl sm:text-3xl font-semibold mb-10 text-center">Seven prakaraṇas, sūtra by sūtra</h2>
         <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {chapters
-            .filter((c) => c.slug !== "mangalacarana" && c.slug !== "afterword")
+            .filter((c) => c.kind === "sutras")
             .map((c) => (
               <li key={c.slug}>
                 <Link href={`/chapters/${c.slug}`} className="anv-card p-5 h-full group">
                   <span className="anv-numeral absolute -right-1 -top-2 text-[4.5rem] sutra-number select-none">{c.number}</span>
                   <span className="block text-xs text-[var(--color-saffron)] mb-2">Chapter {c.number}</span>
                   <span className="block font-devanagari text-lg leading-snug pr-10 group-hover:text-[var(--accent)] transition-colors">{c.title}</span>
-                  <span className="block text-sm text-[var(--fg-muted)] mb-4">{c.titleEnglish}</span>
-                  <span className="block text-xs text-[var(--fg-muted)] sutra-number">Sūtras {c.sutraRange}</span>
+                  <span className="block text-sm text-[var(--fg-muted)] mb-4">{c.titleEn}</span>
+                  <span className="block text-xs text-[var(--fg-muted)] sutra-number">Sūtras {c.rangeLabel}</span>
                 </Link>
               </li>
             ))}

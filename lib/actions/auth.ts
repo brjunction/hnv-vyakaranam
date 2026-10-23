@@ -78,7 +78,7 @@ const PasswordInput = z
   .refine((d) => d.next === d.confirm, { message: "The two new passwords don't match.", path: ["confirm"] });
 
 export async function changePassword(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const me = await requireUser("contributor");
+  const me = await requireUser("viewer");
   const parsed = PasswordInput.safeParse({
     current: form.get("current"),
     next: form.get("next"),

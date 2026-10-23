@@ -75,7 +75,12 @@ Metadata: `07`/`09` docs — title `Sūtra 42 — <first words of
 transliteration> | <Chapter title>`, description from translation → vṛtti
 → transliteration (first 155 chars), canonical to itself.
 
-## 5. Sūtra Notes
+## 5. Sūtra Notes → commentaries (updated 2026-10-23, D-015)
+
+Notes are now one commentary kind ("Notes") among any number per edition:
+`commentary_types` + `sutra_commentaries.html`, rendered with
+`components/RichText.tsx` inside `.rich-content`. The bullets below are the
+original plan, kept for history.
 
 - Stored in `sutra_notes.html` (sanitized).
 - Rendered inside `<div class="prose-notes">`. A single stylesheet in

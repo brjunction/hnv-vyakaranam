@@ -30,6 +30,22 @@ here; nobody edits the database by hand.
 All admin routes: `export const dynamic = "force-dynamic"`, `robots:
 noindex`, excluded from sitemaps, `X-Frame-Options: DENY`.
 
+### 1.1 Chapters & sūtras (built 2026-10-23)
+
+| Route | What |
+|---|---|
+| `/admin/hnv/[edition]` | chapter list, add chapter, reorder, go-to-sūtra |
+| `/admin/hnv/[edition]/chapters/[id]` | chapter details; sections (add/rename/move/delete-or-merge); sūtra list with edit / insert-after |
+| `/admin/hnv/sutras/[id]` | edit one sūtra + all its commentaries; prev/next; insert after; delete (optional −1 renumber) |
+| `/admin/hnv/sutras/new?section=&after=` | new sūtra, suggested number, optional +1 renumber of the following |
+| `/admin/hnv/[edition]/commentaries` | add/rename/reorder/hide/delete commentary kinds |
+| `/api/admin/upload` | picture upload for the editor (Vercel Blob) |
+
+Actions: `lib/actions/hnv.ts`. Renumbering/ordering: `lib/hnv/ordering.ts`
+(two-step "~s~" temporary prefix inside one `db.batch`, so the unique
+number index never conflicts). Rich text is sanitized by
+`lib/html/sanitize.ts` before it is stored.
+
 ## 2. Authentication
 
 Own implementation, deliberately small (no third-party auth beta packages):

@@ -1,24 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Sutra } from "@/lib/content";
+import type { PublicSutra } from "@/lib/data/hnv";
 import VerseLines from "@/components/VerseLines";
+import RichText from "@/components/RichText";
 
-export type SutraWithNotes = Sutra & { notesHtml?: string };
+function Block({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wider text-[var(--color-saffron)] mb-1">{label}</p>
+      {children}
+    </div>
+  );
+}
 
 export default function SutraCard({
   sutra,
   forceOpen,
   showNotes,
-  notesScopeClass,
 }: {
-  sutra: SutraWithNotes;
+  sutra: PublicSutra;
   /** When set (true/false), overrides the card's own open/closed state. */
   forceOpen?: boolean;
-  /** Whether the notes block should render when the card is open. */
+  /** Whether commentaries render when the card is open. */
   showNotes: boolean;
-  /** Wrapper class that applies the Google Doc's own formatting (colors, alignment, etc.). */
-  notesScopeClass: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -27,6 +32,7 @@ export default function SutraCard({
   }, [forceOpen]);
 
   const isOpen = forceOpen !== undefined ? forceOpen : open;
+  const hasCommentary = sutra.commentaries.length > 0;
 
   return (
     <div
@@ -42,25 +48,19 @@ export default function SutraCard({
           {sutra.number}
         </span>
         <span className="flex-1">
-          <VerseLines text={sutra.sutraSanskrit} className="block font-devanagari text-lg leading-snug" />
-          <VerseLines
-            text={sutra.sutraTransliteration}
-            className="block text-sm italic text-[var(--fg-muted)] mt-0.5"
-          />
+          <VerseLines text={sutra.sanskrit} className="block font-devanagari text-lg leading-snug" />
+          <VerseLines text={sutra.transliteration} className="block text-sm italic text-[var(--fg-muted)] mt-0.5" />
         </span>
         <span className="flex items-center gap-2 shrink-0">
-          {sutra.notesHtml && (
+          {hasCommentary && (
             <span
               className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border border-[var(--color-saffron)] text-[var(--color-saffron)]"
-              title="Notes available"
+              title={sutra.commentaries.map((c) => c.name).join(", ")}
             >
-              Notes
+              {sutra.commentaries.length === 1 ? sutra.commentaries[0].name : `${sutra.commentaries.length} commentaries`}
             </span>
           )}
-          <span
-            className={`mt-1 text-[var(--accent)] transition-transform ${isOpen ? "rotate-45" : ""}`}
-            aria-hidden
-          >
+          <span className={`mt-1 text-[var(--accent)] transition-transform ${isOpen ? "rotate-45" : ""}`} aria-hidden>
             +
           </span>
         </span>
@@ -68,30 +68,31 @@ export default function SutraCard({
 
       {isOpen && (
         <div className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-[var(--color-saffron)] mb-1">Vṛtti</p>
-            <p className="font-devanagari text-base leading-relaxed">
-              <VerseLines text={sutra.vrtti} />
-            </p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-[var(--color-saffron)] mb-1">Translation</p>
-            <p className="leading-relaxed">{sutra.translation}</p>
-          </div>
-          {showNotes && sutra.notesHtml && (
-            <div>
-              <p className="text-xs uppercase tracking-wider text-[var(--color-saffron)] mb-2">Notes</p>
-              {/*
-                Rendered exactly as formatted in the Google Doc: the scoped
-                <style> block emitted alongside this page supplies the real
-                colors/alignment/fonts for the classes Google Docs assigns.
-              */}
-              <div
-                className={`gdoc-content ${notesScopeClass}`}
-                dangerouslySetInnerHTML={{ __html: sutra.notesHtml }}
-              />
-            </div>
+          {sutra.synonyms.trim() && (
+            <Block label="Synonyms">
+              <RichText value={sutra.synonyms} className="leading-relaxed" />
+            </Block>
           )}
+          <Block label="Vṛtti">
+            {sutra.vrtti.trim() ? (
+              <RichText value={sutra.vrtti} className="font-devanagari text-base leading-relaxed" />
+            ) : (
+              <p className="text-sm text-[var(--fg-muted)]">—</p>
+            )}
+          </Block>
+          <Block label="Translation">
+            {sutra.translation.trim() ? (
+              <RichText value={sutra.translation} className="leading-relaxed" />
+            ) : (
+              <p className="text-sm text-[var(--fg-muted)]">—</p>
+            )}
+          </Block>
+          {showNotes &&
+            sutra.commentaries.map((c) => (
+              <Block key={c.key} label={c.author ? `${c.name} · ${c.author}` : c.name}>
+                <RichText value={c.html} />
+              </Block>
+            ))}
         </div>
       )}
     </div>

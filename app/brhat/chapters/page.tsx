@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import EditionComingSoon from "@/components/EditionComingSoon";
+import EditionChapterIndex from "@/components/hnv/EditionChapterIndex";
+
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Bṛhat edition — Table of Contents",
@@ -7,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <EditionComingSoon slug="brhat" />;
+  return <EditionChapterIndex edition="brhat" />;
 }

@@ -12,8 +12,10 @@ export function revalidateDaily() {
 
 export function revalidateHnv() {
   revalidateTag(tags.hnvAll);
-  revalidateTag(tags.daily);
+  revalidatePath("/");
   revalidatePath("/chapters", "layout");
+  revalidatePath("/brhat/chapters", "layout");
+  revalidatePath("/laghu/chapters", "layout");
 }
 
 export function revalidateEverything() {

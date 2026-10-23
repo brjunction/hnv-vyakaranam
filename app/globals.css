@@ -764,22 +764,23 @@ a.sutra-xref:hover { background: color-mix(in srgb, var(--accent) 24%, transpare
 .dict-tabs [role="tab"][aria-selected="true"] { color: var(--fg); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .dict-sec-head { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.6rem; font-size: 0.8rem; font-weight: 600; color: var(--color-saffron); }
 
-/* Scripture library — clear hierarchy: SECTION (red, banded) → Category (red title, card) → books */
+/* Scripture library — clear hierarchy: SECTION (pink band) → Category (pink title, card) → books */
+:root { --lib-pink: #d6336c; --lib-pink-2: #e8679a; }
 .lib-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .lib-tabs [role="tab"] { display: inline-flex; align-items: center; gap: 0.4rem; height: 2.25rem; padding: 0 0.85rem; border-radius: 0.6rem; font-size: 13.5px; font-weight: 500; color: var(--fg-muted); background: var(--bg); border: 1px solid var(--border); transition: all .15s; }
 .lib-tabs [role="tab"] span { font-size: 11px; font-variant-numeric: tabular-nums; opacity: .7; }
 .lib-tabs [role="tab"]:hover { color: var(--fg); background: var(--bg-2); }
-.lib-tabs [role="tab"][aria-selected="true"] { color: #fff; background: var(--color-vermillion); border-color: var(--color-vermillion); font-weight: 600; }
+.lib-tabs [role="tab"][aria-selected="true"] { color: #fff; background: var(--lib-pink); border-color: var(--lib-pink); font-weight: 600; }
 .lib-tabs [role="tab"][aria-selected="true"] span { opacity: .85; }
 .lib-sec { border-radius: 0.9rem; border: 1px solid var(--border); background: var(--bg-2); overflow: hidden; }
-.lib-sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; padding: 0.8rem 1.1rem; color: #fff; background: linear-gradient(90deg, var(--color-vermillion), color-mix(in srgb, var(--color-vermillion) 70%, var(--color-saffron))); }
+.lib-sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; padding: 0.8rem 1.1rem; color: #fff; background: linear-gradient(90deg, var(--lib-pink), var(--lib-pink-2)); }
 .lib-sec-head .text-\[var\(--fg-muted\)\] { color: rgb(255 255 255 / .8); }
 .lib-sec-head > span:nth-child(2) { font-size: 1.15rem; letter-spacing: .01em; }
 .lib-sec-bar { display: none; }
 .lib-cat { border-radius: 0.7rem; border: 1px solid var(--border); background: var(--bg); overflow: hidden; }
-.lib-cat-head { display: flex; width: 100%; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; text-align: left; font-size: 0.98rem; font-weight: 700; color: var(--color-vermillion); background: color-mix(in srgb, var(--color-vermillion) 7%, var(--bg)); border-bottom: 1px solid var(--border); box-shadow: inset 3px 0 0 var(--color-vermillion); cursor: pointer; }
-.dark .lib-cat-head, [data-theme="dark"] .lib-cat-head { color: color-mix(in srgb, var(--color-vermillion) 55%, #fff); }
-.lib-cat-head:hover { background: color-mix(in srgb, var(--color-vermillion) 12%, var(--bg)); }
+.lib-cat-head { display: flex; width: 100%; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; text-align: left; font-size: 0.98rem; font-weight: 700; color: var(--lib-pink); background: color-mix(in srgb, var(--lib-pink) 7%, var(--bg)); border-bottom: 1px solid var(--border); box-shadow: inset 3px 0 0 var(--lib-pink); cursor: pointer; }
+.dark .lib-cat-head, [data-theme="dark"] .lib-cat-head { color: color-mix(in srgb, var(--lib-pink) 55%, #fff); }
+.lib-cat-head:hover { background: color-mix(in srgb, var(--lib-pink) 12%, var(--bg)); }
 .lib-cat-head[aria-expanded="false"] { border-bottom-color: transparent; }
 .lib-book { display: flex; align-items: center; gap: 0.75rem; border-radius: 0.55rem; padding: 0.45rem 0.7rem; color: var(--fg); transition: background-color .15s; }
 .lib-book:hover { background: var(--bg-2); }

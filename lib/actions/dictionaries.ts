@@ -133,7 +133,7 @@ export async function addDictionary(input: z.input<typeof AddInput>): Promise<Ad
       .values({
         slug,
         name,
-        shortName: name.length > 18 ? name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 6) : name,
+        shortName: name.length <= 22 ? name : /\s/.test(name) && name.split(/\s+/).length >= 3 ? name.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 8) : `${name.slice(0, 20)}…`,
         headwordScheme: scheme,
         files,
         indexUrl: toRef(prefix),

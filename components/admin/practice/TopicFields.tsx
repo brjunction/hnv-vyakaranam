@@ -27,11 +27,11 @@ export default function TopicFields({ t, chapters }: { t: T; chapters: { id: num
       <Field label="Subtitle">
         <input name="subtitle" defaultValue={t.subtitle} className={inputCls} placeholder="Vowel Sandhi — sutras 41-60" />
       </Field>
-      <Field label="From sūtra">
-        <input name="sutraFrom" defaultValue={t.sutraFrom ?? ""} className={inputCls} inputMode="numeric" />
+      <Field label="From sūtra" hint="Text, e.g. M 41 or B 50 / M 41">
+        <input name="sutraFrom" defaultValue={t.sutraFrom ?? ""} className={inputCls} />
       </Field>
-      <Field label="To sūtra">
-        <input name="sutraTo" defaultValue={t.sutraTo ?? ""} className={inputCls} inputMode="numeric" />
+      <Field label="To sūtra" hint="Text, e.g. M 60">
+        <input name="sutraTo" defaultValue={t.sutraTo ?? ""} className={inputCls} />
       </Field>
     </div>
   );

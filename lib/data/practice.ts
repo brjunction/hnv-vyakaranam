@@ -60,8 +60,15 @@ async function read(): Promise<PracticeData> {
     return { slug: c.slug, number: c.number, title: c.title, titleEn: c.titleEn, topics: ts, available: ts.length > 0 };
   });
 
-  const refs = topics.filter((t) => withQuestions.has(String(t.id))).flatMap((t) => [t.sutraFrom, t.sutraTo]).filter(Boolean).map(Number).filter(Number.isFinite);
-  const sutraSpan = refs.length ? `${Math.min(...refs)}–${Math.max(...refs)}` : "";
+  const used = topics.filter((t) => withQuestions.has(String(t.id)));
+  const ends = used.flatMap((t) => [t.sutraFrom, t.sutraTo]).filter((x): x is string => Boolean(x));
+  const nums = ends.every((x) => /^\d+$/.test(x)) ? ends.map(Number) : [];
+  // Numbers → "41–86"; free text (e.g. "M 41") → first "from" – last "to".
+  const sutraSpan = nums.length
+    ? `${Math.min(...nums)}–${Math.max(...nums)}`
+    : ends.length
+      ? `${used.find((t) => t.sutraFrom)?.sutraFrom ?? ""}–${[...used].reverse().find((t) => t.sutraTo)?.sutraTo ?? ""}`
+      : "";
   return { chapters: list, questions, sutraSpan };
 }
 

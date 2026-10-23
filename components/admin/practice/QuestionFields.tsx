@@ -51,8 +51,11 @@ export default function QuestionFields({ q, canPublish }: { q: Q; canPublish: bo
       <Field label="Explanation" hint="Shown after answering. Name the rule and the sūtra.">
         <textarea name="explanation" rows={3} required defaultValue={q.explanation} className={inputCls} />
       </Field>
-      <Field label="Sūtra numbers" hint="The sūtra(s) behind the answer, separated by commas — must be real Madhyama numbers.">
-        <input name="sutraRefs" required defaultValue={q.sutraRefs.join(", ")} className={`${inputCls} sutra-number`} placeholder="42" />
+      <Field
+        label="Sūtra reference"
+        hint="Written exactly as you want it shown, for any edition — e.g. “B 15 / M 12 / L 9” (B = Bṛhat, M = Madhyama, L = Laghu). Separate different sūtras with commas."
+      >
+        <input name="sutraRefs" required defaultValue={q.sutraRefs.join(", ")} className={inputCls} placeholder="B 15 / M 12 / L 9" />
       </Field>
     </div>
   );

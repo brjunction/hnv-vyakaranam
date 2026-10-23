@@ -132,7 +132,7 @@ paste large content through SQL (use the in-app import).
 - **Practice** lives in Neon (`practice_topics`, `practice_questions`;
   30 questions migrated from `lib/practiceData.ts`, which now holds only
   types/helpers). Admin › Practice edits topics/questions; questions must
-  cite real Madhyama sūtra numbers. The quiz shuffles questions and
+  cite a sūtra reference (free text, any edition: "B 15 / M 12"). The quiz shuffles questions and
   options (`shuffleOptions`).
 - **Editions order:** Laghu → Madhyama → Bṛhat (`lib/editions.ts`, `editions.sort`).
 - **Data fixes:** sūtra 728 added (start of Kṛdanta), 729 corrected

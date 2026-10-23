@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { and, asc, count, desc, eq, gt, inArray, lt, max } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, lt, max } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { editions, practiceQuestions, practiceTopics, revisions, sutras } from "@/lib/db/schema";
+import { practiceQuestions, practiceTopics, revisions } from "@/lib/db/schema";
 import { requireUser, type SessionUser } from "@/lib/auth/session";
 import { revalidatePractice } from "@/lib/actions/revalidate";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
@@ -12,7 +12,8 @@ import { slugifyTitle } from "@/lib/hnv/slug";
 
 // Admin › Practice: topics and questions. Editors publish; contributors
 // can add and edit questions as drafts. Every question must cite at least
-// one real Madhyama sūtra number (CLAUDE.md rule 2).
+// one sūtra reference, written as free text so all three editions can be
+// cited ("B 15 / M 12 / L 9"); it is stored and shown exactly as typed.
 
 const Id = z.coerce.number().int().positive();
 const Status = z.enum(["draft", "published", "archived"]);
@@ -31,8 +32,8 @@ const TopicInput = z.object({
   chapterId: Id,
   title: z.string().trim().min(1, "Give the topic a title.").max(160),
   subtitle: z.string().trim().max(240),
-  sutraFrom: z.string().trim().max(20),
-  sutraTo: z.string().trim().max(20),
+  sutraFrom: z.string().trim().max(60),
+  sutraTo: z.string().trim().max(60),
   status: Status,
 });
 
@@ -127,8 +128,8 @@ const QuestionInput = z
     explanation: z.string().trim().min(1, "Explain the answer (with its sūtra).").max(3000),
     sutraRefs: z
       .string()
-      .transform((s) => s.split(/[,\s;]+/).map((x) => x.trim()).filter(Boolean))
-      .pipe(z.array(z.string().max(20)).min(1, "Cite at least one sūtra number.")),
+      .transform((s) => s.split(/[,;\n]+/).map((x) => x.trim().replace(/\s+/g, " ")).filter(Boolean))
+      .pipe(z.array(z.string().max(120, "A sūtra reference is too long.")).min(1, "Give the sūtra reference (e.g. B 15 / M 12).").max(10)),
     status: Status,
   })
   .refine((d) => new Set(d.options).size === d.options.length, { message: "Two options are the same." });
@@ -158,14 +159,6 @@ export async function saveQuestion(_prev: ActionState, form: FormData): Promise<
   if (user.role === "contributor") f.status = "draft";
 
   const db = getDb();
-  const [ed] = await db.select().from(editions).where(eq(editions.slug, "madhyama")).limit(1);
-  const found = await db
-    .select({ n: sutras.number })
-    .from(sutras)
-    .where(and(eq(sutras.editionId, ed.id), inArray(sutras.number, f.sutraRefs)));
-  const missing = f.sutraRefs.filter((r) => !found.some((x) => x.n === r));
-  if (missing.length) return fail(`No Madhyama sūtra numbered ${missing.join(", ")}. Cite real sūtra numbers.`);
-
   const fields = { ...f, correctIndex, updatedBy: user.id };
   if (id) {
     const [before] = await db.select().from(practiceQuestions).where(eq(practiceQuestions.id, id)).limit(1);

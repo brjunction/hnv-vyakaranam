@@ -90,5 +90,5 @@ async function read(): Promise<PracticeData> {
 }
 
 export function getPracticeData(): Promise<PracticeData> {
-  return unstable_cache(read, ["practice:v4"], { tags: [tags.practice], revalidate: 86400 })();
+  return unstable_cache(read, ["practice:v5"], { tags: [tags.practice], revalidate: 86400 })();
 }

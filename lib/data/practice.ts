@@ -10,13 +10,13 @@ import type { Difficulty, PracticeChapter, PracticeType, Question } from "@/lib/
 // Public read of the practice bank (Madhyama chapters → topics → questions).
 // Cached with the "practice" tag; admin saves revalidate it.
 
-export type PracticeData = { chapters: PracticeChapter[]; questions: Question[]; sutraSpan: string };
+export type PracticeData = { chapters: PracticeChapter[]; questions: Question[]; /** declension tables for Nāma Grid (type "paradigm": options = 24 forms) */ paradigms: Question[]; sutraSpan: string };
 
 async function read(): Promise<PracticeData> {
-  if (!isDbConfigured) return { chapters: [], questions: [], sutraSpan: "" };
+  if (!isDbConfigured) return { chapters: [], questions: [], paradigms: [], sutraSpan: "" };
   const db = getDb();
   const [ed] = await db.select().from(editions).where(eq(editions.slug, "madhyama")).limit(1);
-  if (!ed) return { chapters: [], questions: [], sutraSpan: "" };
+  if (!ed) return { chapters: [], questions: [], paradigms: [], sutraSpan: "" };
   const chs = await db
     .select()
     .from(chapters)
@@ -50,7 +50,7 @@ async function read(): Promise<PracticeData> {
   const textOf = new Map(texts.map((t) => [t.number, { number: t.number, sanskrit: strip(t.sanskrit), iast: strip(t.iast), translation: strip(t.translation) }]));
 
   const chapterOfTopic = new Map(topics.map((t) => [t.id, chs.find((c) => c.id === t.chapterId)?.slug ?? ""]));
-  const questions: Question[] = qs
+  const all: Question[] = qs
     .filter((q) => q.options.length >= 2 && q.correctIndex >= 0 && q.correctIndex < q.options.length)
     .map((q) => ({
       id: q.code,
@@ -66,6 +66,8 @@ async function read(): Promise<PracticeData> {
       sutraRefs: q.sutraRefs,
       sutras: [...new Set(q.sutraRefs.flatMap(numOf))].map((n) => textOf.get(n)).filter((x): x is NonNullable<typeof x> => !!x),
     }));
+  const paradigms = all.filter((q) => q.type === "paradigm");
+  const questions = all.filter((q) => q.type !== "paradigm");
   const withQuestions = new Set(questions.map((q) => q.topicSlug));
 
   const list: PracticeChapter[] = chs.map((c) => {
@@ -84,9 +86,9 @@ async function read(): Promise<PracticeData> {
     : ends.length
       ? `${used.find((t) => t.sutraFrom)?.sutraFrom ?? ""}–${[...used].reverse().find((t) => t.sutraTo)?.sutraTo ?? ""}`
       : "";
-  return { chapters: list, questions, sutraSpan };
+  return { chapters: list, questions, paradigms, sutraSpan };
 }
 
 export function getPracticeData(): Promise<PracticeData> {
-  return unstable_cache(read, ["practice:v3"], { tags: [tags.practice], revalidate: 86400 })();
+  return unstable_cache(read, ["practice:v4"], { tags: [tags.practice], revalidate: 86400 })();
 }

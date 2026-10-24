@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BookOpen, Flame, Gauge, GraduationCap, Home, Leaf, RotateCcw, Swords } from "lucide-react";
 import { shuffle, shuffleOptions, type Difficulty, type Question } from "@/lib/practiceData";
+import Actor, { RAMA, RAVANA } from "@/components/games/Actor";
 import { Formula, HintIcon, Options, PowerUp, QuestionHead, RuleCard, Stars, points, useBest } from "@/components/games/shared";
 
 // Rāma and Rāvaṇa. Rāvaṇa has ten heads — ten right answers bring him down.
@@ -92,10 +93,8 @@ export function BattleDemo() {
   return (
     <div className="rv-scene rv-demo">
       <Backdrop />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/games/ravana.png" alt="Rāvaṇa" className="rv-ravana demo-hit" draggable={false} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/games/rama.png" alt="Śrī Rāma" className="rv-rama" draggable={false} />
+      <Actor {...RAVANA} alt="Rāvaṇa" cut={52} state="walk" className="rv-ravana demo-hit" />
+      <Actor {...RAMA} alt="Śrī Rāma" state="shoot" className="rv-rama" />
       <div className="rv-arrow fire demo-enemy"><ArrowImg fire /></div>
       <div className="rv-arrow demo-shot"><ArrowImg /></div>
     </div>
@@ -292,10 +291,19 @@ export default function RamaRavanaGame({ questions }: { questions: Question[] })
 
         {phase !== "won" ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/games/ravana.png" alt="Rāvaṇa" className={`rv-ravana ${fx === "hit" ? "hit" : ""} ${phase === "lost" ? "cheer" : ""}`} draggable={false} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/games/rama.png" alt="Śrī Rāma" className={`rv-rama ${fx === "ramahit" ? "hit" : ""} ${phase === "lost" ? "down" : ""}`} draggable={false} />
+            <Actor
+              {...RAVANA}
+              alt="Rāvaṇa"
+              cut={52}
+              state={fx === "enemy" || phase === "lost" ? "roar" : fx === "hit" ? "stumble" : "walk"}
+              className={`rv-ravana ${fx === "hit" ? "hit" : ""} ${phase === "lost" ? "cheer" : ""}`}
+            />
+            <Actor
+              {...RAMA}
+              alt="Śrī Rāma"
+              state={fx === "shoot" ? "shoot" : fx === "ramahit" ? "stumble" : "idle"}
+              className={`rv-rama ${fx === "ramahit" ? "hit" : ""} ${phase === "lost" ? "down" : ""}`}
+            />
           </>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
@@ -309,7 +317,12 @@ export default function RamaRavanaGame({ questions }: { questions: Question[] })
         )}
         {fx === "enemy" && <div className="rv-arrow fire fly-to-rama"><ArrowImg fire /></div>}
         {fx === "shoot" && <div className="rv-arrow fly-to-ravana"><ArrowImg /></div>}
-        {fx === "hit" && <div className="rv-burst" aria-hidden />}
+        {fx === "hit" && (
+          <>
+            <div className="rv-burst" aria-hidden />
+            <div className="rv-fallhead" aria-hidden><Head on /></div>
+          </>
+        )}
 
         {playing && (
           <>

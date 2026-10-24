@@ -1,30 +1,8 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import GameFrame from "@/components/games/GameFrame";
-import { getPracticeData } from "@/lib/data/practice";
-import { GameLogo } from "@/components/games/GameArt";
-import PageHead from "@/components/PageHead";
+import GamePage, { gameMetadata } from "@/components/games/GamePage";
 
 export const revalidate = 86400;
+export const metadata = gameMetadata("rama-ravana");
 
-export const metadata: Metadata = {
-  title: "Rāma–Rāvaṇa battle — Sanskrit grammar game",
-  description: "Answer before Rāvaṇa’s arrow lands — Śrī Rāma’s arrow cuts it down. Easy, medium or hard. Questions from Hari-nāmāmṛta-vyākaraṇa, each with its sūtra.",
-  alternates: { canonical: "/practice/games/rama-ravana" },
-};
-
-export default async function Page() {
-  const { questions } = await getPracticeData();
-  return (
-    <>
-      <PageHead deva="राम-रावण युद्धम्" title="Rāma–Rāvaṇa battle" width="max-w-4xl" intro="Ten heads, ten right answers. Study mode shows the sūtra after every answer; Battle mode adds a clock." />
-      <div className="mx-auto max-w-4xl px-5 pb-16 pt-6">
-        <div className="mb-4 flex items-center gap-3"><GameLogo game="rama-ravana" size={44} /><p className="text-sm text-[var(--fg-muted)]">Learn Sandhi by playing — every answer shows its sūtra.</p></div>
-        <GameFrame game="rama-ravana" questions={questions} />
-        <p className="mt-8 text-sm">
-          <Link href="/practice" className="text-[var(--fg-muted)] hover:text-[var(--accent)]">← All practice</Link>
-        </p>
-      </div>
-    </>
-  );
+export default function Page() {
+  return <GamePage id="rama-ravana" />;
 }

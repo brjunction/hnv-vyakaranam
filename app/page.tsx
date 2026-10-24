@@ -253,8 +253,8 @@ export default async function Home() {
               <Link href="/practice/games/rama-ravana" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity">
                 Play now <ArrowRight size={16} />
               </Link>
-              <Link href="/practice/games/sandhi-match" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
-                Sandhi Match
+              <Link href="/practice" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
+                All five games
               </Link>
             </div>
           </div>

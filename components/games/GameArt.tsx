@@ -1,4 +1,5 @@
-// Tiny animated pictures for the game cards (CSS only).
+// Tiny animated pictures for the game cards, and each game's emblem (CSS / SVG only).
+import type { GameId } from "@/lib/practice/games";
 
 export function ArtBattle() {
   return (
@@ -9,40 +10,76 @@ export function ArtBattle() {
   );
 }
 
-export function ArtMatch() {
+export function ArtDash() {
+  return (
+    <span className="relative block h-full w-full overflow-hidden" style={{ background: "linear-gradient(#27305e, #b9606a 58%, #f4b673)" }}>
+      <span className="ga-dash-hills absolute inset-x-0 bottom-[16%] h-[36%]" />
+      <span className="absolute inset-x-0 bottom-0 h-[18%]" style={{ background: "linear-gradient(#7a5236,#3a261c)" }} />
+      <span className="ga-dash-road absolute inset-x-0 bottom-[8%] h-[3px]" />
+      <span className="ga-dash-gate absolute bottom-[14%] right-[8%] h-[60%] w-[22%]" />
+      <span className="ga-dash-rama absolute bottom-[8%] left-[10%] h-[74%]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/games/rama.png" alt="" className="h-full w-auto" style={{ transform: "scaleX(-1)" }} />
+      </span>
+    </span>
+  );
+}
+
+export function ArtForge() {
   return (
     <svg viewBox="0 0 200 90" className="block h-full w-full" aria-hidden>
-      <rect width="200" height="90" fill="#15241f" />
-      {[0, 1, 2, 3].map((i) => (
-        <g key={i} className="ga-flip" style={{ animationDelay: `${i * 0.5}s`, transformOrigin: `${34 + i * 44}px 45px` }}>
-          <rect x={14 + i * 44} y="20" width="40" height="50" rx="7" fill={i % 2 ? "#c9a227" : "#1f8a8a"} />
-          <text x={34 + i * 44} y="52" textAnchor="middle" fontSize="18" fill="#fff" fontFamily="serif">{["ॐ", "सं", "ॐ", "धि"][i]}</text>
-        </g>
-      ))}
+      <defs><radialGradient id="ga-fg" cx=".5" cy="1" r="1"><stop offset="0" stopColor="#7a2d0f" /><stop offset="1" stopColor="#17100e" /></radialGradient></defs>
+      <rect width="200" height="90" fill="url(#ga-fg)" />
+      <rect x="52" y="22" width="96" height="26" rx="6" fill="#e0661c" stroke="#ffb04a" />
+      <text x="72" y="42" fontSize="17" fill="#2b1208" fontFamily="serif">राम</text>
+      <rect x="92" y="27" width="16" height="16" rx="3" fill="#2b1208" className="ga-pulse" />
+      <text x="100" y="40" fontSize="12" textAnchor="middle" fill="#fff3d6" fontFamily="serif">ा</text>
+      <text x="112" y="42" fontSize="17" fill="#2b1208" fontFamily="serif">र्जुन</text>
+      <path d="M40 54 H160 L148 62 H122 L130 72 H142 V84 H58 V72 H70 L78 62 H52Z" fill="#3a3f4a" stroke="#1d2027" />
+      <g fill="#ffd166" className="ga-sparks">{[[100, 20], [86, 14], [116, 14], [96, 8], [108, 8]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="1.8" style={{ animationDelay: `${i * 0.18}s` }} />)}</g>
     </svg>
   );
 }
 
-export function ArtBridge() {
+export function ArtGrid() {
   return (
     <svg viewBox="0 0 200 90" className="block h-full w-full" aria-hidden>
-      <rect width="200" height="90" fill="#e9a76a" />
-      <rect y="58" width="200" height="32" fill="#2f8aa0" />
-      <circle cx="150" cy="40" r="14" fill="#fff3c4" />
-      {[0, 1, 2, 3, 4].map((i) => (
-        <rect key={i} className="ga-stone" style={{ animationDelay: `${i * 0.45}s` }} x={22 + i * 32} y="56" width="26" height="9" rx="4" fill="#a8805a" stroke="#6b4f2c" />
-      ))}
-      <circle cx="22" cy="44" r="7" fill="#f0b43c" /><rect x="17" y="50" width="10" height="12" fill="#f0b43c" />
+      <rect width="200" height="90" fill="#6a2c14" />
+      {Array.from({ length: 4 }).flatMap((_, r) => Array.from({ length: 3 }).map((__, c) => (
+        <rect key={`${r}${c}`} x={46 + c * 40} y={8 + r * 20} width="36" height="16" rx="4" fill={(r + c) % 3 === 0 ? "#fdf3d8" : "rgba(0,0,0,.25)"} stroke="#e8c766" strokeDasharray={(r + c) % 3 === 0 ? "0" : "3 2"} className={(r + c) % 3 === 0 ? "ga-fill" : ""} style={{ animationDelay: `${(r * 3 + c) * 0.25}s` }} />
+      )))}
+      {[0, 1, 2, 3].map((r) => <rect key={r} x="8" y={8 + r * 20} width="34" height="16" rx="4" fill="rgba(0,0,0,.3)" />)}
+      <text x="150" y="24" fontSize="9" fill="#fff" fontFamily="sans-serif" opacity=".0">.</text>
     </svg>
   );
 }
+
+export function ArtSorter() {
+  return (
+    <svg viewBox="0 0 200 90" className="block h-full w-full" aria-hidden>
+      <rect width="200" height="90" fill="#12303a" />
+      <rect y="26" width="200" height="9" fill="#2a2f3b" />
+      <g className="ga-crate"><rect x="14" y="10" width="46" height="20" rx="4" fill="#d7a05c" stroke="#7a4d1d" strokeWidth="2" /><text x="37" y="24" fontSize="9" textAnchor="middle" fill="#2a1608" fontFamily="serif">अ + इ</text></g>
+      {["#1f8a8a", "#d9622b", "#4b5fc7"].map((c, i) => <path key={i} d={`M${16 + i * 62} 52 H${62 + i * 62} L${58 + i * 62} 84 H${20 + i * 62}Z`} fill={c} stroke="#fff" strokeOpacity=".4" />)}
+      {[1, 2, 3].map((n, i) => <text key={n} x={39 + i * 62} y="74" fontSize="16" textAnchor="middle" fill="#fff" fontFamily="sans-serif">{n}</text>)}
+    </svg>
+  );
+}
+
+export const ART: Record<GameId, () => React.ReactNode> = {
+  "rama-ravana": () => <ArtBattle />,
+  "lanka-dash": () => <ArtDash />,
+  "sandhi-forge": () => <ArtForge />,
+  "nama-grid": () => <ArtGrid />,
+  "rule-sorter": () => <ArtSorter />,
+};
 
 /** The emblem of each game. */
-export function GameLogo({ game, size = 56 }: { game: "rama-ravana" | "setu-bandha" | "sandhi-match"; size?: number }) {
-  const c = game === "rama-ravana" ? "#b3341a" : game === "setu-bandha" ? "#d9622b" : "#1f8a8a";
+export function GameLogo({ game, size = 56 }: { game: GameId; size?: number }) {
+  const c: Record<GameId, string> = { "rama-ravana": "#b3341a", "lanka-dash": "#d9622b", "sandhi-forge": "#c2410c", "nama-grid": "#a8541e", "rule-sorter": "#1f8a8a" };
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Game emblem" className="flex-none">
-      <defs><linearGradient id={`gl-${game}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={c} /><stop offset="1" stopColor="#0d1a16" /></linearGradient></defs>
+      <defs><linearGradient id={`gl-${game}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={c[game]} /><stop offset="1" stopColor="#0d1a16" /></linearGradient></defs>
       <circle cx="32" cy="32" r="30" fill={`url(#gl-${game})`} stroke="#e8c766" strokeWidth="2.5" />
       <circle cx="32" cy="32" r="25" fill="none" stroke="#e8c766" strokeWidth="0.8" opacity=".7" />
       {game === "rama-ravana" && (
@@ -54,19 +91,30 @@ export function GameLogo({ game, size = 56 }: { game: "rama-ravana" | "setu-band
           <path d="M32 18 l2 -5 2 4 2 -4 2 5" strokeWidth="1.6" />
         </g>
       )}
-      {game === "setu-bandha" && (
-        <g>
-          {[0, 1, 2, 3].map((i) => <rect key={i} x={10 + i * 11} y={38 - i * 2} width="10" height="6" rx="2" fill="#a8805a" stroke="#f6d77a" strokeWidth="1" />)}
-          <path d="M6 48 q6 -4 12 0 t12 0 t12 0 t12 0" stroke="#bfe3ec" strokeWidth="2" fill="none" />
-          <circle cx="44" cy="22" r="6" fill="#f0b43c" /><circle cx="14" cy="26" r="2" fill="#f6d77a" />
+      {game === "lanka-dash" && (
+        <g fill="none" stroke="#f6d77a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="36" cy="16" r="4" fill="#f6d77a" />
+          <path d="M34 22 L28 34 L20 38 M28 34 L36 40 L34 50 M31 26 L42 26 L48 20" />
+          <path d="M8 30 h8 M6 38 h10 M10 46 h8" strokeWidth="1.6" opacity=".8" />
         </g>
       )}
-      {game === "sandhi-match" && (
+      {game === "sandhi-forge" && (
         <g>
-          <rect x="12" y="18" width="18" height="26" rx="4" fill="#f6d77a" transform="rotate(-8 21 31)" />
-          <rect x="34" y="18" width="18" height="26" rx="4" fill="#fff" stroke="#f6d77a" strokeWidth="1.5" transform="rotate(8 43 31)" />
-          <text x="21" y="37" fontSize="14" textAnchor="middle" fill="#0d1a16" fontFamily="serif">सं</text>
-          <text x="43" y="37" fontSize="14" textAnchor="middle" fill="#0d1a16" fontFamily="serif">धि</text>
+          <path d="M12 38 H52 L47 44 H40 L43 50 H46 V54 H18 V50 H21 L24 44 H17Z" fill="#cfd6e2" stroke="#f6d77a" strokeWidth="1.2" />
+          <g transform="rotate(-30 40 20)"><rect x="30" y="12" width="22" height="9" rx="2" fill="#f6d77a" /><rect x="38" y="20" width="4" height="16" fill="#a8805a" /></g>
+          <circle cx="22" cy="30" r="1.6" fill="#ffd166" /><circle cx="28" cy="26" r="1.2" fill="#ffd166" /><circle cx="16" cy="26" r="1.2" fill="#ffd166" />
+        </g>
+      )}
+      {game === "nama-grid" && (
+        <g stroke="#f6d77a" strokeWidth="1.6" fill="rgba(246,215,122,.18)">
+          {[0, 1, 2].flatMap((r) => [0, 1, 2].map((k) => <rect key={`${r}${k}`} x={14 + k * 12} y={14 + r * 12} width="10" height="10" rx="2" fill={(r + k) % 2 ? "rgba(246,215,122,.18)" : "#f6d77a"} />))}
+        </g>
+      )}
+      {game === "rule-sorter" && (
+        <g>
+          <rect x="12" y="16" width="40" height="8" fill="#cfd6e2" opacity=".6" />
+          <rect x="22" y="9" width="18" height="12" rx="2" fill="#f6d77a" />
+          {[0, 1, 2].map((i) => <path key={i} d={`M${12 + i * 14} 36 h12 l-2 14 h-8z`} fill="none" stroke="#f6d77a" strokeWidth="1.8" />)}
         </g>
       )}
     </svg>

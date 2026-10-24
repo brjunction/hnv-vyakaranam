@@ -92,6 +92,13 @@ export default function ChapterPractice({ slug, title, titleEn, topics, question
           </div>
         )}
 
+        {questions.length === 0 && (
+          <div className="mb-6 rounded-2xl border border-dashed border-[var(--border)] p-8 text-center">
+            <p className="font-semibold">Questions for {sec.short} are being added.</p>
+            <p className="mt-1 text-sm text-[var(--fg-muted)]">They appear here the moment they are published. Meanwhile, the other prakaraṇas are open — and so are the games.</p>
+            <Link href="/practice" className="mt-3 inline-block text-sm font-medium" style={{ color: sec.color }}>← Back to all practice</Link>
+          </div>
+        )}
         <div className="grid gap-5 sm:grid-cols-2">
           <TopicTile idx={0} color={sec.color} icon={<Shuffle size={18} />} title="All topics mixed" sub={`Every topic in ${sec.short}, shuffled together`} count={count} start={start} topic={null} />
           {topics.map((t, i) => (

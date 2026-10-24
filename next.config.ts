@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
       },
       { source: "/hnvwiki", destination: "/hnv-wiki", permanent: true },
       { source: "/wiki", destination: "/hnv-wiki", permanent: true },
+      { source: "/practice/games/sandhi-match", destination: "/practice/games/sandhi-forge", permanent: true },
+      { source: "/practice/games/setu-bandha", destination: "/practice/games/lanka-dash", permanent: true },
       { source: "/scriptures/mine", destination: "/notes", permanent: true },
       { source: "/anvyaya", destination: "/scriptures", permanent: true },
       { source: "/anvyaya/:path*", destination: "/scriptures/:path*", permanent: true },

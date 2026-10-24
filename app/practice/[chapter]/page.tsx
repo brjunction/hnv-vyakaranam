@@ -25,14 +25,13 @@ export default async function Page({ params }: { params: Promise<{ chapter: stri
   if (!SECTIONS.some((s) => s.slug === slug)) notFound();
   const data = await getPracticeData();
   const ch = data.chapters.find((c) => c.slug === slug);
-  if (!ch || !ch.available) notFound();
   const sec = sectionFor(slug);
   return (
     <ChapterPractice
       slug={slug}
-      title={ch.title}
-      titleEn={ch.titleEn || sec.short}
-      topics={ch.topics.map((t) => ({ slug: t.slug, title: t.title, subtitle: t.subtitle }))}
+      title={ch?.title || sec.short}
+      titleEn={ch?.titleEn || sec.short}
+      topics={(ch?.topics ?? []).map((t) => ({ slug: t.slug, title: t.title, subtitle: t.subtitle }))}
       questions={data.questions.filter((q) => q.chapter === slug)}
     />
   );

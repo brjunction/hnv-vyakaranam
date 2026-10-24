@@ -61,19 +61,31 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/setu-bandha</loc>
-    <lastmod>2026-10-24</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.harinamamrta-vyakaranam.com/practice/games/rama-ravana</loc>
     <lastmod>2026-10-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/sandhi-match</loc>
+    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/lanka-dash</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/sandhi-forge</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/nama-grid</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/practice/games/rule-sorter</loc>
     <lastmod>2026-10-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

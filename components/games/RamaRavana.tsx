@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Flame, Gauge, Leaf, RotateCcw, Shield, Swords } from "lucide-react";
 import { shuffle, type Difficulty, type Question } from "@/lib/practiceData";
+import { typeInfo } from "@/lib/practice/sections";
 
 // Rāma and Rāvaṇa — a Sandhi battle. Rāvaṇa looses an arrow; answer the
 // Sandhi question before it lands and Rāma's arrow cuts it down and strikes
@@ -375,6 +376,12 @@ export default function RamaRavanaGame({ questions }: { questions: Question[] })
           </div>
         )}
 
+        {(phase === "play" || phase === "strike" || phase === "hurt") && (
+          <button type="button" onClick={() => { cancelAnimationFrame(raf.current); setPhase("menu"); }} className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/35 px-3 py-1 text-xs text-white hover:bg-black/55">
+            ← Menu
+          </button>
+        )}
+
         {/* Menu / end screens */}
         {(phase === "menu" || phase === "won" || phase === "lost") && (
           <div className="absolute inset-0 grid place-items-center bg-black/45 p-4 text-center text-white backdrop-blur-[2px]">
@@ -416,7 +423,7 @@ export default function RamaRavanaGame({ questions }: { questions: Question[] })
       {(phase === "play" || busyAnim) && q && (
         <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-4 sm:p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-saffron)]">
-            {q.type === "viccheda" ? "Split it (viccheda)" : "Join it (sandhi)"}
+            {typeInfo(q.type).verb}
           </p>
           <p className="mt-1 font-devanagari text-2xl sm:text-3xl">{q.prompt}</p>
           {q.promptSub && <p className="text-sm text-[var(--fg-muted)]">{q.promptSub}</p>}

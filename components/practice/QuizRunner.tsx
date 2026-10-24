@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { shuffle, shuffleOptions, type Question } from "@/lib/practiceData";
 import { Check, X, Flame } from "lucide-react";
+import { typeInfo } from "@/lib/practice/sections";
 
 export type AnsweredQuestion = {
   question: Question;
@@ -13,9 +14,12 @@ export type AnsweredQuestion = {
 export default function QuizRunner({
   questions,
   onFinish,
+  color = "var(--accent)",
 }: {
   questions: Question[];
   onFinish: (answers: AnsweredQuestion[]) => void;
+  /** The prakaraṇa's own colour. */
+  color?: string;
 }) {
   // Shuffle the questions AND each question's options once per quiz
   // (stable across re-renders), so the right answer is never always first.
@@ -72,7 +76,7 @@ export default function QuizRunner({
             style={{ borderColor: difficultyColor, color: difficultyColor }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: difficultyColor }} />
-            {q.difficulty} · {q.type === "sandhi" ? "Sandhi" : "Sandhi-viccheda"}
+            {q.difficulty}
           </span>
         </div>
       </div>
@@ -83,13 +87,13 @@ export default function QuizRunner({
           const answered = answers[i];
           let bg = "var(--bg-2)";
           if (answered) bg = answered.correct ? "var(--color-emerald, #4caf7d)" : "var(--color-vermillion)";
-          else if (i === index) bg = "var(--accent)";
+          else if (i === index) bg = color;
           return <div key={i} className="h-1.5 flex-1 rounded-full transition-colors duration-300" style={{ background: bg }} />;
         })}
       </div>
 
-      <div className="anv-card p-8 sm:p-10 text-center mb-6 shadow-sm">
-        <p className="anv-label mb-4">{q.type === "sandhi" ? "Join these" : "Split this"}</p>
+      <div key={index} className="pq-in anv-card p-8 sm:p-10 text-center mb-6 shadow-sm" style={{ borderTop: `4px solid ${color}` }}>
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em]" style={{ color }}>{typeInfo(q.type).verb}</p>
         <p className="font-devanagari text-3xl sm:text-5xl mb-3 leading-tight">{q.prompt}</p>
         {q.promptSub && <p className="italic text-[var(--fg-muted)]">{q.promptSub}</p>}
       </div>
@@ -106,9 +110,9 @@ export default function QuizRunner({
               disabled={chosen !== null}
               className={`flex items-center justify-between gap-3 px-5 py-4 rounded-xl border text-left font-devanagari text-lg transition-all ${
                 showState && isCorrect
-                  ? "border-[#4caf7d] bg-[#4caf7d]/10 scale-[1.02]"
+                  ? "pq-pop border-[#4caf7d] bg-[#4caf7d]/10 scale-[1.02]"
                   : showState && isChosen && !isCorrect
-                    ? "border-[var(--color-vermillion)] bg-[var(--color-vermillion)]/10"
+                    ? "pq-shake border-[var(--color-vermillion)] bg-[var(--color-vermillion)]/10"
                     : "border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-2)]"
               }`}
             >
@@ -142,7 +146,7 @@ export default function QuizRunner({
         <button
           onClick={next}
           disabled={chosen === null}
-          className="px-8 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+          style={{ background: color }} className="px-8 py-3 rounded-full text-white font-medium hover:opacity-90 hover:scale-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {index + 1 < shuffled.length ? "Next question" : "See results"}
         </button>

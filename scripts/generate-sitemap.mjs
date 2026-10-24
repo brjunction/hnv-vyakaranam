@@ -48,6 +48,7 @@ add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
 add("/practice", { changefreq: "weekly", priority: 0.8 });
+add("/practice/games/setu-bandha", { changefreq: "monthly", priority: 0.6 });
 add("/practice/games/rama-ravana", { changefreq: "monthly", priority: 0.7 });
 add("/practice/games/sandhi-match", { changefreq: "monthly", priority: 0.6 });
 add("/tools", { changefreq: "monthly", priority: 0.7 });
@@ -102,6 +103,26 @@ add("/laghu/chapters", { changefreq: "weekly", priority: 0.6 });
 for (const c of await hnvChapterUrls()) {
   add(c.loc, { changefreq: "weekly", priority: 0.8, lastmod: c.lastmod });
 }
+
+// Practice pages exist only for prakaraṇas that have published questions.
+async function practiceUrls() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return [];
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const sql = neon(url);
+    const rows = await sql`
+      select distinct c.slug from practice_questions q
+      join practice_topics t on t.id = q.topic_id and t.status = 'published'
+      join chapters c on c.id = t.chapter_id
+      where q.status = 'published'`;
+    return rows.map((r) => ({ loc: `/practice/${r.slug}`, priority: 0.6, changefreq: "weekly" }));
+  } catch (err) {
+    console.warn("[sitemap] practice not reachable:", err.message);
+    return [];
+  }
+}
+for (const u of await practiceUrls()) add(u.loc, u);
 
 // Every sūtra has its own page (/sutras/42, /brhat/sutras/…, /laghu/sutras/…).
 async function sutraUrls() {

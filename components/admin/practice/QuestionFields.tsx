@@ -13,14 +13,18 @@ type Q = {
   status: string;
 };
 
-export default function QuestionFields({ q, canPublish }: { q: Q; canPublish: boolean }) {
+export default function QuestionFields({ q, canPublish, types }: { q: Q; canPublish: boolean; types: { key: string; label: string }[] }) {
+  const list = types.some((t) => t.key === q.type) ? types : [...types, { key: q.type, label: q.type }];
   return (
     <div className="grid gap-5">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Kind">
+        <Field label="Kind of question" hint="Each prakaraṇa has its own kinds.">
           <select name="type" defaultValue={q.type} className={inputCls}>
-            <option value="sandhi">Sandhi (join)</option>
-            <option value="viccheda">Sandhi-viccheda (split)</option>
+            {list.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Difficulty">
@@ -38,7 +42,7 @@ export default function QuestionFields({ q, canPublish }: { q: Q; canPublish: bo
           </select>
         </Field>
       </div>
-      <Field label="Question (Devanagari)" hint="e.g. राम + अर्जुन">
+      <Field label="Question" hint="e.g. राम + अर्जुन — or the word / form being asked about">
         <input name="prompt" required defaultValue={q.prompt} className={`${inputCls} font-devanagari text-lg`} />
       </Field>
       <Field label="Transliteration under the question" hint="Optional, e.g. rāma + arjuna">

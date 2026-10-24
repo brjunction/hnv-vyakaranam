@@ -2,6 +2,7 @@
 
 import type { AnsweredQuestion } from "@/components/practice/QuizRunner";
 import { Download, RotateCcw, Trophy, Medal, Award, Gem } from "lucide-react";
+import { typeInfo } from "@/lib/practice/sections";
 
 type Tier = {
   key: string;
@@ -18,7 +19,7 @@ function tierFor(pct: number): Tier {
       label: "Perfect score",
       icon: <Gem size={40} />,
       color: "var(--color-gold)",
-      comment: "Every sandhi rule applied correctly. Flawless.",
+      comment: "Every answer correct. Flawless.",
     };
   }
   if (pct >= 80) {
@@ -86,9 +87,13 @@ function toCsv(answers: AnsweredQuestion[]): string {
 export default function Results({
   answers,
   onRetry,
+  onBack,
+  color = "var(--accent)",
 }: {
   answers: AnsweredQuestion[];
   onRetry: () => void;
+  onBack?: () => void;
+  color?: string;
 }) {
   const correct = answers.filter((a) => a.correct).length;
   const pct = Math.round((correct / answers.length) * 100);
@@ -100,13 +105,20 @@ export default function Results({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sandhi-practice-results-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `hnv-practice-results-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
     <div className="anv-fade max-w-2xl mx-auto text-center">
+      {pct >= 80 && (
+        <div className="pq-confetti" aria-hidden>
+          {Array.from({ length: 28 }, (_, i) => (
+            <i key={i} style={{ left: `${(i * 37) % 100}%`, background: ["#c9a227", "#d9622b", "#1f8a8a", "#4b5fc7", "#b4566f"][i % 5], animationDelay: `${(i % 9) * 0.12}s`, animationDuration: `${1.8 + (i % 5) * 0.3}s` }} />
+          ))}
+        </div>
+      )}
       <div
         className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 anv-fade"
         style={{
@@ -139,10 +151,15 @@ export default function Results({
       <div className="flex flex-wrap justify-center gap-3 mb-12">
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 hover:scale-105 transition-all"
+          style={{ background: color }} className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-medium hover:opacity-90 hover:scale-105 transition-all"
         >
-          <RotateCcw size={18} /> Practice again
+          <RotateCcw size={18} /> Play again
         </button>
+        {onBack && (
+          <button onClick={onBack} className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
+            Choose another level
+          </button>
+        )}
         <button
           onClick={download}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
@@ -164,7 +181,7 @@ export default function Results({
               <div className="min-w-0">
                 <p className="font-devanagari text-lg truncate">{a.question.prompt}</p>
                 <p className="text-xs text-[var(--fg-muted)]">
-                  {a.question.difficulty} · {a.question.type === "sandhi" ? "Sandhi" : "Sandhi-viccheda"}
+                  {a.question.difficulty} · {typeInfo(a.question.type).label.split(" — ")[0]}
                   {a.question.sutraRefs.length > 0 && ` · Sūtra ${a.question.sutraRefs.join(", ")}`}
                 </p>
               </div>

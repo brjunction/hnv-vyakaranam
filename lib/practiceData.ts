@@ -4,7 +4,8 @@
 // question bank; it was moved to the database on 2026-10-23.)
 
 export type Difficulty = "easy" | "medium" | "hard";
-export type PracticeType = "sandhi" | "viccheda"; // join vs split
+/** Kind of question — each prakaraṇa has its own (see lib/practice/sections.ts). */
+export type PracticeType = string;
 
 export type Topic = {
   /** Unique key across chapters (the topic id). */
@@ -19,6 +20,8 @@ export type Question = {
   id: string;
   /** = Topic.slug */
   topicSlug: string;
+  /** Slug of the prakaraṇa (chapter) this question belongs to. */
+  chapter: string;
   difficulty: Difficulty;
   type: PracticeType;
   prompt: string;
@@ -38,14 +41,6 @@ export type PracticeChapter = {
   available: boolean;
   isMisc?: boolean;
 };
-
-export type GameTeaser = { slug: string; title: string; titleEn: string; href?: string };
-export const GAME_TEASERS: GameTeaser[] = [
-  { slug: "rama-ravana", title: "Rāma–Rāvaṇa battle", titleEn: "Answer the Sandhi before the arrow lands", href: "/practice/games/rama-ravana" },
-  { slug: "sandhi-match", title: "Sandhi Match", titleEn: "Flip and pair every Sandhi, against the clock", href: "/practice/games/sandhi-match" },
-  { slug: "nama-games", title: "Nāma Games", titleEn: "Declension drills, gamified" },
-  { slug: "dhatu-games", title: "Dhātu Games", titleEn: "Root & conjugation challenges" },
-];
 
 /** Fisher–Yates shuffle (returns a new array). */
 export function shuffle<T>(list: T[]): T[] {

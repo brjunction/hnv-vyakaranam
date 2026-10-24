@@ -7,6 +7,7 @@ import { deleteTopic, saveTopic } from "@/lib/actions/practice";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { ActionForm, SubmitButton, inputCls } from "@/components/admin/ActionForm";
 import { Crumbs, StatusBadge } from "@/components/admin/hnv/bits";
+import { typeInfo } from "@/lib/practice/sections";
 import TopicFields from "@/components/admin/practice/TopicFields";
 
 export const metadata = { title: "Practice topic" };
@@ -61,7 +62,7 @@ export default async function TopicAdmin({ params, searchParams }: { params: Pro
                   <span className="min-w-0 flex-1">
                     <span className="block font-devanagari text-lg group-hover:underline">{q.prompt}</span>
                     <span className="block truncate text-sm text-[var(--fg-muted)]">
-                      {q.type === "sandhi" ? "Sandhi" : "Viccheda"} · answer: <span className="font-devanagari">{q.options[q.correctIndex]}</span> · {q.options.length} options · sūtra {q.sutraRefs.join(", ")}
+                      {typeInfo(q.type).label} · answer: <span className="font-devanagari">{q.options[q.correctIndex]}</span> · {q.options.length} options · sūtra {q.sutraRefs.join(", ")}
                     </span>
                   </span>
                   <StatusBadge status={q.status} />

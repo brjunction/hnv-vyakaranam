@@ -37,11 +37,13 @@ async function read(): Promise<PracticeData> {
         .orderBy(asc(practiceQuestions.id))
     : [];
 
+  const chapterOfTopic = new Map(topics.map((t) => [t.id, chs.find((c) => c.id === t.chapterId)?.slug ?? ""]));
   const questions: Question[] = qs
     .filter((q) => q.options.length >= 2 && q.correctIndex >= 0 && q.correctIndex < q.options.length)
     .map((q) => ({
       id: q.code,
       topicSlug: String(q.topicId),
+      chapter: chapterOfTopic.get(q.topicId) ?? "",
       difficulty: q.difficulty as Difficulty,
       type: q.type as PracticeType,
       prompt: q.prompt,
@@ -73,5 +75,5 @@ async function read(): Promise<PracticeData> {
 }
 
 export function getPracticeData(): Promise<PracticeData> {
-  return unstable_cache(read, ["practice:v1"], { tags: [tags.practice], revalidate: 86400 })();
+  return unstable_cache(read, ["practice:v2"], { tags: [tags.practice], revalidate: 86400 })();
 }

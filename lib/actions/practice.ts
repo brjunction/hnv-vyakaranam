@@ -117,7 +117,7 @@ const QuestionInput = z
     id: Id.optional(),
     topicId: Id,
     difficulty: z.enum(["easy", "medium", "hard"]),
-    type: z.enum(["sandhi", "viccheda"]),
+    type: z.string().trim().min(1).max(40).regex(/^[a-z-]+$/, "Pick a kind of question."),
     prompt: z.string().trim().min(1, "The question is required.").max(500),
     promptSub: z.string().trim().max(500),
     options: z

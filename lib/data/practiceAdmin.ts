@@ -29,6 +29,23 @@ export async function listTopicsAdmin() {
     .orderBy(asc(practiceTopics.sort), asc(practiceTopics.id));
 }
 
+/** Question counts per chapter and difficulty (published only), for the dashboard. */
+export async function levelCountsByChapter() {
+  const rows = await getDb()
+    .select({
+      chapterId: practiceTopics.chapterId,
+      difficulty: practiceQuestions.difficulty,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(practiceQuestions)
+    .innerJoin(practiceTopics, eq(practiceTopics.id, practiceQuestions.topicId))
+    .where(eq(practiceQuestions.status, "published"))
+    .groupBy(practiceTopics.chapterId, practiceQuestions.difficulty);
+  const out = new Map<number, Record<string, number>>();
+  for (const r of rows) out.set(r.chapterId, { ...(out.get(r.chapterId) ?? {}), [r.difficulty]: r.n });
+  return out;
+}
+
 export async function getTopicAdmin(id: number) {
   const db = getDb();
   const [t] = await db.select().from(practiceTopics).where(eq(practiceTopics.id, id)).limit(1);
@@ -43,5 +60,6 @@ export async function getQuestionAdmin(id: number) {
   const [q] = await db.select().from(practiceQuestions).where(eq(practiceQuestions.id, id)).limit(1);
   if (!q) return null;
   const [t] = await db.select().from(practiceTopics).where(eq(practiceTopics.id, q.topicId)).limit(1);
-  return { question: q, topic: t };
+  const [chapter] = t ? await db.select().from(chapters).where(eq(chapters.id, t.chapterId)).limit(1) : [];
+  return { question: q, topic: t, chapter };
 }

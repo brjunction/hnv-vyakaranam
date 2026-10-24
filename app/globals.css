@@ -915,3 +915,53 @@ a.sutra-xref:hover { background: color-mix(in srgb, var(--accent) 24%, transpare
 .sm-front { transform: rotateY(180deg); background: var(--bg); font-family: var(--font-serif); font-size: 1.15rem; }
 .sm-card.done .sm-front { border-color: #2f8f5b; background: color-mix(in srgb, #2f8f5b 10%, var(--bg)); }
 .sm-card.miss .sm-front { border-color: var(--color-vermillion); }
+
+/* ---- Practice: hub, prakaraṇa pages, quiz ---- */
+.pq-in { animation: pq-in .6s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes pq-in { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes pq-pop { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1.02); } }
+.pq-pop { animation: pq-pop .4s ease; }
+.pq-shake { animation: rr-shake .4s ease; }
+.pq-hub-hero { background: radial-gradient(60% 80% at 50% 0%, color-mix(in srgb, var(--color-gold) 14%, transparent), transparent 70%); }
+
+.pq-card { position: relative; display: block; overflow: hidden; padding: 1.4rem; border-radius: 1.25rem; border: 1px solid var(--border); background: var(--bg-2);
+  transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s; }
+.pq-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--c); }
+.pq-card-glow { position: absolute; right: -3rem; top: -3rem; width: 11rem; height: 11rem; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 28%, transparent), transparent 70%); opacity: .6; transition: transform .6s, opacity .6s; }
+.pq-card:not(.pq-card-off):hover { transform: translateY(-6px); border-color: var(--c); box-shadow: 0 22px 40px -22px color-mix(in srgb, var(--c) 70%, transparent); }
+.pq-card:not(.pq-card-off):hover .pq-card-glow { transform: scale(1.35); opacity: 1; }
+.pq-card-icon { position: relative; display: grid; place-items: center; width: 3.2rem; height: 3.2rem; margin-bottom: 1rem; border-radius: 1rem; color: #fff; background: var(--c);
+  animation: pq-float 4.5s ease-in-out infinite; box-shadow: 0 10px 22px -10px var(--c); }
+.pq-card:hover .pq-card-icon { animation-duration: 1.6s; }
+@keyframes pq-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-4deg); } }
+.pq-go svg { transition: transform .25s; }
+.pq-card:hover .pq-go svg { transform: translateX(4px); }
+.pq-card-off { opacity: .6; }
+.pq-card-off .pq-card-icon { animation: none; filter: grayscale(.6); }
+
+.pq-game { display: block; overflow: hidden; border-radius: 1.25rem; border: 1px solid var(--border); background: var(--bg); transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s; }
+.pq-game:hover { transform: translateY(-6px) rotate(-.4deg); border-color: var(--c); box-shadow: 0 24px 44px -24px color-mix(in srgb, var(--c) 70%, transparent); }
+.pq-game-art { display: block; aspect-ratio: 20 / 9; overflow: hidden; }
+.ga-arrow-l { animation: ga-l 2.4s ease-in infinite; }
+.ga-arrow-r { animation: ga-r 2.4s ease-in infinite; }
+@keyframes ga-l { 0% { transform: translateX(-6px); opacity: 0; } 20% { opacity: 1; } 60% { transform: translateX(36px); opacity: 1; } 70%,100% { transform: translateX(40px); opacity: 0; } }
+@keyframes ga-r { 0% { transform: translateX(6px); opacity: 0; } 20% { opacity: 1; } 60% { transform: translateX(-36px); opacity: 1; } 70%,100% { transform: translateX(-40px); opacity: 0; } }
+.ga-flip { animation: ga-flip 3s ease-in-out infinite; transform-box: fill-box; }
+@keyframes ga-flip { 0%,40%,100% { transform: scaleX(1); } 20% { transform: scaleX(.05); } }
+.ga-stone { animation: ga-stone 3s ease-out infinite; transform-box: fill-box; }
+@keyframes ga-stone { 0% { transform: translateY(-30px); opacity: 0; } 25%,100% { transform: none; opacity: 1; } }
+
+.pq-hero { background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 55%, #0d1a16)); position: relative; overflow: hidden; }
+.pq-hero::after { content: ""; position: absolute; right: -6rem; top: -6rem; width: 22rem; height: 22rem; border-radius: 50%; background: radial-gradient(circle, rgb(255 255 255 / .18), transparent 70%); animation: sun-breathe 8s ease-in-out infinite; }
+.pq-icon { animation: pq-float 4s ease-in-out infinite; }
+.pq-tile { padding: 1.25rem; border-radius: 1.1rem; border: 1px solid var(--border); background: var(--bg-2); border-top: 3px solid var(--c); transition: transform .3s, box-shadow .3s; }
+.pq-tile:hover { transform: translateY(-3px); box-shadow: 0 18px 34px -22px var(--c); }
+.pq-level { display: grid; justify-items: center; gap: .15rem; padding: .7rem .4rem; border-radius: .85rem; border: 1px solid var(--border); background: var(--bg); color: var(--lc);
+  transition: transform .2s, background .2s, color .2s, border-color .2s; }
+.pq-level:not(:disabled):hover { transform: translateY(-2px) scale(1.04); background: var(--lc); color: #fff; border-color: var(--lc); }
+.pq-level:disabled { opacity: .35; cursor: not-allowed; }
+
+.pq-confetti { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 40; }
+.pq-confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: pq-fall linear forwards; }
+@keyframes pq-fall { to { transform: translateY(105vh) rotate(540deg); opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .pq-in, .pq-card-icon, .pq-icon, .pq-hero::after, .ga-arrow-l, .ga-arrow-r, .ga-flip, .ga-stone, .pq-confetti i { animation: none !important; } }

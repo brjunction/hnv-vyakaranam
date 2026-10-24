@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { hasRole, requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
-import { practiceTopics } from "@/lib/db/schema";
+import { chapters, practiceTopics } from "@/lib/db/schema";
+import { typesFor } from "@/lib/practice/sections";
 import { saveQuestion } from "@/lib/actions/practice";
 import { Panel } from "@/components/admin/ui";
 import { ActionForm, SubmitButton } from "@/components/admin/ActionForm";
@@ -15,6 +16,8 @@ export default async function NewQuestion({ searchParams }: { searchParams: Prom
   const user = await requireUser("contributor");
   const [topic] = await getDb().select().from(practiceTopics).where(eq(practiceTopics.id, Number((await searchParams).topic))).limit(1);
   if (!topic) notFound();
+  const [ch] = await getDb().select().from(chapters).where(eq(chapters.id, topic.chapterId)).limit(1);
+  const types = typesFor(ch?.slug ?? "");
   return (
     <>
       <Crumbs items={[{ label: "Practice", href: "/admin/practice" }, { label: topic.title, href: `/admin/practice/topics/${topic.id}` }, { label: "New question" }]} />
@@ -23,8 +26,9 @@ export default async function NewQuestion({ searchParams }: { searchParams: Prom
         <input type="hidden" name="topicId" value={topic.id} />
         <Panel>
           <QuestionFields
-            q={{ difficulty: "easy", type: "sandhi", prompt: "", promptSub: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", sutraRefs: topic.sutraFrom ? [] : [], status: "published" }}
+            q={{ difficulty: "easy", type: types[0].key, prompt: "", promptSub: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", sutraRefs: topic.sutraFrom ? [] : [], status: "published" }}
             canPublish={hasRole(user, "editor")}
+            types={types}
           />
         </Panel>
         <SubmitButton>Add question</SubmitButton>

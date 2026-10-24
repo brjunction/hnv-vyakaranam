@@ -51,6 +51,12 @@ const SCRIPTURES: NavItem[] = [
     ],
   },
 ];
+const ABOUT: NavItem[] = [
+  { href: "/about", label: "About this grammar", desc: "Śrīla Jīva Gosvāmī’s Hari-nāmāmṛta-vyākaraṇa and this website.", icon: Info },
+  { href: "/about/acaryas", label: "Ācārya biographies", desc: "The disciplic succession, from Śrī Kṛṣṇa to Śrīla Prabhupāda.", icon: GraduationCap },
+  { href: "/about/places", label: "Holy places & temples", desc: "Holy dhāmas and important ISKCON temples.", icon: Landmark },
+  { href: "/about/acknowledgements", label: "Acknowledgements", desc: "With gratitude to all whose work makes this possible.", icon: Earth },
+];
 const STUDY_PREFIXES = ["/chapters", "/brhat", "/laghu", "/practice", "/hnv-wiki"];
 const SCRIPTURE_PREFIXES = ["/scriptures", "/songs"];
 
@@ -126,7 +132,9 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         )}
         <p className="px-4 pb-1 pt-3 text-xs font-semibold text-[var(--color-saffron)]">More</p>
         <MobileLink href="/more" icon={LayoutGrid} label="More — courses & resources" active={isActive(pathname, ["/more"])} />
-        <MobileLink href="/about" icon={Info} label="About" active={isActive(pathname, ["/about"])} />
+        {ABOUT.map((a) => (
+          <MobileLink key={a.href} href={a.href} icon={a.icon} label={a.label} active={pathname === a.href} />
+        ))}
       </nav>
     </div>,
     document.body
@@ -166,10 +174,7 @@ export default function Header() {
             <LayoutGrid size={17} strokeWidth={1.8} />
             <span className="nav-label">More</span>
           </Link>
-          <Link href="/about" className={`nav-tab ${isActive(pathname, ["/about"]) ? "on" : ""}`}>
-            <Info size={17} strokeWidth={1.8} />
-            <span className="nav-label">About</span>
-          </Link>
+          <NavMenu label="About" icon={Info} items={ABOUT} prefixes={["/about"]} title="About" intro="The grammar, our ācāryas, holy places and thanks." />
           <span className="w-px h-6 bg-[var(--border)] mx-1.5" />
           <NotebookButton />
           <ThemeToggle />

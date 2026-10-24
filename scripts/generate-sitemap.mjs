@@ -48,6 +48,8 @@ add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/more", { changefreq: "daily", priority: 0.7 });
 add("/practice", { changefreq: "weekly", priority: 0.8 });
+add("/practice/games/rama-ravana", { changefreq: "monthly", priority: 0.7 });
+add("/practice/games/sandhi-match", { changefreq: "monthly", priority: 0.6 });
 add("/tools", { changefreq: "monthly", priority: 0.7 });
 add("/tools/dictionary/search", { changefreq: "weekly", priority: 0.9 });
 add("/scriptures/search", { changefreq: "monthly", priority: 0.5 });

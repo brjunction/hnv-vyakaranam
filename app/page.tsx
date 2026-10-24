@@ -15,6 +15,7 @@ import { listDictionaries } from "@/lib/dict/engine";
 import DictSearch from "@/components/home/DictSearch";
 import HeroSky from "@/components/home/HeroSky";
 import Reveal from "@/components/home/Reveal";
+import { BattleDemo } from "@/components/games/RamaRavana";
 
 const IMPORTANT_SITES = [
   { name: "Vedabase", url: "https://vedabase.io", blurb: "Śrīla Prabhupāda's books, online" },
@@ -234,6 +235,30 @@ export default async function Home() {
             { n: headwords, label: "Dictionary words", sub: `in ${dicts.length} dictionaries` },
           ]}
         />
+      </section>
+
+      {/* ------------------------------------------------------- Play & learn */}
+      <section className="reveal border-y border-[var(--border)] bg-[var(--bg-2)]">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 sm:py-16 lg:grid-cols-[1.25fr_1fr]">
+          <Link href="/practice/games/rama-ravana" className="lift block overflow-hidden rounded-2xl border border-[var(--border)]" aria-label="Play the Rāma–Rāvaṇa Sandhi battle">
+            <BattleDemo />
+          </Link>
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)] mb-3">Play &amp; learn</p>
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-3 leading-tight">Śrī Rāma vs Rāvaṇa — a Sandhi battle</h2>
+            <p className="text-[var(--fg-muted)] leading-relaxed mb-6">
+              Rāvaṇa looses an arrow. Answer the Sandhi before it lands and Śrī Rāma&apos;s arrow cuts it down. Easy, medium or hard — every answer shows its sūtra. For children and for everyone.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/practice/games/rama-ravana" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--color-ink)] font-medium hover:opacity-90 transition-opacity">
+                Play now <ArrowRight size={16} />
+              </Link>
+              <Link href="/practice/games/sandhi-match" className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
+                Sandhi Match
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
 
 

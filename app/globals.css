@@ -882,3 +882,36 @@ a.sutra-xref:hover { background: color-mix(in srgb, var(--accent) 24%, transpare
 .acarya-line .acarya-row:hover, .grid .acarya-row { background: var(--bg-2); }
 .acarya-dot { position: relative; z-index: 1; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; margin-left: .3rem; flex: none; border-radius: 999px; font-size: .7rem; font-weight: 600;
   color: var(--color-ink); background: var(--color-gold-light); box-shadow: 0 0 0 4px var(--bg); }
+
+/* Rāma–Rāvaṇa game */
+.rr-cloud { animation: rr-drift linear infinite; }
+@keyframes rr-drift { from { transform: translateX(-160px); } to { transform: translateX(960px); } }
+.rr-star { animation: rr-twinkle 3s ease-in-out infinite; }
+@keyframes rr-twinkle { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
+.rr-sun { animation: rr-glow 6s ease-in-out infinite; transform-origin: 400px 250px; }
+@keyframes rr-glow { 0%,100% { opacity: .7; } 50% { opacity: 1; } }
+.rr-wave { animation: rr-wave 4s ease-in-out infinite alternate; }
+@keyframes rr-wave { from { transform: translateX(0); } to { transform: translateX(-24px); } }
+.rr-shake { animation: rr-shake .4s ease-in-out 1; }
+@keyframes rr-shake { 0%,100% { translate: 0 0; } 25% { translate: -5px 0; } 75% { translate: 5px 0; } }
+.rr-flash { filter: brightness(1.8) saturate(.6); }
+.rr-timer { padding: .2rem .7rem; border-radius: 999px; background: rgb(0 0 0 / .35); font-weight: 600; }
+.rr-level { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.1rem; border-radius: 999px; font-weight: 600; font-size: .9rem;
+  color: var(--color-ink); background: var(--color-gold-light); transition: transform .2s, box-shadow .2s; }
+.rr-level:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -8px rgb(0 0 0 / .5); }
+.rr-opt { display: flex; align-items: center; gap: .75rem; padding: .7rem .9rem; border-radius: .9rem; text-align: left; border: 1px solid var(--border); background: var(--bg); transition: border-color .15s, transform .15s, background .15s; }
+.rr-opt:not(:disabled):hover { border-color: var(--accent); transform: translateY(-1px); }
+.rr-opt.ok { border-color: #2f8f5b; background: color-mix(in srgb, #2f8f5b 12%, var(--bg)); }
+.rr-opt.bad { border-color: var(--color-vermillion); background: color-mix(in srgb, var(--color-vermillion) 10%, var(--bg)); }
+.rr-key { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; flex: none; border-radius: .5rem; font-size: .75rem; font-weight: 600; background: var(--bg-2); color: var(--fg-muted); }
+@media (prefers-reduced-motion: reduce) { .rr-cloud, .rr-star, .rr-sun, .rr-wave, .rr-shake { animation: none; } }
+
+/* Sandhi match */
+.sm-card { position: relative; min-height: 5.5rem; perspective: 800px; }
+.sm-inner { position: absolute; inset: 0; transition: transform .45s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+.sm-card.up .sm-inner { transform: rotateY(180deg); }
+.sm-face { position: absolute; inset: 0; display: grid; place-items: center; padding: .5rem; border-radius: .9rem; backface-visibility: hidden; border: 1px solid var(--border); text-align: center; }
+.sm-back { background: linear-gradient(135deg, var(--bg-2), color-mix(in srgb, var(--color-gold) 14%, var(--bg-2))); color: var(--color-gold); font-family: var(--font-serif); font-size: 1.6rem; }
+.sm-front { transform: rotateY(180deg); background: var(--bg); font-family: var(--font-serif); font-size: 1.15rem; }
+.sm-card.done .sm-front { border-color: #2f8f5b; background: color-mix(in srgb, #2f8f5b 10%, var(--bg)); }
+.sm-card.miss .sm-front { border-color: var(--color-vermillion); }

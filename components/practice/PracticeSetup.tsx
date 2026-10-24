@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useState } from "react";
 import {
   GAME_TEASERS,
@@ -154,19 +156,26 @@ export default function PracticeSetup({ chapters: PRACTICE_CHAPTERS, questions, 
             <Gamepad2 size={20} className="text-[var(--accent)]" />
             <p className="text-sm font-semibold">Games</p>
           </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {GAME_TEASERS.map((g) => (
-              <div
-                key={g.slug}
-                className="relative rounded-2xl border border-dashed border-[var(--border)] p-5 opacity-70"
-              >
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[var(--bg-2)] text-[var(--fg-muted)] mb-3">
-                  <Lock size={11} /> Coming soon
-                </span>
-                <p className="font-medium mb-1">{g.title}</p>
-                <p className="text-sm text-[var(--fg-muted)]">{g.titleEn}</p>
-              </div>
-            ))}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {GAME_TEASERS.map((g) =>
+              g.href ? (
+                <Link key={g.slug} href={g.href} className="lift rounded-2xl border border-[var(--accent)] bg-[var(--bg-2)] p-5">
+                  <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-[11px] font-semibold text-[var(--color-ink)]">
+                    <Gamepad2 size={11} /> Play now
+                  </span>
+                  <p className="mb-1 font-medium">{g.title}</p>
+                  <p className="text-sm text-[var(--fg-muted)]">{g.titleEn}</p>
+                </Link>
+              ) : (
+                <div key={g.slug} className="relative rounded-2xl border border-dashed border-[var(--border)] p-5 opacity-70">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[var(--bg-2)] text-[var(--fg-muted)] mb-3">
+                    <Lock size={11} /> Coming soon
+                  </span>
+                  <p className="font-medium mb-1">{g.title}</p>
+                  <p className="text-sm text-[var(--fg-muted)]">{g.titleEn}</p>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>

@@ -39,9 +39,10 @@ export type PracticeChapter = {
   isMisc?: boolean;
 };
 
-export type GameTeaser = { slug: string; title: string; titleEn: string };
+export type GameTeaser = { slug: string; title: string; titleEn: string; href?: string };
 export const GAME_TEASERS: GameTeaser[] = [
-  { slug: "sandhi-games", title: "Sandhi Games", titleEn: "Match, race, and build words" },
+  { slug: "rama-ravana", title: "Rāma–Rāvaṇa battle", titleEn: "Answer the Sandhi before the arrow lands", href: "/practice/games/rama-ravana" },
+  { slug: "sandhi-match", title: "Sandhi Match", titleEn: "Flip and pair every Sandhi, against the clock", href: "/practice/games/sandhi-match" },
   { slug: "nama-games", title: "Nāma Games", titleEn: "Declension drills, gamified" },
   { slug: "dhatu-games", title: "Dhātu Games", titleEn: "Root & conjugation challenges" },
 ];

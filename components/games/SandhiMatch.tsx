@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Flame, Gauge, Leaf, RotateCcw, Timer } from "lucide-react";
+import { Flame, GraduationCap, Gauge, Leaf, RotateCcw, Timer } from "lucide-react";
+import { Formula, RuleCard, Stars } from "@/components/games/shared";
 import { shuffle, type Difficulty, type Question } from "@/lib/practiceData";
 
 // Sandhi Match — flip two cards: a pair "word + word" and the joined form
@@ -25,6 +25,8 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
   const [miss, setMiss] = useState<string[]>([]);
   const [left, setLeft] = useState(0);
   const [moves, setMoves] = useState(0);
+  const [timed, setTimed] = useState(false);
+  const [lastPair, setLastPair] = useState<number | null>(null);
 
   function start(d: Difficulty) {
     const L = LEVELS[d];
@@ -45,15 +47,16 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
     ])));
     setUp([]); setDone(new Set()); setMiss([]); setMoves(0);
     setLeft(L.secs);
+    setLastPair(null);
     setLevel(d);
   }
 
-  const finished = level && (done.size === pairs.length || left <= 0);
+  const finished = level && (done.size === pairs.length || (timed && left <= 0));
   useEffect(() => {
-    if (!level || finished) return;
+    if (!level || finished || !timed) return;
     const t = setInterval(() => setLeft((n) => n - 1), 1000);
     return () => clearInterval(t);
-  }, [level, finished]);
+  }, [level, finished, timed]);
 
   function flip(c: Card) {
     if (finished || done.has(c.pair) || up.includes(c.id) || up.length === 2) return;
@@ -63,7 +66,7 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
       setMoves((m) => m + 1);
       const [a, b] = next.map((id) => cards.find((x) => x.id === id)!);
       if (a.pair === b.pair) {
-        setTimeout(() => { setDone((d) => new Set(d).add(a.pair)); setUp([]); }, 350);
+        setTimeout(() => { setDone((d) => new Set(d).add(a.pair)); setLastPair(a.pair); setUp([]); }, 350);
       } else {
         setMiss(next);
         setTimeout(() => { setUp([]); setMiss([]); }, 900);
@@ -93,6 +96,14 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-8 text-center">
         <p className="font-devanagari text-2xl">सन्धि-युग्मम्</p>
         <p className="mx-auto mb-5 mt-1 max-w-md text-sm text-[var(--fg-muted)]">Flip two cards at a time. Pair each “word + word” with its joined form before the time runs out.</p>
+        <div className="mx-auto mb-5 grid max-w-md gap-2 sm:grid-cols-2">
+          {([[false, "Study", "No clock. Every pair you match shows its rule and sūtra."], [true, "Timed", "Beat the clock. Rules are shown at the end."]] as const).map(([t, name, text]) => (
+            <button key={name} type="button" onClick={() => setTimed(t)} className={`rounded-xl border p-3 text-left text-sm transition-colors ${timed === t ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--border)]"}`}>
+              <b className="flex items-center gap-1.5">{t ? <Timer size={15} /> : <GraduationCap size={15} />} {name}</b>
+              <span className="text-xs text-[var(--fg-muted)]">{text}</span>
+            </button>
+          ))}
+        </div>
         {LevelButtons}
       </div>
     );
@@ -102,7 +113,7 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-        <span className={`inline-flex items-center gap-1.5 font-semibold tabular-nums ${left <= 10 ? "text-[var(--color-vermillion)]" : ""}`}><Timer size={15} /> {Math.max(left, 0)}s</span>
+        {timed && <span className={`inline-flex items-center gap-1.5 font-semibold tabular-nums ${left <= 10 ? "text-[var(--color-vermillion)]" : ""}`}><Timer size={15} /> {Math.max(left, 0)}s</span>}
         <span className="text-[var(--fg-muted)]">{done.size}/{pairs.length} pairs · {moves} moves</span>
         <button type="button" onClick={() => start(level)} className="ui-btn ui-btn-sm ml-auto"><RotateCcw size={14} /> Restart</button>
       </div>
@@ -119,17 +130,26 @@ export default function SandhiMatch({ questions }: { questions: Question[] }) {
           );
         })}
       </div>
+      {!finished && lastPair !== null && pairs[lastPair] && (
+        <div className="mt-5">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-saffron)]">You matched</p>
+          <Formula q={pairs[lastPair]} answer={pairs[lastPair].options[pairs[lastPair].correctIndex]} big={false} />
+          <RuleCard q={pairs[lastPair]} ok picked={null} plain />
+        </div>
+      )}
       {finished && (
         <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-5">
           <p className="text-lg font-semibold">{won ? `All pairs matched in ${moves} moves!` : "Time is up"}</p>
-          <ul className="mt-3 grid gap-2 text-sm">
+          <div className="mt-2"><Stars n={won ? (moves <= pairs.length + 3 ? 3 : moves <= pairs.length * 2 ? 2 : 1) : 0} /></div>
+          <p className="mb-2 mt-4 text-sm font-semibold">The rules behind every pair</p>
+          <div className="grid gap-4">
             {pairs.map((q, i) => (
-              <li key={i}>
-                <span className="font-devanagari text-base">{q.prompt} → {q.options[q.correctIndex]}</span>{" "}
-                {q.sutraRefs.map((n) => <Link key={n} href={`/sutras/${encodeURIComponent(n)}`} className="sutra-xref ml-1">Sūtra {n}</Link>)}
-              </li>
+              <div key={i}>
+                <div className="mb-1"><Formula q={q} answer={q.options[q.correctIndex]} big={false} /></div>
+                <RuleCard q={q} ok picked={null} plain />
+              </div>
             ))}
-          </ul>
+          </div>
           <div className="mt-4">{LevelButtons}</div>
         </div>
       )}

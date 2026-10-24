@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import GameFrame from "@/components/games/GameFrame";
 import { getPracticeData } from "@/lib/data/practice";
+import { GameLogo } from "@/components/games/GameArt";
 import PageHead from "@/components/PageHead";
 
 export const revalidate = 86400;
@@ -18,6 +19,7 @@ export default async function Page() {
     <>
       <PageHead deva="सेतु-बन्धनम्" title="Setu-bandha" width="max-w-4xl" intro="Help Hanumān build the bridge to Laṅkā — a right answer lays a stone, a wrong one sinks it." />
       <div className="mx-auto max-w-4xl px-5 pb-16 pt-6">
+        <div className="mb-4 flex items-center gap-3"><GameLogo game="setu-bandha" size={44} /><p className="text-sm text-[var(--fg-muted)]">Learn Sandhi by playing — every answer shows its sūtra.</p></div>
         <GameFrame game="setu-bandha" questions={questions} />
         <p className="mt-8 text-sm">
           <Link href="/practice" className="text-[var(--fg-muted)] hover:text-[var(--accent)]">← All practice</Link>

@@ -4,7 +4,7 @@ import { ArrowRight, Gamepad2, Lock } from "lucide-react";
 import { getPracticeData } from "@/lib/data/practice";
 import { SectionIcon } from "@/components/practice/icons";
 import { SECTIONS } from "@/lib/practice/sections";
-import { ArtBattle, ArtBridge, ArtMatch } from "@/components/games/GameArt";
+import { ArtBattle, ArtBridge, ArtMatch, GameLogo } from "@/components/games/GameArt";
 import HeroSky from "@/components/home/HeroSky";
 import Reveal from "@/components/home/Reveal";
 
@@ -16,10 +16,10 @@ export const metadata: Metadata = {
   description: "Practise Hari-nāmāmṛta-vyākaraṇa: Sandhi, Nāma, Ākhyāta and more — easy, medium and hard — and play Sanskrit grammar games like the Rāma–Rāvaṇa battle.",
 };
 
-const GAMES = [
-  { href: "/practice/games/rama-ravana", title: "Rāma–Rāvaṇa battle", deva: "राम-रावण युद्धम्", text: "Rāvaṇa looses an arrow — answer before it lands and Śrī Rāma cuts it down.", color: "#b3341a", art: <ArtBattle /> },
-  { href: "/practice/games/setu-bandha", title: "Setu-bandha", deva: "सेतु-बन्धनम्", text: "Help Hanumān build the bridge to Laṅkā, one stone for every right answer.", color: "#d9622b", art: <ArtBridge /> },
-  { href: "/practice/games/sandhi-match", title: "Sandhi Match", deva: "सन्धि-युग्मम्", text: "Flip the cards and pair each question with its answer, against the clock.", color: "#1f8a8a", art: <ArtMatch /> },
+const GAMES: { href: string; title: string; deva: string; text: string; color: string; art: React.ReactNode; id: "rama-ravana" | "setu-bandha" | "sandhi-match" }[] = [
+  { href: "/practice/games/rama-ravana", title: "Rāma–Rāvaṇa battle", deva: "राम-रावण युद्धम्", text: "Ten heads, ten right answers. Learn the sūtra behind every answer — Study or Battle.", color: "#b3341a", art: <ArtBattle />, id: "rama-ravana" },
+  { href: "/practice/games/setu-bandha", title: "Setu-bandha", deva: "सेतु-बन्धनम्", text: "Build the bridge to Laṅkā, one stone for every right answer — and read the rule each time.", color: "#d9622b", art: <ArtBridge />, id: "setu-bandha" },
+  { href: "/practice/games/sandhi-match", title: "Sandhi Match", deva: "सन्धि-युग्मम्", text: "Flip the cards, pair each Sandhi with its result, and see its rule when you match.", color: "#1f8a8a", art: <ArtMatch />, id: "sandhi-match" },
 ];
 
 export default async function PracticePage() {
@@ -86,7 +86,7 @@ export default async function PracticePage() {
           <div className="grid gap-5 md:grid-cols-3">
             {GAMES.map((g) => (
               <Link key={g.href} href={g.href} className="pq-game" style={{ ["--c" as string]: g.color }}>
-                <span className="pq-game-art">{g.art}</span>
+                <span className="pq-game-art relative">{g.art}<span className="absolute -bottom-5 right-3 rounded-full bg-[var(--bg)] p-1 shadow-lg"><GameLogo game={g.id} size={48} /></span></span>
                 <span className="block p-4">
                   <span className="block font-devanagari text-lg" style={{ color: g.color }}>{g.deva}</span>
                   <span className="block font-semibold">{g.title}</span>

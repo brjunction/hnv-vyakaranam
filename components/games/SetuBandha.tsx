@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Flame, Gauge, Home, Leaf, RotateCcw } from "lucide-react";
+import { BookOpen, Flame, GraduationCap, Gauge, Home, Leaf, RotateCcw, Swords } from "lucide-react";
 import { shuffle, shuffleOptions, type Difficulty, type Question } from "@/lib/practiceData";
-import { typeInfo } from "@/lib/practice/sections";
+import { Formula, HintIcon, Options, PowerUp, QuestionHead, RuleCard, Stars, points, useBest } from "@/components/games/shared";
 
 // Setu-bandha — Hanumān builds the bridge to Laṅkā. Every right answer lays a
 // stone marked "राम" and Hanumān leaps onto it; a wrong answer (or running out
@@ -106,191 +105,238 @@ function Scene({ n, laid, d }: { n: number; laid: number; d: Dyn }) {
   );
 }
 
-type Phase = "menu" | "play" | "busy" | "won" | "lost";
+type Mode = "study" | "battle";
+type Phase = "menu" | "ask" | "busy" | "review" | "won" | "lost";
 
 export default function SetuBandha({ questions }: { questions: Question[] }) {
+  const [mode, setMode] = useState<Mode>("study");
   const [level, setLevel] = useState<Difficulty>("easy");
   const [phase, setPhase] = useState<Phase>("menu");
-  const [deck, setDeck] = useState<Question[]>([]);
-  const [qi, setQi] = useState(0);
+  const [queue, setQueue] = useState<Question[]>([]);
   const [laid, setLaid] = useState(0);
   const [lives, setLives] = useState(LIVES);
-  const [left, setLeft] = useState(0);
-  const [last, setLast] = useState<{ ok: boolean; q: Question; chosen: number | null } | null>(null);
+  const [left, setLeft] = useState(1);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [right, setRight] = useState(0);
+  const [asked, setAsked] = useState(0);
   const [missed, setMissed] = useState<Question[]>([]);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const [hidden, setHidden] = useState<Set<number>>(new Set());
+  const [peek, setPeek] = useState(false);
+  const [powers, setPowers] = useState({ fifty: 2, sutra: 2 });
+  const [fresh, setFresh] = useState(false);
   const [d, setD] = useState<Dyn>({ px: SHORE_X - 20, py: WATER_Y - 4, dropI: null, drop: 1, splash: null, sway: false });
-  const [ready, setReady] = useState(false);
-  const raf = useRef(0);
-  const t0 = useRef(0);
+  // separate handles: the clock must never cancel an animation (that froze the game before)
+  const clock = useRef(0);
+  const anim = useRef(0);
   const cfg = LEVELS[level];
   const n = cfg.stones;
-  const q = deck[qi % Math.max(deck.length, 1)];
+  const q = queue[0];
+  const { best, submit } = useBest(`setu:${questions[0]?.chapter ?? ""}:${mode}:${level}`);
   const standX = (k: number) => (k === 0 ? SHORE_X - 20 : stoneX(k - 1, n));
 
-  function start(lv: Difficulty) {
+  const stop = () => {
+    cancelAnimationFrame(clock.current);
+    cancelAnimationFrame(anim.current);
+  };
+  useEffect(() => stop, []);
+
+  function begin(m: Mode, lv: Difficulty) {
+    stop();
     const L = LEVELS[lv];
     let pool = questions.filter((x) => L.pool.includes(x.difficulty));
     if (pool.length < 4) pool = questions;
-    setLevel(lv);
-    setDeck(shuffle(pool).map(shuffleOptions));
-    setQi(0); setLaid(0); setLives(LIVES); setMissed([]); setLast(null);
+    let deck: Question[] = [];
+    while (deck.length < 40) deck = deck.concat(shuffle(pool));
+    setMode(m); setLevel(lv);
+    setQueue(deck.map(shuffleOptions));
+    setLaid(0); setLives(LIVES); setScore(0); setStreak(0); setRight(0); setAsked(0); setMissed([]);
+    setPicked(null); setTimedOut(false); setHidden(new Set()); setPeek(false); setPowers({ fifty: 2, sutra: 2 }); setFresh(false);
     setD({ px: SHORE_X - 20, py: WATER_Y - 4, dropI: null, drop: 1, splash: null, sway: false });
-    setPhase("play");
+    setPhase("ask");
   }
 
-  // countdown while a question is open
   useEffect(() => {
-    cancelAnimationFrame(raf.current);
-    if (phase !== "play") return;
-    t0.current = performance.now();
+    cancelAnimationFrame(clock.current);
+    if (phase !== "ask" || mode !== "battle" || !q) return;
+    const t0 = performance.now();
     const tick = (now: number) => {
-      const s = cfg.secs - (now - t0.current) / 1000;
-      if (s <= 0) return answer(null);
-      setLeft(s);
-      raf.current = requestAnimationFrame(tick);
+      const p = (now - t0) / (cfg.secs * 1000);
+      if (p >= 1) return answer(null, 0);
+      setLeft(1 - p);
+      clock.current = requestAnimationFrame(tick);
     };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
+    setLeft(1);
+    clock.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(clock.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, qi]);
+  }, [phase, q?.id, asked]);
 
-  function anim(ms: number, f: (p: number) => void, done: () => void) {
+  function run(ms: number, f: (p: number) => void, done: () => void) {
     const s = performance.now();
     const tick = (now: number) => {
       const p = Math.min((now - s) / ms, 1);
       f(p);
-      if (p < 1) raf.current = requestAnimationFrame(tick);
+      if (p < 1) anim.current = requestAnimationFrame(tick);
       else done();
     };
-    raf.current = requestAnimationFrame(tick);
+    anim.current = requestAnimationFrame(tick);
   }
 
-  function answer(i: number | null) {
-    if (!q || phase !== "play") return;
-    cancelAnimationFrame(raf.current);
+  function answer(i: number | null, frac = left) {
+    if (!q || phase !== "ask") return;
+    cancelAnimationFrame(clock.current);
     const ok = i === q.correctIndex;
-    setLast({ ok, q, chosen: i });
-    setReady(false);
+    setPicked(i);
+    setTimedOut(i === null);
+    setAsked((a) => a + 1);
     setPhase("busy");
     if (ok) {
       const k = laid;
       setLaid(k + 1);
-      anim(
-        320,
-        (p) => setD((x) => ({ ...x, dropI: k, drop: p })),
-        () => {
-          const from = standX(k), to = standX(k + 1);
-          anim(
-            560,
-            (p) => setD((x) => ({ ...x, dropI: null, px: from + (to - from) * p, py: WATER_Y - 4 - Math.sin(p * Math.PI) * 70 })),
-            () => {
-              setD((x) => ({ ...x, px: to, py: WATER_Y - 4 }));
-              if (k + 1 >= n) {
-                anim(500, (p) => setD((x) => ({ ...x, px: to + (LANKA_X - to) * p })), () => setPhase("won"));
-              } else setReady(true);
-            }
-          );
-        }
-      );
+      setRight((r) => r + 1);
+      setStreak((s) => s + 1);
+      setScore((v) => v + points(streak, mode === "battle" ? frac : 0.5) - (peek ? 25 : 0));
+      run(320, (p) => setD((x) => ({ ...x, dropI: k, drop: p })), () => {
+        const from = standX(k), to = standX(k + 1);
+        run(560, (p) => setD((x) => ({ ...x, dropI: null, px: from + (to - from) * p, py: WATER_Y - 4 - Math.sin(p * Math.PI) * 70 })), () => {
+          setD((x) => ({ ...x, px: to, py: WATER_Y - 4 }));
+          if (k + 1 >= n) run(500, (p) => setD((x) => ({ ...x, px: to + (LANKA_X - to) * p })), () => setPhase("review"));
+          else setPhase("review");
+        });
+      });
     } else {
-      setMissed((m) => [...m, q]);
+      setStreak(0);
+      setMissed((m) => (m.some((x) => x.id === q.id) ? m : [...m, q]));
       const sx = stoneX(laid, n);
-      anim(
-        700,
-        (p) => setD((x) => ({ ...x, splash: { x: sx, p }, sway: p < 0.6 })),
-        () => {
-          setD((x) => ({ ...x, splash: null, sway: false }));
-          const l = lives - 1;
-          setLives(l);
-          if (l <= 0) setPhase("lost");
-          else setReady(true);
-        }
-      );
+      run(700, (p) => setD((x) => ({ ...x, splash: { x: sx, p }, sway: p < 0.6 })), () => {
+        setD((x) => ({ ...x, splash: null, sway: false }));
+        if (mode === "battle") setLives((l) => l - 1);
+        setPhase("review");
+      });
     }
   }
 
-  const settled = phase === "busy" && ready;
+  function finish(won: boolean) {
+    if (mode === "battle") setFresh(submit(score));
+    setPhase(won ? "won" : "lost");
+  }
   function next() {
-    setLast(null);
-    setQi((v) => v + 1);
-    setPhase("play");
+    if (phase !== "review" || !q) return;
+    const ok = picked === q.correctIndex;
+    if (laid >= n) return finish(true);
+    if (mode === "battle" && lives <= 0) return finish(false);
+    const rest = queue.slice(1);
+    if (!ok) rest.splice(Math.min(3, rest.length), 0, shuffleOptions(q));
+    setQueue(rest);
+    setPicked(null); setTimedOut(false); setHidden(new Set()); setPeek(false);
+    setPhase("ask");
+  }
+  function fifty() {
+    if (!q || powers.fifty <= 0 || phase !== "ask") return;
+    const wrong = shuffle(q.options.map((_, i) => i).filter((i) => i !== q.correctIndex)).slice(0, Math.max(1, q.options.length - 2));
+    setHidden(new Set(wrong));
+    setPowers((p) => ({ ...p, fifty: p.fifty - 1 }));
+  }
+  function showSutra() {
+    if (!q || powers.sutra <= 0 || phase !== "ask" || peek) return;
+    setPeek(true);
+    setPowers((p) => ({ ...p, sutra: p.sutra - 1 }));
   }
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
-      if (phase === "play" && q && /^[1-9]$/.test(e.key) && Number(e.key) <= q.options.length) answer(Number(e.key) - 1);
-      else if (e.key === "Enter" && settled) next();
+      if (phase === "ask" && q && /^[1-9]$/.test(e.key)) {
+        const i = Number(e.key) - 1;
+        if (i < q.options.length && !hidden.has(i)) answer(i);
+      } else if ((e.key === "Enter" || e.key === " ") && phase === "review") {
+        e.preventDefault();
+        next();
+      }
     };
     window.addEventListener("keydown", on);
     return () => window.removeEventListener("keydown", on);
   });
 
-  if (!questions.length) return <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">Questions for this prakaraṇa are being added.</p>;
+  if (!questions.length) return <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">Questions for this prakaraṇa are being added — please come back soon.</p>;
+
+  const playing = phase === "ask" || phase === "busy" || phase === "review";
+  const acc = asked ? Math.round((right / asked) * 100) : 0;
+  const stars = phase === "won" ? (acc >= 90 ? 3 : acc >= 70 ? 2 : 1) : 0;
 
   return (
     <div>
       <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] shadow-[var(--shadow-lift)]">
         <Scene n={n} laid={laid} d={d} />
-        {phase !== "menu" && (
+        {playing && (
           <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-3 text-xs text-white sm:p-4 sm:text-sm">
-            <div>
-              <p className="font-semibold">Setu · {laid}/{n}</p>
-              <p aria-label={`${lives} tries left`}>{"♥".repeat(lives)}<span className="opacity-30">{"♥".repeat(LIVES - lives)}</span></p>
+            <div className="grid gap-1">
+              <p className="rv-chip">Stones {laid}/{n}</p>
+              {mode === "battle" ? <p className="rv-hearts" aria-label={`${lives} tries left`}>{"♥".repeat(Math.max(lives, 0))}<span>{"♥".repeat(Math.max(LIVES - lives, 0))}</span></p> : <p className="rv-chip"><GraduationCap size={13} /> Study mode</p>}
             </div>
-            {phase === "play" && (
-              <div className="h-2 w-28 self-center overflow-hidden rounded-full bg-black/30 sm:w-48"><div className="h-full rounded-full bg-[var(--color-gold-light)]" style={{ width: `${(left / cfg.secs) * 100}%` }} /></div>
-            )}
-            <button type="button" onClick={() => { cancelAnimationFrame(raf.current); setPhase("menu"); }} className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-black/35 px-3 py-1 hover:bg-black/55"><Home size={13} /> Menu</button>
+            <p className="rv-chip">Score <b>{score}</b>{streak >= 2 ? ` · 🔥×${streak}` : ""}</p>
+            <button type="button" onClick={() => { stop(); setPhase("menu"); }} className="rv-menu !static"><Home size={13} /> Menu</button>
           </div>
         )}
+        {phase === "ask" && mode === "battle" && <div className="rv-time"><i style={{ width: `${left * 100}%` }} /></div>}
         {(phase === "menu" || phase === "won" || phase === "lost") && (
-          <div className="absolute inset-0 grid place-items-center bg-black/45 p-4 text-center text-white backdrop-blur-[2px]">
-            <div className="max-w-md">
-              {phase === "menu" && (<><p className="font-devanagari text-2xl sm:text-3xl">सेतु-बन्धनम्</p><p className="mt-1 text-sm opacity-85">Help Hanumān build the bridge to Laṅkā. Right answer: a stone is laid. Wrong: it sinks.</p></>)}
-              {phase === "won" && (<><p className="text-3xl font-semibold">Jaya Hanumān!</p><p className="mt-1 text-sm opacity-85">The bridge is complete — {missed.length} missed.</p></>)}
-              {phase === "lost" && (<><p className="text-2xl font-semibold">The sea took the stones</p><p className="mt-1 text-sm opacity-85">{laid} of {n} laid. Review below and try again.</p></>)}
-              <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className="rv-overlay">
+            <div className="rv-card">
+              {phase === "menu" && (
+                <>
+                  <p className="font-devanagari text-3xl">सेतु-बन्धनम्</p>
+                  <p className="mt-1 text-sm opacity-85">Help Hanumān build the bridge to Laṅkā. A right answer lays a stone marked with Rāma&apos;s name; a wrong one sinks it.</p>
+                  <div className="rv-modes">
+                    <button type="button" onClick={() => setMode("study")} className={mode === "study" ? "on" : ""}><GraduationCap size={18} /> <b>Study</b><span>No clock, no lost tries. The sūtra after every answer; mistakes come back.</span></button>
+                    <button type="button" onClick={() => setMode("battle")} className={mode === "battle" ? "on" : ""}><Swords size={18} /> <b>Challenge</b><span>A clock on every stone, three tries, a score to beat.</span></button>
+                  </div>
+                </>
+              )}
+              {phase === "won" && (<><p className="text-3xl font-semibold">Jaya Hanumān!</p><div className="my-2"><Stars n={stars} /></div><p className="text-sm opacity-90">{right} of {asked} right ({acc}%){mode === "battle" ? ` · score ${score}${fresh ? " — a new best!" : ""}` : ""}</p></>)}
+              {phase === "lost" && (<><p className="text-2xl font-semibold">The sea took the stones</p><p className="mt-1 text-sm opacity-90">{laid} of {n} laid. Revise the rules below and try again.</p></>)}
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {(Object.keys(LEVELS) as Difficulty[]).map((k) => { const L = LEVELS[k]; return (
-                  <button key={k} type="button" onClick={() => start(k)} className="rr-level"><L.icon size={15} /> {L.label} <span className="opacity-70">· {L.stones} stones</span></button>
+                  <button key={k} type="button" onClick={() => begin(mode, k)} className="rr-level"><L.icon size={15} /> {L.label} <span className="opacity-70">· {L.stones} stones</span></button>
                 ); })}
               </div>
+              {mode === "battle" && best !== null && phase === "menu" && <p className="mt-2 text-xs opacity-80">Your best on {cfg.label}: {best}</p>}
             </div>
           </div>
         )}
       </div>
 
-      {(phase === "play" || phase === "busy") && q && (
-        <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-4 sm:p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-saffron)]">{typeInfo(q.type).verb}</p>
-          <p className="mt-1 font-devanagari text-2xl sm:text-3xl">{q.prompt}</p>
-          {q.promptSub && <p className="text-sm text-[var(--fg-muted)]">{q.promptSub}</p>}
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {q.options.map((o, i) => {
-              const st = last ? (i === q.correctIndex ? "ok" : i === last.chosen ? "bad" : "") : "";
-              return <button key={i} type="button" disabled={phase !== "play"} onClick={() => answer(i)} className={`rr-opt ${st}`}><span className="rr-key">{i + 1}</span><span className="font-devanagari text-lg">{o}</span></button>;
-            })}
+      {playing && q && (
+        <div className="rv-panel">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <QuestionHead q={q} />
+            {phase === "ask" && (
+              <div className="flex gap-2">
+                <PowerUp icon={HintIcon} label="50 : 50" left={powers.fifty} onUse={fifty} disabled={hidden.size > 0} />
+                <PowerUp icon={<BookOpen size={14} />} label="Show sūtra" left={powers.sutra} onUse={showSutra} disabled={peek} />
+              </div>
+            )}
           </div>
-          {last && (
-            <div className="mt-4 flex flex-wrap items-start gap-3 border-t border-[var(--border)] pt-3">
-              <p className="min-w-0 flex-1 text-sm leading-relaxed">
-                <span className={`font-semibold ${last.ok ? "text-[#2f8f5b]" : "text-[var(--color-vermillion)]"}`}>{last.ok ? "A stone is laid! " : last.chosen == null ? "Time’s up — " : "The stone sank — "}</span>
-                {last.q.explanation}{" "}
-                {last.q.sutraRefs.map((r) => <Link key={r} href={`/sutras/${encodeURIComponent(r)}`} className="sutra-xref ml-1" target="_blank">Sūtra {r}</Link>)}
-              </p>
-              {settled && <button type="button" onClick={next} className="ui-btn">Next stone →</button>}
+          <div className="my-3 text-center sm:text-left"><Formula q={q} answer={phase === "review" ? q.options[q.correctIndex] : null} /></div>
+          {peek && phase === "ask" && q.sutras && q.sutras.length > 0 && (
+            <div className="gm-sutra mb-2">
+              {q.sutras.map((s) => (<div key={s.number}><p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-saffron)]">Sūtra {s.number}</p><p className="font-devanagari text-lg">{s.sanskrit}</p>{s.translation && <p className="text-sm">{s.translation}</p>}</div>))}
             </div>
           )}
+          <Options q={q} hidden={hidden} picked={picked} locked={phase !== "ask"} onPick={(i) => answer(i)} />
+          {phase === "review" && <RuleCard q={q} ok={picked === q.correctIndex} picked={picked} timedOut={timedOut} onNext={next} last={laid >= n || (mode === "battle" && lives <= 0)} />}
         </div>
       )}
 
-      {(phase === "won" || phase === "lost") && missed.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-[var(--border)] p-4 sm:p-5">
-          <p className="mb-2 text-sm font-semibold">Review</p>
-          <ul className="grid gap-3 text-sm">
-            {missed.map((m, i) => (
-              <li key={i}><span className="font-devanagari text-base">{m.prompt} → {m.options[m.correctIndex]}</span><span className="block text-[var(--fg-muted)]">{m.explanation}</span></li>
-            ))}
-          </ul>
-          <button type="button" onClick={() => start(level)} className="ui-btn mt-4"><RotateCcw size={15} /> Play again</button>
+      {(phase === "won" || phase === "lost") && (
+        <div className="rv-panel">
+          {missed.length > 0 ? (
+            <>
+              <p className="mb-3 font-semibold">Revise these — the rules behind your mistakes</p>
+              <div className="grid gap-4">{missed.map((m) => (<div key={m.id}><div className="mb-1"><Formula q={m} answer={m.options[m.correctIndex]} big={false} /></div><RuleCard q={m} ok picked={null} plain /></div>))}</div>
+            </>
+          ) : (<p className="text-sm">No mistakes — every rule applied correctly. 🙏</p>)}
+          <button type="button" onClick={() => begin(mode, level)} className="ui-btn mt-4"><RotateCcw size={15} /> Play again</button>
         </div>
       )}
     </div>

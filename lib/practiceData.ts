@@ -30,6 +30,8 @@ export type Question = {
   correctIndex: number;
   explanation: string;
   sutraRefs: string[];
+  /** The sūtras named in sutraRefs, with their text (Madhyama numbers), when found. */
+  sutras?: { number: string; sanskrit: string; iast: string; translation: string }[];
 };
 
 export type PracticeChapter = {

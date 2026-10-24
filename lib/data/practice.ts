@@ -2,7 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { chapters, editions, practiceQuestions, practiceTopics } from "@/lib/db/schema";
+import { chapters, editions, practiceQuestions, practiceTopics, sutras } from "@/lib/db/schema";
 import { isDbConfigured } from "@/lib/env";
 import { tags } from "@/lib/data/tags";
 import type { Difficulty, PracticeChapter, PracticeType, Question } from "@/lib/practiceData";
@@ -37,6 +37,18 @@ async function read(): Promise<PracticeData> {
         .orderBy(asc(practiceQuestions.id))
     : [];
 
+  // The sūtra text behind each answer (refs like "42" or "M 42" → Madhyama sūtra 42).
+  const numOf = (ref: string) => ref.split(/[\/,;]+/).map((x) => x.trim()).map((x) => /^(?:M\s*)?(\d+(?:\.\d+)*)$/i.exec(x)?.[1]).filter((x): x is string => !!x);
+  const wanted = [...new Set(qs.flatMap((q) => q.sutraRefs.flatMap(numOf)))];
+  const strip = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const texts = wanted.length
+    ? await db
+        .select({ number: sutras.number, sanskrit: sutras.sanskrit, iast: sutras.transliteration, translation: sutras.translation })
+        .from(sutras)
+        .where(and(eq(sutras.editionId, ed.id), eq(sutras.status, "published"), inArray(sutras.number, wanted)))
+    : [];
+  const textOf = new Map(texts.map((t) => [t.number, { number: t.number, sanskrit: strip(t.sanskrit), iast: strip(t.iast), translation: strip(t.translation) }]));
+
   const chapterOfTopic = new Map(topics.map((t) => [t.id, chs.find((c) => c.id === t.chapterId)?.slug ?? ""]));
   const questions: Question[] = qs
     .filter((q) => q.options.length >= 2 && q.correctIndex >= 0 && q.correctIndex < q.options.length)
@@ -52,6 +64,7 @@ async function read(): Promise<PracticeData> {
       correctIndex: q.correctIndex,
       explanation: q.explanation,
       sutraRefs: q.sutraRefs,
+      sutras: [...new Set(q.sutraRefs.flatMap(numOf))].map((n) => textOf.get(n)).filter((x): x is NonNullable<typeof x> => !!x),
     }));
   const withQuestions = new Set(questions.map((q) => q.topicSlug));
 
@@ -75,5 +88,5 @@ async function read(): Promise<PracticeData> {
 }
 
 export function getPracticeData(): Promise<PracticeData> {
-  return unstable_cache(read, ["practice:v2"], { tags: [tags.practice], revalidate: 86400 })();
+  return unstable_cache(read, ["practice:v3"], { tags: [tags.practice], revalidate: 86400 })();
 }

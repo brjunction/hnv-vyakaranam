@@ -6,6 +6,7 @@ import SiteChrome from "@/components/SiteChrome";
 import { SITE_URL } from "@/lib/site";
 import SeoJsonLd from "@/components/SeoJsonLd";
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -160,6 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </SiteChrome>
         <Analytics/>
+        <SpeedInsights/>
       </body>
     </html>
   );

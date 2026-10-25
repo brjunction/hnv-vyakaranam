@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import SiteChrome from "@/components/SiteChrome";
 import { SITE_URL } from "@/lib/site";
 import SeoJsonLd from "@/components/SeoJsonLd";
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -153,10 +154,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="google-site-verification" content="A0wYp6OHY16TtZb5ua8xmcSaN4D1YiLzLHOfULCdFZw" />
       </head>
       <body className="antialiased">
+      
         <SeoJsonLd />
         <SiteChrome header={<Header />} footer={<Footer />}>
           {children}
         </SiteChrome>
+        <Analytics/>
       </body>
     </html>
   );

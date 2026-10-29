@@ -30,12 +30,39 @@ export function blocks(xhtml: string): Block[] {
         const cls = /\bclass="([^"]*)"/.exec(open.attrs)?.[1] ?? "";
         const id = /\bid="([^"]*)"/.exec(open.attrs)?.[1] ?? "";
         // a wrapper (a div holding other blocks) is opened up; its children are the blocks
-        if (/^(div|section|blockquote)$/.test(open.tag) && /<(div|p|h[1-6]|blockquote|table|ul|ol)\b/i.test(inner)) out.push(...blocks(inner));
+        if (/^(div|section|blockquote)$/.test(open.tag) && /<(div|p|h[1-6]|blockquote|table|ul|ol)\b/i.test(inner)) out.push(...wrapperBlocks(inner, open.tag, cls, id));
         else out.push({ tag: open.tag, cls, id, html: inner, text: toText(inner) });
         open = null;
       }
     }
   }
+  return out;
+}
+
+/** The blocks inside a wrapper, with any text standing loose in it (between them) kept as blocks of its own. */
+function wrapperBlocks(inner: string, tag: string, cls: string, id: string): Block[] {
+  const kids = blocks(`<body>${inner}`);
+  if (!kids.length) return [];
+  const out: Block[] = [];
+  let at = 0;
+  const loose = (html: string) => {
+    const text = toText(html);
+    if (text) out.push({ tag, cls, id, html: html.trim(), text });
+  };
+  for (const k of kids) {
+    const i = inner.indexOf(k.html, at);
+    if (i < 0) {
+      out.push(k);
+      continue;
+    }
+    // back up to the child's opening tag
+    const openAt = inner.lastIndexOf("<", i - 1);
+    loose(inner.slice(at, openAt >= at ? openAt : i));
+    out.push(k);
+    const closeAt = inner.indexOf(">", i + k.html.length);
+    at = closeAt >= 0 ? closeAt + 1 : i + k.html.length;
+  }
+  loose(inner.slice(at));
   return out;
 }
 
@@ -85,4 +112,32 @@ export function cleanInline(html: string): string {
     .replace(/\s*<br>\s*/g, "<br>")
     .trim()
     .normalize("NFC");
+}
+
+// ------------------------------------------------------------ e-book CSS
+export type ClassStyle = { i?: boolean; b?: boolean; center?: boolean };
+/** Which classes of an e-book's stylesheet are italic, bold or centred. */
+export function cssClasses(css: string): Map<string, ClassStyle> {
+  const out = new Map<string, ClassStyle>();
+  for (const m of css.matchAll(/\.([\w-]+)\s*\{([^}]*)\}/g)) {
+    const body = m[2];
+    const st: ClassStyle = {};
+    if (/font-style\s*:\s*italic/i.test(body)) st.i = true;
+    if (/font-weight\s*:\s*(bold|[6-9]00)/i.test(body)) st.b = true;
+    if (/text-align\s*:\s*center/i.test(body)) st.center = true;
+    if (st.i || st.b || st.center) out.set(m[1], st);
+  }
+  return out;
+}
+
+/** Spans whose class is italic / bold in the stylesheet become <i> / <b> (spans in these e-books are not nested). */
+export function styleSpans(xhtml: string, styles: Map<string, ClassStyle>): string {
+  return xhtml.replace(/<span\b[^>]*class="([^"]*)"[^>]*>([\s\S]*?)<\/span>/gi, (all, cls: string, inner: string) => {
+    const st = cls.split(/\s+/).map((c) => styles.get(c)).find((x) => x && (x.i || x.b));
+    if (!st) return inner;
+    let h = inner;
+    if (st.i) h = `<i>${h}</i>`;
+    if (st.b) h = `<b>${h}</b>`;
+    return h;
+  });
 }

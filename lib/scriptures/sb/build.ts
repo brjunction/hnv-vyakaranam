@@ -39,7 +39,19 @@ const verseText = (lines: string[]) =>
     .join(" ")
     .replace(/[|।॥]/g, " ");
 
-export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; comm?: CommentaryVerse[] }): SbBuild {
+type KindDef = { key: string; name: string; author: string; match: (author: string, work: string) => boolean };
+export type BuildOptions = {
+  /** the location of a chapter in the book ("1.5" for the Bhāgavatam, "5" for the Gītā) */
+  location?: (canto: number, chapter: number) => string;
+  /** the commentary kinds of this book (default: the Bhāgavatam's) */
+  kinds?: KindDef[];
+};
+const foldName = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]+/g, "");
+
+export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; comm?: CommentaryVerse[] }, opts: BuildOptions = {}): SbBuild {
+  const loc = opts.location ?? ((c: number, ch: number) => `${c}.${ch}`);
+  const KINDS = opts.kinds ?? COMMENTARY_KINDS;
+  const kindFor = (c: CommentaryVerse["commentaries"][number]) => (opts.kinds ? KINDS.find((k) => k.match(foldName(c.author), foldName(c.work))) ?? null : kindOf(c));
   const { bbt, vc } = input;
   const comm = input.comm ?? [];
   const report: SbBuild["report"] = {
@@ -118,7 +130,7 @@ export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; c
     else report.commentaries.byNumberOnly++;
     const sameNumber = target.key === (cv.from === cv.to ? String(cv.from) : `${cv.from}-${cv.to}`);
     for (const c of cv.commentaries) {
-      const k = kindOf(c);
+      const k = kindFor(c);
       const key = k?.key ?? OTHER_KIND.key;
       usedKinds.add(key);
       report.perKind[key] = (report.perKind[key] ?? 0) + 1;
@@ -137,7 +149,7 @@ export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; c
     if (b.purport) c.purport = markSanskrit(b.purport);
     const m = attached.get(b);
     if (m) for (const [k, parts] of Object.entries(m)) c[k] = parts.join("");
-    return { location: `${b.canto}.${b.chapter}`, verse: b.key, iast: b.lines.join("\n"), speaker: b.speaker || undefined, c };
+    return { location: loc(b.canto, b.chapter), verse: b.key, iast: b.lines.join("\n"), speaker: b.speaker || undefined, c };
   });
 
   // 4 · cantos and chapters (titles, and the chapter summaries of Cantos 10–12)
@@ -149,7 +161,7 @@ export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; c
   for (const k of chapterKeys) {
     const [c, ch] = k.split(".").map(Number);
     const fromBbt = bbt?.chapters.find((x) => x.canto === c && x.chapter === ch);
-    divisions.push({ location: k, number: String(ch), title: fromBbt?.title || vc?.chapterTitles[k] || "", body: fromBbt?.summary ? markSanskrit(fromBbt.summary) : undefined });
+    divisions.push({ location: loc(c, ch), number: String(ch), title: fromBbt?.title || vc?.chapterTitles[k] || "", body: fromBbt?.summary ? markSanskrit(fromBbt.summary) : undefined });
   }
   report.chapters = chapterKeys.size;
 
@@ -157,7 +169,7 @@ export function buildSb(input: { bbt?: BbtResult | null; vc?: VcResult | null; c
   if (base.some((b) => b.synonyms)) kinds.push({ key: "synonyms", name: "Synonyms", author: "Śrīla Prabhupāda", language: "english", pane: "verse" });
   if (base.some((b) => b.translation)) kinds.push({ key: "translation", name: "Translation", author: "Śrīla Prabhupāda", language: "english", pane: "translation" });
   if (base.some((b) => b.purport)) kinds.push({ key: "purport", name: "Purport", author: "Śrīla Prabhupāda", language: "english", pane: "commentary" });
-  for (const k of COMMENTARY_KINDS) if (usedKinds.has(k.key)) kinds.push({ key: k.key, name: k.name, author: k.author, language: "sanskrit", pane: "commentary" });
+  for (const k of KINDS) if (usedKinds.has(k.key)) kinds.push({ key: k.key, name: k.name, author: k.author, language: "sanskrit", pane: "commentary" });
   if (usedKinds.has(OTHER_KIND.key)) kinds.push({ key: OTHER_KIND.key, name: OTHER_KIND.name, author: "", language: "sanskrit", pane: "commentary" });
 
   return { rows, divisions, kinds, report };

@@ -3,14 +3,16 @@
 import { useRef, useState } from "react";
 import { AlertTriangle, BookOpen, CheckCircle2, Loader2, Upload } from "lucide-react";
 import { unzipSync, strFromU8 } from "fflate";
-import { epubDocuments } from "@/lib/scriptures/sb/epub";
+import { epubCss, epubDocuments } from "@/lib/scriptures/sb/epub";
+import { parseBbtGita } from "@/lib/scriptures/bg/bbt";
+import { GITA_KINDS } from "@/lib/scriptures/bg/kinds";
 import { parseBbt, type BbtResult } from "@/lib/scriptures/sb/bbt";
 import { parseVerseCollection, type VcResult } from "@/lib/scriptures/sb/vc";
-import { parseCommentaries, type CommentaryVerse } from "@/lib/scriptures/sb/commentaries";
+import { parseCommentaries, repairSequence, type CommentaryVerse } from "@/lib/scriptures/sb/commentaries";
 import { buildSb, type SbBuild } from "@/lib/scriptures/sb/build";
 import { ensureCommentaryKinds, importScriptureRows, type ImportReport } from "@/lib/actions/scriptures";
 
-// Admin › Scriptures › (book) › Import e-books — Śrīmad-Bhāgavatam.
+// Admin › Scriptures › (book) › Import e-books — Śrīmad-Bhāgavatam or Bhagavad-gītā.
 // Choose any of: Śrīla Prabhupāda's Bhāgavatam (BBT e-book), the BBT verse
 // collection, the ācāryas' commentaries (.zip of e-books or single e-books).
 // Everything is read here in the browser. Numbering and text follow Śrīla
@@ -25,15 +27,24 @@ const empty = (): Total => ({ created: 0, updated: 0, unchanged: 0, divisionsCre
 const MAX_ROWS = 120;
 const MAX_BYTES = 2_400_000;
 
-function classify(docs: { path: string; xhtml: string }[]): Found["kind"] {
+function classify(docs: { path: string; xhtml: string }[], book: "sb" | "bg"): Found["kind"] {
   const sample = docs.slice(0, 80).map((d) => d.xhtml).join("\n");
+  if (book === "bg") {
+    const text = sample.replace(/<[^>]+>/g, "");
+    // Śrīla Prabhupāda's Gītā (Balarama letters: "uväca"), the commentaries "(3.1)"
+    if (/\bTEXTS?\s+\d+/.test(text) && /uväca|Kåñëa/.test(text)) return "bbt";
+    if (/^\s*\(\s*\d+\s*\.\s*\d+\s*\)\s*$/m.test(text)) return "commentary";
+    return "ignored";
+  }
   if (/verse-number-heading|class="text">TEXTS?\s/.test(sample) || /class="synonyms"/.test(sample)) return "bbt";
   if (/\|\|\s*\d+\.\d+\.\d+/.test(sample)) return "commentary";
   if (/class_sk[^>]*>\s*Texts?\s+\d/.test(sample) || /Canto\s+\d+\s*:/.test(sample)) return "collection";
   return "ignored";
 }
 
-export default function EbookImport({ bookId, bookTitle }: { bookId: number; bookTitle: string }) {
+export default function EbookImport({ bookId, bookTitle, book = "sb" }: { bookId: number; bookTitle: string; book?: "sb" | "bg" }) {
+  const gita = book === "bg";
+  const prabhupada = gita ? "Śrīla Prabhupāda’s Bhagavad-gītā As It Is" : "Śrīla Prabhupāda’s Bhāgavatam";
   const [found, setFound] = useState<Found[]>([]);
   const [build, setBuild] = useState<SbBuild | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -41,6 +52,7 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
   const [progress, setProgress] = useState(0);
   const [total, setTotal] = useState<Total>(empty());
   const [error, setError] = useState("");
+  const [notes, setNotes] = useState<string[]>([]);
   const input = useRef<HTMLInputElement>(null);
 
   async function read(files: FileList | null) {
@@ -53,20 +65,24 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
     let bbt: BbtResult | null = null;
     let vc: VcResult | null = null;
     const comm: CommentaryVerse[] = [];
+    const repairs: string[] = [];
     const take = (name: string, bytes: Uint8Array) => {
-      const docs = epubDocuments(unzipSync(bytes), strFromU8);
-      const kind = classify(docs);
+      const files = unzipSync(bytes);
+      const docs = epubDocuments(files, strFromU8);
+      const kind = classify(docs, book);
       if (kind === "bbt") {
-        bbt = parseBbt(docs);
+        bbt = gita ? parseBbtGita(docs, epubCss(files, strFromU8)) : parseBbt(docs);
+        if (bbt.issues.length) repairs.push(...bbt.issues);
         list.push({ name, kind, note: `${bbt.verses.length} verses, ${bbt.chapters.length} chapters` });
       } else if (kind === "collection") {
         vc = parseVerseCollection(docs);
         list.push({ name, kind, note: `${vc.verses.length} verses` });
       } else if (kind === "commentary") {
         const vs = parseCommentaries(docs);
+        if (gita) repairs.push(...repairSequence(vs).map((x) => `${name}: verse number ${x}`));
         comm.push(...vs);
         list.push({ name, kind: vs.length ? "commentary" : "ignored", note: vs.length ? `${vs.length} verses (${vs[0].ref} … ${vs[vs.length - 1].ref})` : "no verses found" });
-      } else list.push({ name, kind, note: "not a Bhāgavatam e-book this import knows" });
+      } else list.push({ name, kind, note: `not a ${gita ? "Gītā" : "Bhāgavatam"} e-book this import knows` });
       setFound([...list]);
     };
     try {
@@ -86,11 +102,12 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
       setStatus("Matching the commentaries to Śrīla Prabhupāda’s verses…");
       await new Promise((r) => setTimeout(r, 20));
       if (!bbt && !vc) {
-        setError("Add Śrīla Prabhupāda’s Bhāgavatam (or the verse collection) too: the verses and their numbering come from it.");
+        setError(`Add ${prabhupada}${gita ? "" : " (or the verse collection)"} too: the verses and their numbering come from it.`);
         setPhase("idle");
         return;
       }
-      setBuild(buildSb({ bbt, vc, comm }));
+      setBuild(gita ? buildSb({ bbt, comm }, { location: (_c, ch) => String(ch), kinds: GITA_KINDS }) : buildSb({ bbt, vc, comm }));
+      setNotes(repairs);
       setPhase("ready");
     } catch (e) {
       setError(`Could not read the files: ${(e as Error).message}`);
@@ -158,9 +175,9 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
       <section className="a-card p-5 sm:p-6">
         <h2 className="text-base font-semibold">1 · Choose the e-books</h2>
         <p className="mt-1 text-sm text-[var(--a-fg-muted)]">
-          Choose all at once: Śrīla Prabhupāda’s Bhāgavatam (.epub), the verse collection (.epub) and the commentaries (.zip, or single .epub files). Verses, numbering,
-          synonyms, translation and purport come from Śrīla Prabhupāda’s edition; the ācāryas’ commentaries are attached to the verse they explain. Reading takes about
-          half a minute; nothing is uploaded.
+          Choose all at once: {prabhupada} (.epub){gita ? "" : ", the verse collection (.epub)"} and the commentaries (.zip, or single .epub files). Verses, numbering,
+          synonyms, translation and purport come from Śrīla Prabhupāda’s edition; the ācāryas’ commentaries are attached to the verse they explain. Reading takes{" "}
+          {gita ? "a few seconds" : "about half a minute"}; nothing is uploaded.
         </p>
         <input ref={input} type="file" multiple accept=".epub,.zip,application/epub+zip,application/zip" className="hidden" onChange={(e) => read(e.target.files)} />
         <button type="button" disabled={busy} onClick={() => input.current?.click()} className="a-btn a-btn-primary mt-4 inline-flex items-center gap-2">
@@ -177,7 +194,7 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
               <li key={i} className="flex items-start gap-2">
                 <BookOpen size={15} className="mt-0.5 shrink-0" />
                 <span>
-                  <b>{f.name}</b> — {{ bbt: "Śrīla Prabhupāda’s Bhāgavatam", collection: "verse collection", commentary: "commentaries", ignored: "skipped" }[f.kind]}: {f.note}
+                  <b>{f.name}</b> — {{ bbt: prabhupada, collection: "verse collection", commentary: "commentaries", ignored: "skipped" }[f.kind]}: {f.note}
                 </span>
               </li>
             ))}
@@ -220,6 +237,15 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
               </ul>
             </Box>
           )}
+          {notes.length > 0 && (
+            <Box tone="warn" title={`${notes.length} note(s) on the e-books`}>
+              <ul className="grid gap-1 text-xs">
+                {notes.slice(0, 60).map((n, i) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
+            </Box>
+          )}
           {r.textDiffers.length > 0 && (
             <Box tone="warn" title={`${r.textDiffers.length} verse(s) read differently in the e-book and the verse collection`}>
               <p className="text-xs">The verse collection's text is used when it is clearly the same verse; otherwise the e-book's.</p>
@@ -228,7 +254,7 @@ export default function EbookImport({ bookId, bookTitle }: { bookId: number; boo
                 <ul className="mt-2 grid gap-2 text-xs">
                   {r.textDiffers.map((d) => (
                     <li key={d.ref}>
-                      <b>SB {d.ref}</b>
+                      <b>{gita ? "Bg" : "SB"} {d.ref}</b>
                       <br />
                       e-book: {d.bbt}
                       <br />

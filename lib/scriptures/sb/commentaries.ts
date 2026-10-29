@@ -1,4 +1,4 @@
-import { blocks, cleanInline } from "@/lib/scriptures/sb/html";
+import { blocks, cleanInline, toText, type Block } from "@/lib/scriptures/sb/html";
 
 // The ācāryas' Sanskrit commentaries (Gauḍīya Grantha Mandira e-books
 // "four / five / ten commentaries – bhagavata purana – canto N"):
@@ -10,14 +10,18 @@ import { blocks, cleanInline } from "@/lib/scriptures/sb/html";
 //   "na vyākhyātam."                     not commented on
 
 export type CommentaryText = { author: string; work: string; html: string };
-export type CommentaryVerse = { canto: number; chapter: number; from: number; to: number; ref: string; lines: string[]; commentaries: CommentaryText[] };
+export type CommentaryVerse = { canto: number; chapter: number; from: number; to: number; ref: string; lines: string[]; commentaries: CommentaryText[]; /** the edition printed no number: read from the verse's last line */ noRef?: true };
 
 const REF = /^\|\|\s*(\d+)\.(\d+)\.(\d+)(?:\s*[-–]\s*(\d+))?\s*\|\|$/;
+/** Bhagavad-gītā editions: "(3.1)", "(1.4-6)" — read as canto 1 */
+const REF_BG = /^\(\s*(\d+)\s*\.\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*\)?$/;
+/** "Verses 41-42" (the chapter is the current one) */
+const REF_VERSES = /^Verses?\s+(\d+)(?:\s*[-–]\s*(\d+))?$/i;
 const HEAD = /^\s*([a-zāīūṛṝḷḹṅñṭḍṇśṣṁḥ’'\s-]{3,60}?)\s*\(([^)]{2,80})\)\s*:\s*/i;
 /** Short form without the work: "śrīdharaḥ :", "madhvaḥ :" */
-const HEAD2 = /^\s*(śrīdhara(?:-svāmī|ḥ)?|madhvaḥ|madhvācāryaḥ|jīvaḥ|jīva-gosvāmī|viśvanāthaḥ|viśvanātha-cakravartī|baladevaḥ|vaṁśīdharaḥ|sanātanaḥ|sanātana-gosvāmī)\s*:\s*/i;
+const HEAD2 = /^\s*(śrīdhara(?:-svāmī|ḥ)?|madhvaḥ|madhvācāryaḥ|jīvaḥ|jīva-gosvāmī|viśvanāthaḥ|viśvanātha-cakravartī|baladevaḥ|baladeva|viśvanātha|madhusūdanaḥ|madhusūdana(?:-sarasvatī)?|rāmānujaḥ|rāmānuja|vaṁśīdharaḥ|sanātanaḥ|sanātana-gosvāmī)\s*:\s*/i;
 const WORK_OF: Record<string, string> = {
-  sridhara: "bhāvārtha-dīpikā", madhva: "bhāgavata-tātparyam", jiva: "krama-sandarbhaḥ", visvanatha: "sārārtha-darśinī",
+  sridhara: "bhāvārtha-dīpikā", madhusudana: "gūḍhārtha-dīpikā", ramanuja: "gītā-bhāṣya", madhva: "bhāgavata-tātparyam", jiva: "krama-sandarbhaḥ", visvanatha: "sārārtha-darśinī",
   baladeva: "vaiṣṇavānandinī", vamsidhara: "bhāvārtha-dīpikā-prakāśaḥ", sanatana: "bṛhad-vaiṣṇava-toṣaṇī",
 };
 
@@ -39,24 +43,56 @@ function afterHeader(html: string): string {
   return after.replace(/^<b>\s*<\/b>/, "").replace(/<b>\s*<\/b>/g, " ").trim();
 }
 
+const NAMES = HEAD2.source.slice(HEAD2.source.indexOf("("), HEAD2.source.lastIndexOf(")") + 1);
+const SPLIT = new RegExp(`\\|\\|(?:\\s*\\d+\\s*\\|\\|)?(?=\\s*(?:<[^>]+>\\s*)*${NAMES}(?:\\s*<[^>]+>)*\\s*:)`, "gi");
+/** A paragraph holding the end of a verse (or of one commentary) and the next commentary's header is cut in two there. */
+function splitAtHeaders(b: Block): Block[] {
+  const cuts = [...b.html.matchAll(SPLIT)].map((m) => (m.index ?? 0) + m[0].length);
+  if (!cuts.length) return [b];
+  const out: Block[] = [];
+  let at = 0;
+  for (const c of [...cuts, b.html.length]) {
+    const html = b.html.slice(at, c);
+    at = c;
+    const text = toText(html);
+    if (text) out.push({ ...b, html, text });
+  }
+  return out;
+}
+
+/** Notes left in by the editor's word processor: "Commented [3]: other sources say …" */
+const stripEditorNotes = (x: string) =>
+  x.normalize("NFC").replace(/<span\b[^>]*>\s*Commented \[\d+\]:\s*<\/span>\s*(?:<span\b[^>]*>[^<]*<\/span>)?/g, " ").replace(/Commented \[\d+\]:\s*/g, "");
+
+/** A line of a verse: short, and ending in "|" or "||12||" (no "|" inside) */
+const VERSE_LINE = /^[^|]{8,90}(?:\|\|?\s*(?:\d+(?:\s*[-–]\s*\d+)?\s*\|\|)?)?$/;
+const VERSE_END = /\|\|\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*\|\|\s*$/;
+
 export function parseCommentaries(files: { path: string; xhtml: string }[]): CommentaryVerse[] {
   const out: CommentaryVerse[] = [];
   let cur: CommentaryVerse | null = null;
   let com: CommentaryText | null = null;
+  let paras: { html: string; text: string }[] = [];
   let inVerse = false;
   const close = () => {
+    if (com) com.html = paras.map((p) => `<p>${p.html}</p>`).join("");
     const plain = com?.html.replace(/<[^>]+>/g, "").trim() ?? "";
     if (cur && com && plain && !/^na vyākhyātam\.?$/i.test(plain)) cur.commentaries.push(com);
     com = null;
+    paras = [];
   };
+  const verseLines = (t: string) => t.split("\n").map((x) => x.replace(/\|\|\s*\d+(?:\s*[-–]\s*\d+)?\s*\|\|\s*$/, "").replace(/[|।॥]+\s*$/, "").trim()).filter(Boolean);
   for (const f of files) {
-    for (const b of blocks(f.xhtml)) {
+    for (const blk of blocks(stripEditorNotes(f.xhtml))) for (const b of splitAtHeaders(blk)) {
       const t = b.text.trim();
-      const r = REF.exec(t);
+      const html = b.html;
+      const rb = REF_BG.exec(t);
+      const rv: RegExpExecArray | null = cur ? REF_VERSES.exec(t) : null;
+      const r: (string | undefined)[] | null = REF.exec(t) ?? (rb ? [rb[0], "1", rb[1], rb[2], rb[3]] : rv && cur ? [rv[0], String(cur.canto), String(cur.chapter), rv[1], rv[2]] : null);
       if (r) {
         close();
-        const from = Number(r[3]);
-        cur = { canto: Number(r[1]), chapter: Number(r[2]), from, to: r[4] ? Number(r[4]) : from, ref: t.replace(/\|/g, "").trim(), lines: [], commentaries: [] };
+        const from: number = Number(r[3]);
+        cur = { canto: Number(r[1]), chapter: Number(r[2]), from, to: r[4] ? Number(r[4]) : from, ref: rv ? `${r[2]}.${r[3]}${r[4] ? `-${r[4]}` : ""}` : t.replace(/[|()\s]/g, ""), lines: [], commentaries: [] };
         out.push(cur);
         inVerse = true;
         continue;
@@ -78,26 +114,74 @@ export function parseCommentaries(files: { path: string; xhtml: string }[]): Com
         }
       }
       if (h) {
+        const author = titleCase(h[1], true);
+        // A verse whose number is missing in that edition: the same ācārya
+        // begins again, right after a few verse lines ending in "||27||".
+        const again = (com as CommentaryText | null)?.author === author || cur.commentaries.some((c) => c.author === author);
+        if (again && !inVerse && paras.length > 2 && VERSE_END.test(paras[paras.length - 1].text)) {
+          let k = paras.length;
+          while (k > 1 && VERSE_LINE.test(paras[k - 1].text.replace(/\n/g, " ")) && paras.length - k < 8) k--;
+          const verse = paras.slice(k);
+          if (verse.length >= 2) {
+            paras = paras.slice(0, k);
+            close();
+            const e = VERSE_END.exec(verse[verse.length - 1].text)!;
+            const to = Number(e[2] ?? e[1]);
+            const from = e[2] ? Number(e[1]) : to;
+            cur = { canto: cur.canto, chapter: cur.chapter, from, to, ref: `${cur.chapter}.${from}${from !== to ? `-${to}` : ""}`, lines: verse.flatMap((v) => verseLines(v.text)), commentaries: [], noRef: true };
+            out.push(cur);
+          }
+        }
         close();
         inVerse = false;
-        com = { author: titleCase(h[1], true), work: titleCase(h[2], false), html: "" };
+        com = { author, work: titleCase(h[2], false), html: "" };
         // the rest of this paragraph is the first part of the commentary
-        const rest = afterHeader(cleanInline(b.html));
-        if (rest) com.html += `<p>${rest}</p>`;
+        const rest = afterHeader(cleanInline(html));
+        if (rest) paras.push({ html: rest, text: t });
         continue;
       }
       if (inVerse) {
-        cur.lines.push(...t.split("\n").map((x) => x.replace(/[|।॥]+\s*$/, "").trim()).filter(Boolean));
+        cur.lines.push(...verseLines(t));
         continue;
       }
       if (com) {
         const p = cleanInline(b.html);
-        if (p) com.html += `<p>${p}</p>`;
+        if (p) paras.push({ html: p, text: t });
       }
     }
   }
   close();
   return out;
+}
+
+/**
+ * Misprinted verse numbers ("(8.5)" in the middle of Chapter 9): a number that
+ * does not follow the one before it (next verse, or verse 1 of the next
+ * chapter) is replaced by the expected one. The verse text decides the final
+ * place later (build.ts), so this only keeps the commentary in its chapter.
+ */
+export function repairSequence(list: CommentaryVerse[]): string[] {
+  const fixed: string[] = [];
+  let prev: CommentaryVerse | null = null;
+  for (const v of list) {
+    if (prev && v.canto === prev.canto) {
+      const next = v.chapter === prev.chapter && v.from === prev.to + 1;
+      const first = v.chapter === prev.chapter + 1 && v.from === 1;
+      // a number that jumps a little ahead (a verse not commented on) is fine
+      const ahead = v.chapter === prev.chapter && v.from > prev.to && v.from - prev.to <= 4;
+      if (!next && !first && !ahead) {
+        const was = v.ref;
+        const n = v.to - v.from;
+        v.chapter = prev.chapter;
+        v.from = prev.to + 1;
+        v.to = v.from + n;
+        v.ref = `${v.chapter}.${v.from}${n ? `-${v.to}` : ""}`;
+        fixed.push(`(${was}) after (${prev.ref}) — read as (${v.ref})`);
+      }
+    }
+    prev = v;
+  }
+  return fixed;
 }
 
 // ------------------------------------------------------------------ kinds

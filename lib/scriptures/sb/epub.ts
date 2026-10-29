@@ -26,3 +26,11 @@ function normalise(p: string) {
   }
   return out.join("/");
 }
+
+/** All stylesheets of an EPUB, joined. */
+export function epubCss(files: Record<string, Uint8Array>, str: (b: Uint8Array) => string): string {
+  return Object.keys(files)
+    .filter((p) => /\.css$/i.test(p))
+    .map((p) => str(files[p]))
+    .join("\n");
+}

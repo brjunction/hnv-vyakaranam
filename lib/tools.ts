@@ -42,7 +42,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     name: "Text Utilities",
     blurb: "Everyday helpers",
     tools: [
-      { slug: "converter", name: "Multi-Script Converter", blurb: "IAST, Devanagari, Bengali, Oriya, HK, ITRANS, SLP1", icon: Languages },
+      { slug: "converter", name: "Script & Font Converter", blurb: "Balarama, IAST, Devanagari, Bengali, Odia, HK, ITRANS, SLP1 — Sanskrit-aware", icon: Languages, ready: true },
       { slug: "keyboard", name: "IAST Keyboard", blurb: "Type ā, ṛ, ṣ … easily", icon: Keyboard },
       { slug: "citation", name: "Citation Generator", blurb: "Cite any sūtra, verse or page", icon: Quote },
     ],

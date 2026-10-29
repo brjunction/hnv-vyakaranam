@@ -52,6 +52,7 @@ add("/practice", { changefreq: "weekly", priority: 0.8 });
 for (const g of ["rama-ravana", "lanka-dash", "sandhi-forge", "nama-grid", "rule-sorter", "case-blitz", "varna-order", "sutra-order"]) add(`/practice/games/${g}`, { changefreq: "monthly", priority: g === "rama-ravana" ? 0.7 : 0.6 });
 add("/tools", { changefreq: "monthly", priority: 0.7 });
 add("/tools/dictionary/search", { changefreq: "weekly", priority: 0.9 });
+add("/tools/text/converter", { changefreq: "monthly", priority: 0.8 });
 add("/scriptures/search", { changefreq: "monthly", priority: 0.5 });
 
 // ---------------------------------------------------------------------------

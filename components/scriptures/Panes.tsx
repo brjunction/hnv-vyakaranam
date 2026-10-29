@@ -104,13 +104,16 @@ export function TranslationBlock({ type, html, script, compact = false }: { type
   );
 }
 
-/** Everything that belongs WITH the verse (not commentaries), in the admin’s order: word-for-word, Anvaya, Translation. */
+/** Everything that belongs WITH the verse (not commentaries), always in this order: synonyms (word-for-word), Anvaya, Translation. */
+const COMPANION_ORDER: Record<string, number> = { verse: 0, anvaya: 1, translation: 2 };
 export function VerseCompanions({ types, c, script, compact = false }: { types: CommentaryType[]; c: Record<number, string>; script: ScriptName; compact?: boolean }) {
   return (
     <>
       {types
         .filter((t) => t.appliesTo !== "division" && t.pane !== "commentary")
-        .map((t) =>
+        .map((t, i) => ({ t, i }))
+        .sort((a, b) => (COMPANION_ORDER[a.t.pane] ?? 0) - (COMPANION_ORDER[b.t.pane] ?? 0) || a.i - b.i)
+        .map(({ t }) =>
           t.pane === "anvaya" ? (
             <AnvayaBlock key={t.id} type={t} html={c[t.id]} script={script} compact={compact} />
           ) : t.pane === "translation" ? (

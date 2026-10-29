@@ -81,3 +81,4 @@ yarn-error.log*
 .project
 .classpath
 .settings/
+tsconfig.tsbuildinfo

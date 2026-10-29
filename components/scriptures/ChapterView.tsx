@@ -110,8 +110,8 @@ export default function ChapterView({ data }: { data: DivisionData }) {
                         ) : (
                           <p className="text-sm italic text-[var(--fg-muted)]">Text not yet added.</p>
                         )}
-                        {prefs.chapterAnvaya && anvayaT.map((t) => <AnvayaBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                         {withTrans && wfwT.filter((t) => v.c[t.id]).map((t) => <SynonymsBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
+                        {prefs.chapterAnvaya && anvayaT.map((t) => <AnvayaBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                         {withTrans && transT.map((t) => <TranslationBlock key={t.id} type={t} html={v.c[t.id]} script={prefs.script} compact />)}
                       </div>
                       {mode === "commentary" && comm && (

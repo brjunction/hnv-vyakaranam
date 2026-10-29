@@ -1236,10 +1236,13 @@ export async function ensureCommentaryKinds(bookId: number, kinds: z.input<typeo
   const created: string[] = [];
   for (const k of parsed.data) {
     if (have.some((t) => t.key === k.key)) continue;
-    sort += 10;
+    // synonyms (word-for-word) come first, before the Anvaya and the translation
+    let at: number;
+    if (k.pane === "verse") at = Math.min(10, ...have.map((t) => t.sort)) - 5;
+    else at = sort += 10;
     const [t] = await db
       .insert(scriptureCommentaryTypes)
-      .values({ bookId: book.id, key: k.key, name: k.name, author: k.author, language: k.language, pane: k.pane, appliesTo: "verse", sort, updatedBy: user.id })
+      .values({ bookId: book.id, key: k.key, name: k.name, author: k.author, language: k.language, pane: k.pane, appliesTo: "verse", sort: at, updatedBy: user.id })
       .returning();
     await log(user, "scripture_commentary_types", t.id, "create", null, t, "e-book import");
     created.push(k.name);

@@ -1212,7 +1212,7 @@ function toHtml(s: string) {
 
 // ======================================================= e-book import ===
 const KindIn = z.object({
-  key: z.string().trim().min(1).max(60).regex(/^[a-z0-9-]+$/),
+  key: z.string().trim().min(1).max(60).regex(/^[a-z0-9_-]+$/),
   name: z.string().trim().min(1).max(120),
   author: z.string().trim().max(120),
   language: z.enum(["sanskrit", "english"]),

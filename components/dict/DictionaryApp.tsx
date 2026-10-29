@@ -239,6 +239,7 @@ export default function DictionaryApp() {
   const [mobileEntry, setMobileEntry] = useState(false);
   const [ready, setReady] = useState(false);
   const [note, setNote] = useState("");
+  const [failed, setFailed] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
   const [stars, setStars] = useState<string[]>([]);
   const [size, setSize] = useState(1);
@@ -306,21 +307,29 @@ export default function DictionaryApp() {
       window.history.replaceState(window.history.state, "", u.toString());
       setLoading(Boolean(q.trim()));
       try {
-        const res = await fetch(`/api/dict/search?q=${encodeURIComponent(q)}&mode=${mode}${scopeParam}`, { signal: ac.signal });
-        const data = (await res.json()) as { results: Hit[]; dictionaries: DictInfo[]; note?: string };
+        const url = `/api/dict/search?q=${encodeURIComponent(q)}&mode=${mode}${scopeParam}`;
+        let res = await fetch(url, { signal: ac.signal });
+        if (!res.ok) res = await fetch(url, { signal: ac.signal }); // one quiet retry
+        if (!res.ok) throw new Error("search failed");
+        const data = (await res.json()) as { results: Hit[]; dictionaries: DictInfo[]; note?: string; translated?: { from: string; text: string } };
+        setFailed(false);
         if (data.dictionaries) setDicts(data.dictionaries);
         setHits(q.trim() ? data.results ?? [] : []);
-        setNote(mode === "meaning" && q.trim() ? data.note ?? "" : "");
+        setNote(
+          mode === "meaning" && q.trim()
+            ? `${data.translated ? `Searched for “${data.translated.text}” (translated from ${data.translated.from}). ` : ""}${data.note ?? ""}`
+            : ""
+        );
         setActive(0);
         setReady(true);
         const first = data.results?.[0];
         if (q.trim() && first && first.match === "exact") void openEntry(first.headword, { mobile: false });
       } catch {
-        /* aborted */
+        if (!ac.signal.aborted) setFailed(true); // aborted searches are replaced by a newer one
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
-    }, q ? 170 : 0);
+    }, q ? (mode === "meaning" ? 350 : 170) : 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, mode, scopeParam]);
@@ -461,7 +470,7 @@ export default function DictionaryApp() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={onKey}
-              placeholder={mode === "word" ? "कृष्ण · kṛṣṇa · kRShNa · krishna" : "heart, knowledge, grammar…"}
+              placeholder={mode === "word" ? "कृष्ण · kṛṣṇa · kRShNa · krishna" : "heart, knowledge, हृदय, ज्ञान, ছাত্র…  (any language)"}
               className="dict-noring h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] pl-10 pr-20 text-base shadow-sm outline-none transition focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)]"
               autoComplete="off"
               autoCapitalize="off"
@@ -496,6 +505,7 @@ export default function DictionaryApp() {
           </div>
         </div>
         {note && <p className="mt-2 text-xs text-[var(--fg-muted)]">{note}</p>}
+        {failed && <p className="mt-2 text-xs text-red-600">The search did not answer. Please try again in a moment.</p>}
       </div>
 
       {noDicts ? (

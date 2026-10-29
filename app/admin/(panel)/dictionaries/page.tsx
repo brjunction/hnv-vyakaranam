@@ -71,6 +71,7 @@ export default async function DictionariesAdmin() {
               wordCount: d.wordCount,
               totalBytes: d.totalBytes,
               headwordScheme: d.headwordScheme,
+              meaningWords: (d.info as Record<string, string>).meaningWords ?? "",
               sectionId: d.sectionId,
             }))}
           />

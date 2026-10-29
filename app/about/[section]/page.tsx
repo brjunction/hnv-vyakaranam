@@ -25,6 +25,9 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   return { title: s.title, description: s.intro || undefined, alternates: { canonical: `/about/${key}` } };
 }
 
+const PRAYER =
+  "We heartily pray to all the Vaishnavas who are seeing this now, to bless us, and pray for us, to Guru Gauranga, so that these fallen souls may be able to contribute in their pleasure, someday. We don't want anything else, except it. Hare Krsna.";
+
 export default async function AboutSection({ params }: P) {
   const key = (await params).section;
   const s = await getMoreSection(`about-${key}`);
@@ -35,7 +38,11 @@ export default async function AboutSection({ params }: P) {
     <>
       <PageHead eyebrow="About" title={s.title} intro={s.intro || undefined} />
       <div className="mx-auto max-w-4xl px-5 pb-16 pt-6">
-        {items.length === 0 ? (
+        {key === "acknowledgements" ? (
+          <blockquote className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-6 text-center sm:p-8">
+            <p className="text-lg leading-relaxed sm:text-xl">{PRAYER}</p>
+          </blockquote>
+        ) : items.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">This page is being prepared.</p>
         ) : key === "acaryas" ? (
           <AcaryaList items={items} base={base} />

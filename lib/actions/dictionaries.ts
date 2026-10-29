@@ -24,7 +24,8 @@ import {
   putObject,
   toRef,
 } from "@/lib/storage/neon";
-import { DICT_TAG, categoryFromRef } from "@/lib/dict/engine";
+import { DICT_TAG, categoryFromRef, listDictionaries } from "@/lib/dict/engine";
+import { buildMeaningIndex } from "@/lib/dict/meaning";
 import { slugifyTitle } from "@/lib/hnv/slug";
 import { cleanStoragePath, guessScheme, isJunkPath, sampleIdxBytes } from "@/lib/dict/guess";
 import { parseIfo } from "@/lib/dict/stardict";
@@ -454,4 +455,30 @@ export async function setDictionaryEnabled(id: number, on: boolean): Promise<{ o
   await getDb().update(dictionaries).set({ isEnabled: on, updatedBy: user.id }).where(eq(dictionaries.id, z.number().int().positive().parse(id)));
   refresh();
   return { ok: true };
+}
+
+/** Builds the English meaning index of one dictionary (fast meaning search). */
+export async function buildMeaningById(id: number): Promise<{ ok: boolean; message: string }> {
+  const user = await requireUser("editor");
+  const db = getDb();
+  const [d] = await db.select().from(dictionaries).where(eq(dictionaries.id, id)).limit(1);
+  if (!d) return { ok: false, message: "That dictionary no longer exists." };
+  const meta = (await listDictionaries()).find((m) => m.id === id);
+  if (!meta) return { ok: false, message: "Switch the dictionary on first." };
+  try {
+    const r = await buildMeaningIndex(meta);
+    await db
+      .update(dictionaries)
+      .set({ info: { ...(d.info as Record<string, string>), meaningWords: String(r.words) }, updatedBy: user.id })
+      .where(eq(dictionaries.id, id));
+    refresh();
+    return { ok: true, message: `${d.shortName || d.name}: ${r.words.toLocaleString()} words from ${r.entries.toLocaleString()} entries.` };
+  } catch (err) {
+    return { ok: false, message: `${d.shortName || d.name}: ${(err as Error).message}` };
+  }
+}
+
+export async function buildMeaningForm(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const r = await buildMeaningById(Number(form.get("id")));
+  return r.ok ? ok(`Meaning search ready. ${r.message}`) : fail(r.message);
 }

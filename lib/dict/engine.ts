@@ -32,6 +32,8 @@ export type DictMeta = {
   category: string;
   section: { id: number; key: string; name: string; sort: number };
   updatedAt: string;
+  /** True once the English meaning index has been built (admin › Dictionaries). */
+  meaningIndexed: boolean;
 };
 
 const NO_SECTION = { id: 0, key: "other", name: "Other", sort: 1e6 };
@@ -73,10 +75,11 @@ export const listDictionaries = unstable_cache(
         category: r.category || r.name,
         section: secOf(r.sectionId),
         updatedAt: r.updatedAt.toISOString(),
+        meaningIndexed: Boolean((r.info as Record<string, string>).meaningWords),
       }))
       .sort((a, b) => a.section.sort - b.section.sort || 0);
   },
-  ["dict:list:v4"],
+  ["dict:list:v5"],
   { tags: [DICT_TAG], revalidate: 3600 }
 );
 
@@ -108,7 +111,7 @@ async function fetchShard(meta: DictMeta, c: string): Promise<Loaded> {
   return { rows: shard.rows, byLabel, bytes: json.length * 3 };
 }
 
-function loadShard(meta: DictMeta, c: string): Promise<Loaded> {
+export function loadShard(meta: DictMeta, c: string): Promise<Loaded> {
   const key = `${meta.id}|${meta.indexUrl}|${c}`;
   const hit = shardCache.get(key);
   if (hit) {
@@ -136,7 +139,7 @@ function loadShard(meta: DictMeta, c: string): Promise<Loaded> {
 
 const shardLists = new Map<string, Promise<string[]>>();
 /** Letters that have a shard (for whole-dictionary operations). */
-function shardLetters(meta: DictMeta): Promise<string[]> {
+export function shardLetters(meta: DictMeta): Promise<string[]> {
   const k = `${meta.id}|${meta.indexUrl}`;
   let p = shardLists.get(k);
   if (!p) {
@@ -270,6 +273,71 @@ export async function searchDictionaries(
   };
 }
 
+// ------------------------------------------------------------- meaning index
+// Built once per dictionary (lib/dict/meaning.ts): English word → the best
+// headwords. A meaning search then reads one small file per word instead of
+// scanning whole dictionaries.
+export type MeaningShard = { v: 1; w: Record<string, [string, number][]> };
+const meaningCache = new Map<string, Promise<MeaningShard>>();
+const MEANING_CACHE_MAX = 80;
+
+export function loadMeaningShard(meta: DictMeta, c: string): Promise<MeaningShard> {
+  const key = `${meta.id}|${meta.indexUrl}|m|${c}`;
+  const hit = meaningCache.get(key);
+  if (hit) return hit;
+  const p = readBytes(`${meta.indexUrl}meaning/${c}.json.gz`)
+    .then((gz) => JSON.parse(zlib.gunzipSync(gz).toString("utf8")) as MeaningShard)
+    .catch(() => ({ v: 1, w: {} }) as MeaningShard);
+  meaningCache.set(key, p);
+  if (meaningCache.size > MEANING_CACHE_MAX) meaningCache.delete(meaningCache.keys().next().value as string);
+  return p;
+}
+
+const STOP = new Set("the and for with from that this are was were has have not but you your his her its their they them then than into onto upon one two also any all can may who whom whose which what when where how why out off per via etc".split(" "));
+/** Same light normalisation used when the index is built. */
+export function stem(w: string): string {
+  if (w.length > 4 && w.endsWith("ies")) return w.slice(0, -3) + "y";
+  if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss") && !w.endsWith("us")) return w.slice(0, -1);
+  return w;
+}
+export function meaningTokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z]+/)
+    .filter((w) => w.length >= 3 && !STOP.has(w))
+    .map(stem);
+}
+
+async function indexedMeaning(
+  q: string,
+  metas: DictMeta[],
+  add: (label: string, dict: string, match: SearchHit["match"], score: number) => void
+) {
+  const words = [...new Set(meaningTokens(q))].slice(0, 4);
+  if (!words.length) return;
+  for (const m of metas) {
+    const per = await Promise.all(
+      words.map(async (w) => {
+        const sh = await loadMeaningShard(m, w[0]);
+        return new Map(sh.w[w] ?? []);
+      })
+    );
+    const labels = new Map<string, { n: number; s: number }>();
+    per.forEach((mp) => {
+      for (const [label, s] of mp) {
+        const cur = labels.get(label);
+        if (cur) {
+          cur.n++;
+          cur.s += s;
+        } else labels.set(label, { n: 1, s });
+      }
+    });
+    for (const [label, v] of labels) add(label, m.slug, "meaning", RANK.meaning + (words.length - v.n) * 10 - Math.min(v.s, 99) / 100);
+  }
+}
+
 // Meaning (reverse) search over the definitions of a few dictionaries.
 const MEANING_MAX_BYTES = 80 * 1024 * 1024;
 const plainTexts = new Map<string, Promise<{ label: string; text: string }[]>>();
@@ -305,6 +373,17 @@ async function meaningSearch(
   limit: number,
   add: (label: string, dict: string, match: SearchHit["match"], score: number) => void
 ): Promise<string> {
+  const indexed = _all.filter((m) => m.meaningIndexed);
+  const rest = metas.filter((m) => !m.meaningIndexed);
+  if (indexed.length) {
+    try {
+      await indexedMeaning(q, indexed, add);
+    } catch (err) {
+      console.error("[dict/meaning]", err);
+    }
+    // Only fall back to scanning when nothing at all is indexed.
+    return `Meanings searched in ${indexed.map((m) => m.shortName).join(", ")}.${rest.length ? " Other dictionaries are not indexed for meaning search yet." : ""}`;
+  }
   const words = q.toLowerCase().split(/\s+/).filter((w) => w.length >= 2).slice(0, 4);
   if (!words.length) return "";
   const res = words.map((w) => new RegExp(`(^|[^a-z])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^a-z])`));

@@ -8,7 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 import NotebookButton from "@/components/notebook/Notebook";
 import ToolsMenu, { ToolsGrid } from "@/components/tools/ToolsMenu";
 import Image from "next/image";
-import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown, Music, GraduationCap, Landmark, type LucideIcon } from "lucide-react";
+import { BookSearch, SquareLibrary, Info, LayoutGrid, Menu, X, Earth, LandPlot, Wrench, ChevronDown, Music, GraduationCap, Landmark, Mail, type LucideIcon } from "lucide-react";
 import NavMenu, { isActive, type NavItem } from "@/components/NavMenu";
 
 // Header groups. Desktop: Study · Scriptures · Tools · About, then icons (More, Notebook, Theme).
@@ -56,6 +56,7 @@ const ABOUT: NavItem[] = [
   { href: "/about/acaryas", label: "Ācārya biographies", desc: "The disciplic succession, from Śrī Kṛṣṇa to Śrīla Prabhupāda.", icon: GraduationCap },
   { href: "/about/places", label: "Holy places & temples", desc: "Holy dhāmas and important ISKCON temples.", icon: Landmark },
   { href: "/about/acknowledgements", label: "Acknowledgements", desc: "With gratitude to all whose work makes this possible.", icon: Earth },
+  { href: "/about/contact", label: "Contact", desc: "Write or call: questions, corrections and seva.", icon: Mail },
 ];
 const STUDY_PREFIXES = ["/chapters", "/brhat", "/laghu", "/practice", "/hnv-wiki"];
 const SCRIPTURE_PREFIXES = ["/scriptures", "/songs"];

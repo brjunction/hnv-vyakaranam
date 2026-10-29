@@ -7,6 +7,7 @@ import {
   deleteDictSection,
   deleteDictionary,
   reprocessDictionary,
+  buildMeaningForm,
   saveDictLayout,
   saveDictSection,
   setDictionaryEnabled,
@@ -29,6 +30,7 @@ export type BoardDict = {
   wordCount: number;
   totalBytes: number;
   headwordScheme: string;
+  meaningWords: string;
   sectionId: number | null;
 };
 
@@ -328,6 +330,15 @@ export default function DictBoard({ sections: initialSections, dicts, canEdit }:
                                   </Field>
                                   <div>
                                     <SubmitButton variant="ghost">Prepare search again</SubmitButton>
+                                  </div>
+                                </ActionForm>
+                                <ActionForm action={buildMeaningForm} className="grid gap-2">
+                                  <input type="hidden" name="id" value={d.id} />
+                                  <p className="text-xs text-[var(--fg-muted)]">
+                                    {d.meaningWords ? `Meaning search is ready (${Number(d.meaningWords).toLocaleString()} words).` : "Meaning search is not built yet."}
+                                  </p>
+                                  <div>
+                                    <SubmitButton variant="ghost">{d.meaningWords ? "Rebuild meaning search" : "Build meaning search"}</SubmitButton>
                                   </div>
                                 </ActionForm>
                                 <ActionForm action={deleteDictionary} confirm={`Delete “${d.name}” and its files?`}>

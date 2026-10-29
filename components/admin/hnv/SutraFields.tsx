@@ -64,9 +64,9 @@ export function SutraFields({
         <>
           {(
             [
-              ["Vṛtti", values.vrtti],
-              ["Translation", values.translation],
               ["Synonyms", values.synonyms],
+              ["Translation", values.translation],
+              ["Vṛtti", values.vrtti],
             ] as const
           ).map(([label, v]) => (
             <div key={label}>
@@ -77,20 +77,20 @@ export function SutraFields({
         </>
       ) : (
         <>
-          <div>
-            <span className="mb-1.5 block text-sm font-semibold">Vṛtti</span>
-            <RichTextEditor name="vrtti" defaultValue={values.vrtti} devanagari placeholder="Vṛtti…" />
-          </div>
-          <div>
-            <span className="mb-1.5 block text-sm font-semibold">Translation</span>
-            <RichTextEditor name="translation" defaultValue={values.translation} placeholder="Translation…" />
-          </div>
           <details open={Boolean(values.synonyms)}>
             <summary className="cursor-pointer text-sm font-semibold">Synonyms (word for word)</summary>
             <div className="mt-2">
               <RichTextEditor name="synonyms" defaultValue={values.synonyms} minHeight={90} placeholder="Synonyms…" />
             </div>
           </details>
+          <div>
+            <span className="mb-1.5 block text-sm font-semibold">Translation</span>
+            <RichTextEditor name="translation" defaultValue={values.translation} placeholder="Translation…" />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-sm font-semibold">Vṛtti</span>
+            <RichTextEditor name="vrtti" defaultValue={values.vrtti} devanagari placeholder="Vṛtti…" />
+          </div>
         </>
       )}
     </fieldset>

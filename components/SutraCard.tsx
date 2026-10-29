@@ -145,6 +145,13 @@ export default function SutraCard({
               {isHtml(sutra.synonyms) ? <RichIn html={sutra.synonyms} english script={script} className="leading-relaxed" /> : <RichText value={sutra.synonyms} className="leading-relaxed" />}
             </Block>
           )}
+          {compact !== "vrtti" && <Block label="Translation">
+            {sutra.translation.trim() ? (
+              isHtml(sutra.translation) ? <RichIn html={sutra.translation} english script={script} className="leading-relaxed" /> : <RichText value={sutra.translation} className="leading-relaxed" />
+            ) : (
+              <p className="text-sm text-[var(--fg-muted)]">—</p>
+            )}
+          </Block>}
           {compact !== "translation" && <Block label="Vṛtti">
             {sutra.vrtti.trim() ? (
               isHtml(sutra.vrtti) ? (
@@ -157,13 +164,6 @@ export default function SutraCard({
                   className="!text-base !leading-relaxed"
                 />
               )
-            ) : (
-              <p className="text-sm text-[var(--fg-muted)]">—</p>
-            )}
-          </Block>}
-          {compact !== "vrtti" && <Block label="Translation">
-            {sutra.translation.trim() ? (
-              isHtml(sutra.translation) ? <RichIn html={sutra.translation} english script={script} className="leading-relaxed" /> : <RichText value={sutra.translation} className="leading-relaxed" />
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { and, eq, inArray, like } from "drizzle-orm";
+import { and, eq, inArray, like, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { chapters, commentaryTypes, editions, revisions, sutraCommentaries, sutras } from "@/lib/db/schema";
 import { resequenceChapter } from "@/lib/hnv/ordering";
@@ -301,4 +301,50 @@ export async function linkMadhyamaBrhat(dryRun: boolean): Promise<{ ok: boolean;
     revalidateHnv();
   }
   return { ok: true, message: `${linked.length} Madhyama sūtra(s) ${dryRun ? "would be" : "were"} linked to the Bṛhat (of ${m.length} without a link; ${b.length} Bṛhat sūtras have text).`, linked: linked.map(({ m, b, score }) => ({ m, b, score })) };
+}
+
+/**
+ * Every Bṛhat sūtra (1–3181) with its text and its Madhyama number, from the
+ * Comparative Table (HNV Vol. 2, Appendix 3; lib/hnv/data/brhat-sutras.json).
+ * Fills empty sūtra texts, creates missing sūtras in their prakaraṇa, puts
+ * every sūtra in number order, and links Madhyama sūtras to their Bṛhat one.
+ * Text already in the database is never overwritten.
+ */
+export async function seedBrhatFromTable(): Promise<{ ok: boolean; message: string }> {
+  await requireUser("editor");
+  const list = (await import("@/lib/hnv/data/brhat-sutras.json")).default as { n: string; t: string; m: string[] }[];
+  const db = getDb();
+  const eds = await db.select().from(editions).where(inArray(editions.slug, ["madhyama", "brhat"]));
+  const mid = eds.find((e) => e.slug === "madhyama")?.id;
+  const bid = eds.find((e) => e.slug === "brhat")?.id;
+  if (!mid || !bid) return { ok: false, message: "Both editions are needed." };
+  const chs = await db.select().from(chapters).where(eq(chapters.editionId, bid));
+  const idOf = (re: RegExp) => chs.find((c) => re.test(c.title.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()))?.id;
+  const ranges: [number, number, number | undefined][] = [
+    [1, 147, idOf(/samjna/)], [148, 364, idOf(/^nama/)], [365, 917, idOf(/akhyata/)], [918, 1184, idOf(/karaka/)],
+    [1185, 1679, idOf(/krdanta/)], [1680, 2044, idOf(/samasa/)], [2045, 3181, idOf(/taddhita/)],
+  ];
+  if (ranges.some((r) => !r[2])) return { ok: false, message: "A prakaraṇa chapter is missing in the Bṛhat edition." };
+  const rows = list.map((x) => ({ n: x.n, t: x.t, c: ranges.find(([a, b]) => Number(x.n) >= a && Number(x.n) <= b)![2]! }));
+  const json = JSON.stringify(rows);
+  const r = await db.execute(sql`
+    with v as (select * from json_to_recordset(${json}::json) as v(n text, t text, c int)),
+    up as (update sutras s set transliteration = v.t, chapter_id = v.c, position = v.n::int * 10, updated_at = now()
+           from v where s.edition_id = ${bid} and s.number = v.n and s.transliteration = '' returning s.number),
+    fix as (update sutras s set chapter_id = v.c, position = v.n::int * 10
+           from v where s.edition_id = ${bid} and s.number = v.n and s.transliteration <> '' returning s.number),
+    ins as (insert into sutras (edition_id, chapter_id, number, position, transliteration)
+           select ${bid}, v.c, v.n, v.n::int * 10, v.t from v
+           where not exists (select 1 from sutras s where s.edition_id = ${bid} and s.number = v.n) returning number)
+    select (select count(*) from up) as filled, (select count(*) from fix) as kept, (select count(*) from ins) as created`);
+  const links: { m: string; b: string }[] = [];
+  const seen = new Set<string>();
+  for (const x of list) for (const m of x.m) if (!seen.has(m)) (seen.add(m), links.push({ m, b: x.n }));
+  const l = await db.execute(sql`
+    with v as (select * from json_to_recordset(${JSON.stringify(links)}::json) as v(m text, b text))
+    update sutras s set brhat_number = v.b from v where s.edition_id = ${mid} and s.number = v.m and s.brhat_number = '' returning s.id`);
+  revalidateHnv();
+  const c = (r as unknown as { rows: Record<string, string>[] }).rows?.[0] ?? {};
+  const linked = (l as unknown as { rows: unknown[] }).rows?.length ?? 0;
+  return { ok: true, message: `Bṛhat: ${c.filled ?? "?"} sūtra texts filled, ${c.created ?? "?"} sūtras created, ${c.kept ?? "?"} already had text (kept). ${linked} Madhyama sūtras linked to the Bṛhat.` };
 }

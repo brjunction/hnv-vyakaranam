@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
 import { parseCommentaryDocx, type DocxResult } from "@/lib/hnv/docx-commentary";
-import { finishPdfImport, importPdfBatch, linkMadhyamaBrhat, type PdfImportBatch } from "@/lib/actions/hnv-pdf";
+import { finishPdfImport, importPdfBatch, linkMadhyamaBrhat, seedBrhatFromTable, type PdfImportBatch } from "@/lib/actions/hnv-pdf";
 
 // Admin › HNV › (edition) › Import commentaries (Word). Reads amrta_*.docx /
 // bala_*.docx in the browser; each sūtra's Amṛta and Bāla-toṣaṇī go to the
@@ -177,8 +177,34 @@ export default function DocxImporter({ edition, editionName }: { edition: string
           )}
         </section>
       )}
+      <SeedBrhat />
       <LinkBrhat />
     </div>
+  );
+}
+
+/** All 3181 Bṛhat sūtras from the Comparative Table of Vol. 2 (one click). */
+function SeedBrhat() {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  return (
+    <section className="a-card p-5 sm:p-6">
+      <h2 className="text-base font-semibold">All Bṛhat sūtras (1–3181) from HNV Vol. 2</h2>
+      <p className="mt-1 text-sm text-[var(--a-fg-muted)]">
+        The Comparative Table (Vol. 2, Appendix 3) lists every Bṛhat sūtra with its Madhyama number. This fills every empty Bṛhat sūtra text, creates missing sūtras in their prakaraṇa,
+        orders them by number, and links each Madhyama sūtra to its Bṛhat sūtra. Text already there is kept.
+      </p>
+      <button type="button" disabled={busy} className="a-btn a-btn-primary mt-3 inline-flex items-center gap-2" onClick={async () => {
+        if (!window.confirm("Fill the Bṛhat sūtras from the Comparative Table?")) return;
+        setBusy(true);
+        const r = await seedBrhatFromTable().catch((e: Error) => ({ ok: false, message: e.message }));
+        setMsg(r.message);
+        setBusy(false);
+      }}>
+        {busy && <Loader2 size={16} className="animate-spin" />} Fill the Bṛhat sūtras
+      </button>
+      {msg && <Box tone="ok" title={msg}>{null}</Box>}
+    </section>
   );
 }
 

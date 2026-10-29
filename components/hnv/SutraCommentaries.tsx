@@ -1,23 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Columns2, Rows3 } from "lucide-react";
+import { ScriptPicker } from "@/components/scriptures/Panes";
 import type { PublicSutra } from "@/lib/data/hnv";
 import SutraCard from "@/components/SutraCard";
 import { RichIn } from "@/components/scriptures/ScriptText";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 
-/** A sūtra's own page body: the sūtra (synonyms, vṛtti, translation), then its commentaries in their own section. */
+/**
+ * A sūtra's own page. Two readers, switched with the icons at the top:
+ *  • Reader (default): like the scripture reader — the sūtra on the left, its
+ *    commentaries on the right, switched with tabs (stacked on phones).
+ *  • Simple: everything one below the other.
+ */
 export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
-  const [prefs] = useReaderPrefs();
-  // Wide screens: the sūtra on the left, its commentaries beside it (like the scripture reader's panes).
-  if (!sutra.commentaries.length) return <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />;
+  const [prefs, setPrefs] = useReaderPrefs();
+  const [mode, setMode] = useState<"reader" | "simple">("reader");
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem("hnv:sutra-reader");
+      if (m === "simple" || m === "reader") setMode(m);
+    } catch {}
+  }, []);
+  const pick = (m: "reader" | "simple") => {
+    setMode(m);
+    try {
+      localStorage.setItem("hnv:sutra-reader", m);
+    } catch {}
+  };
+  const card = <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />;
+  const has = sutra.commentaries.length > 0;
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
-      <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />
+    <>
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+        <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+        {has && (
+          <span className="inline-flex overflow-hidden rounded-full border border-[var(--border)]" role="group" aria-label="Reader">
+            <button type="button" title="Reader: sūtra and commentary side by side" aria-label="Reader" aria-pressed={mode === "reader"} onClick={() => pick("reader")} className={`px-3 py-1.5 ${mode === "reader" ? "bg-[var(--accent)] text-[var(--color-ink)]" : ""}`}>
+              <Columns2 size={16} />
+            </button>
+            <button type="button" title="Simple: one below the other" aria-label="Simple" aria-pressed={mode === "simple"} onClick={() => pick("simple")} className={`px-3 py-1.5 ${mode === "simple" ? "bg-[var(--accent)] text-[var(--color-ink)]" : ""}`}>
+              <Rows3 size={16} />
+            </button>
+          </span>
+        )}
       </div>
-      <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
-    </div>
+      {!has || mode === "simple" ? (
+        <>
+          {card}
+          <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
+        </>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+          <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">{card}</div>
+          <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
+        </div>
+      )}
+    </>
   );
 }
 

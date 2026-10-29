@@ -38,11 +38,7 @@ export default async function AboutSection({ params }: P) {
     <>
       <PageHead eyebrow="About" title={s.title} intro={s.intro || undefined} />
       <div className="mx-auto max-w-4xl px-5 pb-16 pt-6">
-        {key === "acknowledgements" ? (
-          <blockquote className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-6 text-center sm:p-8">
-            <p className="text-lg leading-relaxed sm:text-xl">{PRAYER}</p>
-          </blockquote>
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">This page is being prepared.</p>
         ) : key === "acaryas" ? (
           <AcaryaList items={items} base={base} />
@@ -63,6 +59,11 @@ export default async function AboutSection({ params }: P) {
               </article>
             ))}
           </div>
+        )}
+        {key === "acknowledgements" && (
+          <blockquote className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-6 text-center sm:p-8">
+            <p className="text-lg leading-relaxed sm:text-xl">{PRAYER}</p>
+          </blockquote>
         )}
         <p className="mt-10">
           <Link href="/about" className="text-sm text-[var(--fg-muted)] hover:text-[var(--accent)]">← About</Link>

@@ -41,7 +41,7 @@ export async function SutraPage({ edition, number }: { edition: EditionSlug; num
     inLanguage: ["sa", "en"],
   };
   return (
-    <div className="mx-auto max-w-3xl px-5 py-6 sm:py-8">
+    <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="text-sm text-[var(--fg-muted)]" aria-label="Breadcrumb">
         <Link href={chapterBase(edition)} className="hover:text-[var(--accent)]">Chapters</Link> ›{" "}

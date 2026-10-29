@@ -9,11 +9,15 @@ import { useReaderPrefs } from "@/components/scriptures/prefs";
 /** A sūtra's own page body: the sūtra (synonyms, vṛtti, translation), then its commentaries in their own section. */
 export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
   const [prefs] = useReaderPrefs();
+  // Wide screens: the sūtra on the left, its commentaries beside it (like the scripture reader's panes).
+  if (!sutra.commentaries.length) return <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />;
   return (
-    <>
-      <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
+      <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />
+      </div>
       <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
-    </>
+    </div>
   );
 }
 
@@ -23,7 +27,7 @@ export function SutraCommentaries({ commentaries, script }: { commentaries: Publ
   if (!commentaries.length) return null;
   const c = commentaries[Math.min(active, commentaries.length - 1)];
   return (
-    <section className="mt-8" aria-label="Commentaries">
+    <section className="mt-8 lg:mt-0" aria-label="Commentaries">
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--fg-muted)]">Commentaries</h2>
       {commentaries.length > 1 && (
         <div role="tablist" className="mb-4 flex flex-wrap gap-2">

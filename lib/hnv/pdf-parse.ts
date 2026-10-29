@@ -448,7 +448,7 @@ function measure(lines: Line[]) {
   G.head = (l: Line) => {
     if (!(l.y > maxY - 45 || l.y < 45)) return false;
     const t = text(l).trim();
-    if (/^\d{1,4}$/.test(t)) return true;
+    if (/^\d{1,4}$/.test(t) && (l.y < 45 || l.y > maxY - 15 || apart.has(l))) return true;
     if ((freq.get(key(l)) ?? 0) >= Math.max(3, pages * 0.15)) return true;
     // "34 Hari-nāmāmṛta-vyākaraṇam", "Saṁjñā 35" — but never a sūtra ("36. upendrāt …")
     return apart.has(l) && t.length < 60 && !/^\d{1,4}\.\s/.test(t) && (/^\d{1,4}\s*[^\d.\s]/.test(t) || /[^\d\s]\s*\d{1,4}$/.test(t));
@@ -521,6 +521,10 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
   let intro: (RawIntro & { before: number }) | null = { kind: "chapter", title: [], lines: [], page: opts.firstPage, before: opts.startAt };
   rawIntros.push(intro);
   let titleMode = false;
+  let inVerseLines = false;
+  // verses numbered on the page (Madhyama) or not (Bṛhat)?
+  const numberedVerses =
+    verses && body.filter((l) => /^\d{1,2}$/.test(text(l).trim()) && l.size >= G.body * 0.85 && l.pieces[0]?.x >= G.left + 60).length >= 2;
   const unconfirmed: number[] = [];
 
   let devSeen = -1; // the last Devanagari sūtra heading ("N / …"), and where
@@ -542,8 +546,33 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       continue;
     }
     if (verses) {
-      // a verse begins with its number alone, centred, 12 pt
-      if (/^\d{1,2}$/.test(t) && Number(t) === expected && l.size >= G.body * 0.85 && l.pieces[0].x >= G.left + 60) {
+      const indented = (x: Line) => x.pieces[0].x >= G.left + 50 && !/—/.test(text(x)) && x.size >= G.body * 0.9;
+      const synLike = (x: Line) => {
+        const f = x.pieces.find((p) => p.t.trim());
+        return !!f?.i && /—/.test(text(x).slice(0, 60)) && x.pieces[0].x < G.left + 20;
+      };
+      const nextHeading = body.slice(li + 1, li + 3).some((n) => n.size >= 16);
+      // (a) a verse begins with its number alone, centred (Madhyama)
+      const numbered = /^\d{1,2}$/.test(t) && Number(t) === expected && l.size >= G.body * 0.85 && l.pieces[0].x >= G.left + 60 && !nextHeading;
+      // (b) or, unnumbered (Bṛhat), with its indented lines, when synonyms follow them
+      let unnumbered = false;
+      const curLines = (cur as Raw | null)?.lines.length ?? 0;
+      if (!numberedVerses && !numbered && indented(l) && !inVerseLines && (!cur || curLines > 0)) {
+        let k = li + 1;
+        while (k < body.length && k < li + 10 && indented(body[k])) k++;
+        unnumbered = k < body.length && synLike(body[k]);
+      }
+      inVerseLines = indented(l) && (inVerseLines || numbered || unnumbered || (cur !== null && curLines === 0));
+      if (unnumbered) {
+        const section = intro?.kind === "section" ? intro.title.join(" — ") : "";
+        cur = { number: expected, prakarana: prak, section, lines: [l], first: l.page, last: l.page };
+        raws.push(cur);
+        intro = null;
+        titleMode = false;
+        expected++;
+        continue;
+      }
+      if (numbered) {
         const section = intro?.kind === "section" ? intro.title.join(" — ") : "";
         cur = { number: expected, prakarana: prak, section, lines: [], first: l.page, last: l.page };
         raws.push(cur);

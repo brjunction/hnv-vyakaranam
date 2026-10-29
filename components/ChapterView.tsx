@@ -6,8 +6,17 @@ import SutraCard from "@/components/SutraCard";
 import { ScriptPicker } from "@/components/scriptures/Panes";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import DictButton from "@/components/DictButton";
+import { ChevronsDownUp, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 
-export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
+function IconBtn({ title, onClick, active, children }: { title: string; onClick: () => void; active?: boolean; children: React.ReactNode }) {
+  return (
+    <button type="button" title={title} aria-label={title} aria-pressed={active} onClick={onClick} className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${active ? "border-[var(--accent)] text-[var(--accent)]" : "border-[var(--border)] hover:border-[var(--accent)]"}`}>
+      {children}
+    </button>
+  );
+}
+
+export default function ChapterView({ chapter, sutraBase }: { chapter: PublicChapter; sutraBase?: string }) {
   const allSectionSlugs = useMemo(() => chapter.sections.map((s) => s.slug), [chapter]);
 
   // Which sections are expanded. Starts with the first section open (if any).
@@ -18,7 +27,8 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   // undefined = each sutra card manages its own open state.
   // true/false = force every card open or closed.
   const [forceAllSutras, setForceAllSutras] = useState<boolean | undefined>(undefined);
-  const [showNotes, setShowNotes] = useState(true);
+  // Commentaries are read on each sūtra's own page; "show all" shows only the translation and/or vṛtti.
+  const [compact, setCompact] = useState<"translation" | "vrtti" | "both">("translation");
   const [prefs, setPrefs] = useReaderPrefs();
 
   // Arriving at #<sūtra number> (e.g. from a Madhyama ↔ Bṛhat link): open its section and scroll to it.
@@ -42,10 +52,6 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
   }, [chapter]);
 
   const totalSutras = chapter.sections.reduce((n, s) => n + s.sutras.length, 0);
-  const notesCount = chapter.sections.reduce(
-    (n, s) => n + s.sutras.filter((x) => x.commentaries.length > 0).length,
-    0
-  );
 
   function toggleSection(slug: string) {
     setOpenSections((prev) => {
@@ -70,51 +76,26 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
           <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
           <DictButton />
           <span className="w-px h-5 bg-[var(--border)] mx-1" />
-          <button
-            onClick={expandAllSections}
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-          >
-            Expand all subchapters
-          </button>
-          <button
-            onClick={collapseAllSections}
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-          >
-            Collapse all
-          </button>
+          <IconBtn title="Open all sections" onClick={expandAllSections}><ChevronsUpDown size={16} /></IconBtn>
+          <IconBtn title="Close all sections" onClick={collapseAllSections}><ChevronsDownUp size={16} /></IconBtn>
           <span className="w-px h-5 bg-[var(--border)] mx-1" />
-          <button
-            onClick={() => setForceAllSutras(true)}
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-          >
-            Show all sūtras
-          </button>
-          <button
-            onClick={() => setForceAllSutras(false)}
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-          >
-            Hide all sūtras
-          </button>
-          <button
-            onClick={() => setForceAllSutras(undefined)}
-            className="px-3 py-1.5 rounded-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
-          >
-            Reset
-          </button>
-          <span className="w-px h-5 bg-[var(--border)] mx-1" />
-          <button
-            onClick={() => setShowNotes((v) => !v)}
-            className={`px-3 py-1.5 rounded-full border transition-colors ${
-              showNotes
-                ? "border-[var(--color-saffron)] text-[var(--color-saffron)]"
-                : "border-[var(--border)] hover:border-[var(--accent)]"
-            }`}
-          >
-            {showNotes ? "Commentaries: shown" : "Commentaries: hidden"}
-          </button>
-          {notesCount > 0 && (
-            <span className="text-xs text-[var(--fg-muted)]">
-              {notesCount} of {totalSutras} sūtras have commentaries
+          <IconBtn title="Show every sūtra (translation / vṛtti only)" active={forceAllSutras === true} onClick={() => setForceAllSutras(forceAllSutras === true ? undefined : true)}>
+            <Eye size={16} />
+          </IconBtn>
+          <IconBtn title="Close every sūtra" onClick={() => setForceAllSutras(false)}><EyeOff size={16} /></IconBtn>
+          {forceAllSutras === true && (
+            <span className="inline-flex overflow-hidden rounded-full border border-[var(--border)]" role="group" aria-label="What to show">
+              {(["translation", "vrtti", "both"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={compact === k}
+                  onClick={() => setCompact(k)}
+                  className={`px-3 py-1.5 ${compact === k ? "bg-[var(--accent)] text-[var(--color-ink)]" : "hover:text-[var(--accent)]"}`}
+                >
+                  {k === "translation" ? "Translation" : k === "vrtti" ? "Vṛtti" : "Both"}
+                </button>
+              ))}
             </span>
           )}
         </div>
@@ -165,7 +146,9 @@ export default function ChapterView({ chapter }: { chapter: PublicChapter }) {
                           key={s.id}
                           sutra={s}
                           forceOpen={forceAllSutras}
-                          showNotes={showNotes}
+                          showNotes={false}
+                          compact={forceAllSutras === true ? compact : undefined}
+                          pageHref={sutraBase ? `${sutraBase}/${encodeURIComponent(s.number)}` : undefined}
                         />
                       ))}
                     </div>

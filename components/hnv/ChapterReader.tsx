@@ -22,7 +22,7 @@ export default function ChapterReader({ chapter, backHref }: { chapter: PublicCh
         </p>
       )}
 
-      <ChapterView chapter={chapter} />
+      <ChapterView chapter={chapter} sutraBase={backHref.replace(/chapters\/?$/, "sutras")} />
     </div>
   );
 }

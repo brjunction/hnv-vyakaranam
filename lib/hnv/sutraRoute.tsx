@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSutraPage } from "@/lib/data/hnv";
-import SutraCard from "@/components/SutraCard";
+import SutraFull from "@/components/hnv/SutraCommentaries";
 import type { EditionSlug } from "@/lib/editions";
 
 // One page per sūtra (/sutras/42, /brhat/sutras/…, /laghu/sutras/…), so every
@@ -56,7 +56,7 @@ export async function SutraPage({ edition, number }: { edition: EditionSlug; num
         <span className="font-devanagari">{p.chapter.title}</span>
         {p.section ? ` · ${p.section}` : ""}
       </p>
-      <SutraCard sutra={p.sutra} forceOpen showNotes />
+      <SutraFull sutra={p.sutra} />
       <div className="mt-6 flex justify-between gap-3 text-sm">
         {p.prev ? (
           <Link href={`${base}/${encodeURIComponent(p.prev.number)}`} className="ui-btn">← Sūtra {p.prev.number}</Link>

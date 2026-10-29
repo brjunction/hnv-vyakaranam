@@ -20,6 +20,8 @@ export default function SutraCard({
   sutra,
   forceOpen,
   showNotes,
+  pageHref,
+  compact,
   script = "devanagari",
 }: {
   sutra: PublicSutra;
@@ -27,6 +29,10 @@ export default function SutraCard({
   forceOpen?: boolean;
   /** Whether commentaries render when the card is open. */
   showNotes: boolean;
+  /** The sūtra's own page (shown as a link when the card is open). */
+  pageHref?: string;
+  /** "Show all" mode: only the translation and/or the vṛtti. */
+  compact?: "translation" | "vrtti" | "both";
   /** Reader's script (Devanagari / IAST / Bengali / Odia). */
   script?: ScriptName;
 }) {
@@ -94,12 +100,12 @@ export default function SutraCard({
       {/* Always rendered (hidden when closed) so search engines index the full text. */}
       {(
         <div hidden={!isOpen} className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
-          {sutra.synonyms.trim() && (
+          {!compact && sutra.synonyms.trim() && (
             <Block label="Synonyms">
               {isHtml(sutra.synonyms) ? <RichIn html={sutra.synonyms} english script={script} className="leading-relaxed" /> : <RichText value={sutra.synonyms} className="leading-relaxed" />}
             </Block>
           )}
-          <Block label="Vṛtti">
+          {compact !== "translation" && <Block label="Vṛtti">
             {sutra.vrtti.trim() ? (
               isHtml(sutra.vrtti) ? (
                 <RichIn html={sutra.vrtti} english={false} script={script} className="text-base leading-relaxed" />
@@ -114,14 +120,19 @@ export default function SutraCard({
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}
-          </Block>
-          <Block label="Translation">
+          </Block>}
+          {compact !== "vrtti" && <Block label="Translation">
             {sutra.translation.trim() ? (
               isHtml(sutra.translation) ? <RichIn html={sutra.translation} english script={script} className="leading-relaxed" /> : <RichText value={sutra.translation} className="leading-relaxed" />
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}
-          </Block>
+          </Block>}
+          {pageHref && (
+            <Link href={pageHref} className="inline-flex items-center gap-1 text-sm font-medium text-[var(--accent)] hover:underline">
+              {hasCommentary ? `Open the sūtra page — ${sutra.commentaries.length === 1 ? sutra.commentaries[0].name : `${sutra.commentaries.length} commentaries`}` : "Open the sūtra page"} →
+            </Link>
+          )}
           {showNotes &&
             sutra.commentaries.map((c) => (
               <Block key={c.key} label={c.author ? `${c.name} · ${c.author}` : c.name}>

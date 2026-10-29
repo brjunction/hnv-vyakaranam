@@ -1237,3 +1237,10 @@ button.ng-cell.empty:hover { border-color: #e8c766; transform: translateY(-1px);
 .ga-fill { animation: rr-glow 2.4s ease-in-out infinite; }
 .ga-crate { animation: ga-slide 3.2s linear infinite; }
 @keyframes ga-slide { 0% { transform: translateX(-10px); } 100% { transform: translateX(120px); } }
+
+/* Order games (Varṇa Order, Sūtra Order) */
+@keyframes gm-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}

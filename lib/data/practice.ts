@@ -5,18 +5,18 @@ import { getDb } from "@/lib/db";
 import { chapters, editions, practiceQuestions, practiceTopics, sutras } from "@/lib/db/schema";
 import { isDbConfigured } from "@/lib/env";
 import { tags } from "@/lib/data/tags";
-import type { Difficulty, PracticeChapter, PracticeType, Question } from "@/lib/practiceData";
+import type { Difficulty, PracticeChapter, PracticeType, Question, SutraLine } from "@/lib/practiceData";
 
 // Public read of the practice bank (Madhyama chapters → topics → questions).
 // Cached with the "practice" tag; admin saves revalidate it.
 
-export type PracticeData = { chapters: PracticeChapter[]; questions: Question[]; /** declension tables for Nāma Grid (type "paradigm": options = 24 forms) */ paradigms: Question[]; sutraSpan: string };
+export type PracticeData = { chapters: PracticeChapter[]; questions: Question[]; /** declension tables for Nāma Grid (type "paradigm": options = 24 forms) */ paradigms: Question[]; /** sūtras of each prakaraṇa in order (Sūtra Order) */ sutraLines: Record<string, SutraLine[]>; sutraSpan: string };
 
 async function read(): Promise<PracticeData> {
-  if (!isDbConfigured) return { chapters: [], questions: [], paradigms: [], sutraSpan: "" };
+  if (!isDbConfigured) return { chapters: [], questions: [], paradigms: [], sutraLines: {}, sutraSpan: "" };
   const db = getDb();
   const [ed] = await db.select().from(editions).where(eq(editions.slug, "madhyama")).limit(1);
-  if (!ed) return { chapters: [], questions: [], paradigms: [], sutraSpan: "" };
+  if (!ed) return { chapters: [], questions: [], paradigms: [], sutraLines: {}, sutraSpan: "" };
   const chs = await db
     .select()
     .from(chapters)
@@ -86,9 +86,23 @@ async function read(): Promise<PracticeData> {
     : ends.length
       ? `${used.find((t) => t.sutraFrom)?.sutraFrom ?? ""}–${[...used].reverse().find((t) => t.sutraTo)?.sutraTo ?? ""}`
       : "";
-  return { chapters: list, questions, paradigms, sutraSpan };
+  // The sūtras of each prakaraṇa, in book order, for Sūtra Order.
+  const sutraLines: Record<string, SutraLine[]> = {};
+  if (chs.length) {
+    const rows = await db
+      .select({ chapterId: sutras.chapterId, number: sutras.number, iast: sutras.transliteration })
+      .from(sutras)
+      .where(and(eq(sutras.editionId, ed.id), eq(sutras.status, "published"), inArray(sutras.chapterId, chs.map((c) => c.id))))
+      .orderBy(asc(sutras.chapterId), asc(sutras.position));
+    for (const r of rows) {
+      const slug = chs.find((c) => c.id === r.chapterId)?.slug;
+      const iast = strip(r.iast);
+      if (slug && iast) (sutraLines[slug] ??= []).push({ number: r.number, iast });
+    }
+  }
+  return { chapters: list, questions, paradigms, sutraLines, sutraSpan };
 }
 
 export function getPracticeData(): Promise<PracticeData> {
-  return unstable_cache(read, ["practice:v5"], { tags: [tags.practice], revalidate: 86400 })();
+  return unstable_cache(read, ["practice:v6"], { tags: [tags.practice], revalidate: 86400 })();
 }

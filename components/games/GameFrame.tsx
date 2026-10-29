@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react";
 import { SectionIcon } from "@/components/practice/icons";
 import { SECTIONS, sectionFor } from "@/lib/practice/sections";
-import type { Question } from "@/lib/practiceData";
+import type { Question, SutraLine } from "@/lib/practiceData";
 import type { GameId } from "@/lib/practice/games";
 import RamaRavana from "@/components/games/RamaRavana";
 import LankaDash from "@/components/games/LankaDash";
 import SandhiForge, { forgeable } from "@/components/games/SandhiForge";
 import NamaGrid from "@/components/games/NamaGrid";
 import SutraSorter, { sortable } from "@/components/games/SutraSorter";
+import CaseBlitz from "@/components/games/CaseBlitz";
+import VarnaOrder from "@/components/games/VarnaOrder";
+import SutraOrder, { orderable } from "@/components/games/SutraOrder";
 
 // Every game can be played on any prakaraṇa that has what it needs — choose it
 // here, then the game's own menu (mode and level) appears. Prakaraṇas that
@@ -17,11 +20,14 @@ import SutraSorter, { sortable } from "@/components/games/SutraSorter";
 
 const firstRef = (q: Question) => /(\d+(?:\.\d+)*)/.exec(q.sutraRefs[0] ?? "")?.[1] ?? "";
 
-function ready(game: GameId, chapter: string, questions: Question[], paradigms: Question[]): boolean {
+function ready(game: GameId, chapter: string, questions: Question[], paradigms: Question[], sutraLines: Record<string, SutraLine[]>): boolean {
   const qs = questions.filter((q) => q.chapter === chapter);
   switch (game) {
     case "nama-grid":
+    case "case-blitz":
       return paradigms.some((p) => p.chapter === chapter);
+    case "sutra-order":
+      return orderable(sutraLines[chapter] ?? []);
     case "sandhi-forge":
       return qs.filter(forgeable).length >= 4;
     case "rule-sorter":
@@ -31,8 +37,9 @@ function ready(game: GameId, chapter: string, questions: Question[], paradigms: 
   }
 }
 
-export default function GameFrame({ game, questions, paradigms = [] }: { game: GameId; questions: Question[]; paradigms?: Question[] }) {
-  const open = useMemo(() => SECTIONS.map((s) => s.slug).filter((c) => ready(game, c, questions, paradigms)), [game, questions, paradigms]);
+export default function GameFrame({ game, questions, paradigms = [], sutraLines = {} }: { game: GameId; questions: Question[]; paradigms?: Question[]; sutraLines?: Record<string, SutraLine[]> }) {
+  if (game === "varna-order") return <VarnaOrder />;
+  const open = useMemo(() => SECTIONS.map((s) => s.slug).filter((c) => ready(game, c, questions, paradigms, sutraLines)), [game, questions, paradigms, sutraLines]);
   const [ch, setCh] = useState(open[0] ?? "");
   const qs = useMemo(() => questions.filter((q) => q.chapter === ch), [questions, ch]);
   const ps = useMemo(() => paradigms.filter((p) => p.chapter === ch), [paradigms, ch]);
@@ -62,14 +69,14 @@ export default function GameFrame({ game, questions, paradigms = [] }: { game: G
       {!ch ? (
         <p className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">This game is being filled with questions — please come back soon.</p>
       ) : (
-        <GameBody key={`${game}-${ch}`} game={game} qs={qs} ps={ps} />
+        <GameBody key={`${game}-${ch}`} game={game} qs={qs} ps={ps} lines={sutraLines[ch] ?? []} />
       )}
       {ch && <p className="sr-only">{sectionFor(ch).short}</p>}
     </div>
   );
 }
 
-function GameBody({ game, qs, ps }: { game: GameId; qs: Question[]; ps: Question[] }) {
+function GameBody({ game, qs, ps, lines }: { game: GameId; qs: Question[]; ps: Question[]; lines: SutraLine[] }) {
   switch (game) {
     case "rama-ravana":
       return <RamaRavana questions={qs} />;
@@ -81,5 +88,11 @@ function GameBody({ game, qs, ps }: { game: GameId; qs: Question[]; ps: Question
       return <NamaGrid paradigms={ps} />;
     case "rule-sorter":
       return <SutraSorter questions={qs} />;
+    case "case-blitz":
+      return <CaseBlitz paradigms={ps} />;
+    case "sutra-order":
+      return <SutraOrder lines={lines} />;
+    case "varna-order":
+      return null;
   }
 }

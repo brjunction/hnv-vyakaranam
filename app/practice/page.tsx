@@ -71,7 +71,7 @@ export default async function PracticePage() {
       <section className="reveal border-t border-[var(--border)] bg-[var(--bg-2)]">
         <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
           <h2 className="mb-1 flex items-center gap-2 text-xl font-semibold sm:text-2xl"><Gamepad2 size={22} className="text-[var(--accent)]" /> Play</h2>
-          <p className="mb-7 text-sm text-[var(--fg-muted)]">Five different games — battle, run, build, fill, sort — all made to teach the grammar. Choose any prakaraṇa to play with.</p>
+          <p className="mb-7 text-sm text-[var(--fg-muted)]">Eight different games — battle, run, build, fill, sort, blitz and order — all made to teach the grammar. Choose any prakaraṇa to play with.</p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {GAMES.map((g) => (
               <Link key={g.href} href={g.href} className="pq-game" style={{ ["--c" as string]: g.color }}>

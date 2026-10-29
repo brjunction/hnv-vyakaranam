@@ -16,6 +16,9 @@ export type Topic = {
   subtitle: string;
 };
 
+/** One sūtra of a prakaraṇa, in book order (for Sūtra Order). */
+export type SutraLine = { number: string; iast: string };
+
 export type Question = {
   id: string;
   /** = Topic.slug */

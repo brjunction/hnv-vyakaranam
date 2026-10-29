@@ -66,17 +66,30 @@ export function ArtSorter() {
   );
 }
 
+export function ArtTiles({ label, tint }: { label: string; tint: string }) {
+  return (
+    <svg viewBox="0 0 200 90" className="block h-full w-full" aria-hidden>
+      <rect width="200" height="90" fill={tint} />
+      {[0, 1, 2].map((i) => <rect key={i} x={22 + i * 56} y={22 + (i % 2) * 8} width="48" height="40" rx="8" fill="#f6d77a" opacity={0.9 - i * 0.18} />)}
+      <text x="100" y="52" fontSize="20" textAnchor="middle" fill="#fff" fontFamily="serif">{label}</text>
+    </svg>
+  );
+}
+
 export const ART: Record<GameId, () => React.ReactNode> = {
   "rama-ravana": () => <ArtBattle />,
   "lanka-dash": () => <ArtDash />,
   "sandhi-forge": () => <ArtForge />,
   "nama-grid": () => <ArtGrid />,
   "rule-sorter": () => <ArtSorter />,
+  "case-blitz": () => <ArtTiles label="कृष्णाय" tint="#2e1065" />,
+  "varna-order": () => <ArtTiles label="अ आ इ ई" tint="#042f2e" />,
+  "sutra-order": () => <ArtTiles label="१ → २ → ३" tint="#3b0764" />,
 };
 
 /** The emblem of each game. */
 export function GameLogo({ game, size = 56 }: { game: GameId; size?: number }) {
-  const c: Record<GameId, string> = { "rama-ravana": "#b3341a", "lanka-dash": "#d9622b", "sandhi-forge": "#c2410c", "nama-grid": "#a8541e", "rule-sorter": "#1f8a8a" };
+  const c: Record<GameId, string> = { "rama-ravana": "#b3341a", "lanka-dash": "#d9622b", "sandhi-forge": "#c2410c", "nama-grid": "#a8541e", "rule-sorter": "#1f8a8a", "case-blitz": "#7c3aed", "varna-order": "#0f766e", "sutra-order": "#9333ea" };
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Game emblem" className="flex-none">
       <defs><linearGradient id={`gl-${game}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={c[game]} /><stop offset="1" stopColor="#0d1a16" /></linearGradient></defs>
@@ -109,6 +122,9 @@ export function GameLogo({ game, size = 56 }: { game: GameId; size?: number }) {
         <g stroke="#f6d77a" strokeWidth="1.6" fill="rgba(246,215,122,.18)">
           {[0, 1, 2].flatMap((r) => [0, 1, 2].map((k) => <rect key={`${r}${k}`} x={14 + k * 12} y={14 + r * 12} width="10" height="10" rx="2" fill={(r + k) % 2 ? "rgba(246,215,122,.18)" : "#f6d77a"} />))}
         </g>
+      )}
+      {(game === "case-blitz" || game === "varna-order" || game === "sutra-order") && (
+        <text x="32" y="42" fontSize="22" textAnchor="middle" fill="#f6d77a" fontFamily="serif">{game === "case-blitz" ? "विभ" : game === "varna-order" ? "अ-ह" : "१२३"}</text>
       )}
       {game === "rule-sorter" && (
         <g>

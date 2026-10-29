@@ -1,6 +1,6 @@
 // The games of the Practice section. Client-safe (no database).
 
-export type GameId = "rama-ravana" | "lanka-dash" | "sandhi-forge" | "nama-grid" | "rule-sorter";
+export type GameId = "rama-ravana" | "lanka-dash" | "sandhi-forge" | "nama-grid" | "rule-sorter" | "case-blitz" | "varna-order" | "sutra-order";
 
 export type GameMeta = {
   id: GameId;
@@ -72,6 +72,39 @@ export const GAMES: GameMeta[] = [
     color: "#1f8a8a",
     intro: "Each crate holds a worked example. Send it to the bin of the sūtra behind it — sorting by rule is the skill that matters.",
     description: "Sort Sanskrit examples by the sūtra that makes them — a rule-recognition game for Hari-nāmāmṛta-vyākaraṇa.",
+  },
+  {
+    id: "case-blitz",
+    href: "/practice/games/case-blitz",
+    title: "Case Blitz",
+    deva: "विभक्ति-वेगः",
+    kind: "Arcade",
+    text: "A form flashes up. Name its case and number before the clock runs out.",
+    color: "#7c3aed",
+    intro: "A declined form appears — tap its case and its number. Quick rounds, three lives, and a streak that keeps score.",
+    description: "Name the case and number of Sanskrit noun forms against the clock — a fast declension game from the paradigms of Hari-nāmāmṛta-vyākaraṇa.",
+  },
+  {
+    id: "varna-order",
+    href: "/practice/games/varna-order",
+    title: "Varṇa Order",
+    deva: "वर्ण-क्रमः",
+    kind: "Order",
+    text: "Tap the letters of the varṇa-krama in their order — one row, or the whole alphabet.",
+    color: "#0f766e",
+    intro: "The varṇa-krama arises from Nārāyaṇa (sūtra 1). Put the letters in their order: a row at a time, or all forty-seven.",
+    description: "Put the Sanskrit alphabet in order — vowels, vargas, semivowels and sibilants — a varṇa-krama game for beginners.",
+  },
+  {
+    id: "sutra-order",
+    href: "/practice/games/sutra-order",
+    title: "Sūtra Order",
+    deva: "सूत्र-क्रमः",
+    kind: "Order",
+    text: "A few neighbouring sūtras lie in a heap. Tap them in the order the text gives them.",
+    color: "#9333ea",
+    intro: "The sūtras follow each other for a reason. Put a short run of real sūtras back in their order.",
+    description: "Arrange real sūtras of Hari-nāmāmṛta-vyākaraṇa in their textual order — a sequence game for memorising the text.",
   },
 ];
 

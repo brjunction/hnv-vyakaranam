@@ -13,7 +13,7 @@ export const gameMetadata = (id: GameId): Metadata => {
 
 export default async function GamePage({ id }: { id: GameId }) {
   const m = gameMeta(id);
-  const { questions, paradigms } = await getPracticeData();
+  const { questions, paradigms, sutraLines } = await getPracticeData();
   return (
     <>
       <PageHead deva={m.deva} title={m.title} width="max-w-4xl" intro={m.intro} />
@@ -22,7 +22,7 @@ export default async function GamePage({ id }: { id: GameId }) {
           <GameLogo game={id} size={44} />
           <p className="text-sm text-[var(--fg-muted)]">Learn the grammar by playing — every answer shows its sūtra.</p>
         </div>
-        <GameFrame game={id} questions={questions} paradigms={paradigms} />
+        <GameFrame game={id} questions={questions} paradigms={paradigms} sutraLines={sutraLines} />
         <p className="mt-8 text-sm">
           <Link href="/practice" className="text-[var(--fg-muted)] hover:text-[var(--accent)]">← All practice</Link>
         </p>

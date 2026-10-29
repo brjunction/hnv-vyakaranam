@@ -298,7 +298,8 @@ function Counts({ items }: { items: ImportItem[] }) {
 
 function Results({ results, imported }: { results: ItemResult[]; imported: boolean }) {
   const missing = results.filter((r) => r.error);
-  const textChanges = results.filter((r) => r.sutra && r.sutra.change !== "same");
+  const created = results.filter((r) => r.created);
+  const textChanges = results.filter((r) => r.sutra && r.sutra.change !== "same" && !r.created);
   const count = (pick: (r: ItemResult) => string | undefined, v: string) => results.filter((r) => pick(r) === v).length;
   const fields = ["synonyms", "translation", "vrtti"] as const;
   const coms = ["intro", "amrta", "samsodhini", "bala"] as const;
@@ -317,7 +318,7 @@ function Results({ results, imported }: { results: ItemResult[]; imported: boole
           <tbody>
             <tr>
               <td className="pr-4">Sūtra text</td>
-              <td>{results.filter((r) => r.sutra?.change === "fill").length}</td>
+              <td>{results.filter((r) => r.sutra?.change === "fill" || r.created).length}</td>
               <td>{results.filter((r) => r.sutra?.change === "replace").length}</td>
               <td>{results.filter((r) => r.sutra?.change === "same").length}</td>
             </tr>
@@ -340,6 +341,15 @@ function Results({ results, imported }: { results: ItemResult[]; imported: boole
           </tbody>
         </table>
       </Box>
+      {created.length > 0 && (
+        <Box tone="ok" title={`${created.length} new sūtra(s) ${imported ? "created" : "will be created"} from the PDF`}>
+          <p className="text-xs">
+            {Object.entries(created.reduce<Record<string, string[]>>((m, r) => ((m[r.created!] ??= []).push(r.number), m), {}))
+              .map(([ch, ns]) => `${ch}: ${ns[0]}–${ns[ns.length - 1]} (${ns.length})`)
+              .join(" · ")}
+          </p>
+        </Box>
+      )}
       {missing.length > 0 && (
         <Box tone="warn" title={`${missing.length} not matched in the database`}>
           <ul className="text-xs">{missing.map((r) => <li key={r.number}><b>{r.number}</b>: {r.error}</li>)}</ul>

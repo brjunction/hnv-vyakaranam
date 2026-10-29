@@ -77,6 +77,7 @@ export type ImportItem = {
   vrtti: string;
   commentaries: { key: "intro" | "amrta" | "samsodhini" | "bala"; html: string }[];
   pages: [number, number];
+  prakarana?: string;
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -88,7 +89,7 @@ export function toItems(a: Analysis): ImportItem[] {
     const com: ImportItem["commentaries"] = [];
     if (intro) com.push({ key: "intro", html: intro });
     for (const c of b.commentaries) if (c.key === "amrta" || c.key === "samsodhini" || c.key === "bala") com.push({ key: c.key, html: c.html });
-    return { number: b.number, sutra: b.sutra, synonyms: b.synonyms, translation: b.translation, vrtti: b.vrtti, commentaries: com, pages: b.pages };
+    return { number: b.number, sutra: b.sutra, synonyms: b.synonyms, translation: b.translation, vrtti: b.vrtti, commentaries: com, pages: b.pages, prakarana: b.prakarana };
   });
 }
 

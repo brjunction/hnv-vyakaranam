@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { and, eq, inArray, like } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { commentaryTypes, editions, revisions, sutraCommentaries, sutras } from "@/lib/db/schema";
+import { chapters, commentaryTypes, editions, revisions, sutraCommentaries, sutras } from "@/lib/db/schema";
+import { resequenceChapter } from "@/lib/hnv/ordering";
 import { requireUser, type SessionUser } from "@/lib/auth/session";
 import { revalidateHnv } from "@/lib/actions/revalidate";
 import { sanitizeRich } from "@/lib/html/sanitize";
@@ -32,6 +33,8 @@ const Item = z.object({
   vrtti: Html,
   commentaries: z.array(z.object({ key: z.enum(["intro", "amrta", "samsodhini", "bala"]), html: Html })).max(8),
   pages: z.tuple([z.number().int(), z.number().int()]),
+  /** the prakaraṇa heading it was printed under ("Saṁjñā-sandhi") — places a new sūtra */
+  prakarana: z.string().max(200).optional(),
 });
 const Batch = z.object({
   edition: z.string().trim().min(1).max(40),
@@ -48,6 +51,8 @@ export type ItemResult = {
   number: string;
   /** the sūtra it was matched to (verses are matched by their text) */
   dbNumber: string | null;
+  /** not in the database yet: created from the PDF (in which chapter) */
+  created?: string;
   error?: string;
   sutra?: { from: string; to: string; change: FieldChange };
   fields: Partial<Record<"synonyms" | "translation" | "vrtti", FieldChange>>;
@@ -102,6 +107,31 @@ export async function importPdfBatch(input: PdfImportBatch): Promise<BatchResult
   }
   const typeIds = types.filter((t) => t.key in COMMENTARY).map((t) => t.id);
 
+  // where a new sūtra goes: beside the sūtra numbered just before (or after) it
+  const known = await db
+    .select({ id: sutras.id, number: sutras.number, chapterId: sutras.chapterId, subchapterId: sutras.subchapterId, position: sutras.position })
+    .from(sutras)
+    .where(eq(sutras.editionId, ed.id));
+  const chs = await db.select({ id: chapters.id, title: chapters.title, titleEn: chapters.titleEn }).from(chapters).where(eq(chapters.editionId, ed.id));
+  const touchedChapters = new Set<number>();
+  const foldName = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/prakaranam?$/, "").replace(/[^a-z]/g, "");
+  async function placeFor(number: string, prakarana: string) {
+    const n = Number(number);
+    if (!Number.isInteger(n)) return null;
+    const byNum = (k: number) => known.find((r) => r.number === String(k));
+    let before: (typeof known)[number] | undefined;
+    for (let k = n - 1; k >= Math.max(1, n - 40) && !before; k--) before = byNum(k);
+    let after: (typeof known)[number] | undefined;
+    for (let k = n + 1; k <= n + 40 && !after; k++) after = byNum(k);
+    const want = prakarana ? chs.find((c) => foldName(c.title) === foldName(prakarana) || foldName(c.titleEn) === foldName(prakarana)) : undefined;
+    // the prakaraṇa heading wins when the neighbours sit in another chapter
+    const nb = want ? [before, after].find((x) => x && x.chapterId === want.id) : before ?? after;
+    const chapterId = want?.id ?? nb?.chapterId;
+    if (!chapterId) return null;
+    const position = nb ? nb.position + (nb === before ? 1 : -1) : 1_000_000;
+    return { chapterId, subchapterId: nb?.subchapterId ?? null, position, chapterTitle: chs.find((c) => c.id === chapterId)?.title ?? "" };
+  }
+
   const usedVerse = new Set<number>();
   const results: ItemResult[] = [];
   for (const it of items) {
@@ -117,8 +147,43 @@ export async function importPdfBatch(input: PdfImportBatch): Promise<BatchResult
     }
     const res: ItemResult = { number: it.number, dbNumber: row?.number ?? null, fields: {}, commentaries: {} };
     results.push(res);
+    if (!row && !it.number.startsWith("0.")) {
+      // A sūtra the database does not have yet: the PDF's numbering is authoritative, so it is
+      // created — in the chapter (and section) of its neighbour, or of its prakaraṇa heading.
+      const place = await placeFor(it.number, it.prakarana ?? "");
+      if (!place) {
+        res.error = "Not in the database, and its chapter could not be found (no neighbouring sūtra, no matching prakaraṇa).";
+        continue;
+      }
+      res.created = place.chapterTitle;
+      res.dbNumber = it.number;
+      if (fields.sutra) res.sutra = { from: "", to: it.sutra, change: "fill" };
+      if (dryRun) {
+        for (const f of ["synonyms", "translation", "vrtti"] as const) if (fields[f] && it[f].trim()) res.fields[f] = "fill";
+        if (fields.commentaries) for (const c of it.commentaries) res.commentaries[c.key] = "fill";
+        known.push({ number: it.number, chapterId: place.chapterId, subchapterId: place.subchapterId, position: place.position, id: -1 });
+        continue;
+      }
+      const [createdRow] = await db
+        .insert(sutras)
+        .values({
+          editionId: ed.id,
+          chapterId: place.chapterId,
+          subchapterId: place.subchapterId,
+          number: it.number,
+          position: place.position,
+          transliteration: it.sutra,
+          status: "published",
+          updatedBy: user.id,
+        })
+        .returning();
+      await log(user, "sutras", createdRow.id, "create", null, createdRow);
+      known.push({ number: it.number, chapterId: createdRow.chapterId, subchapterId: createdRow.subchapterId, position: createdRow.position, id: createdRow.id });
+      touchedChapters.add(createdRow.chapterId);
+      row = createdRow;
+    }
     if (!row) {
-      res.error = it.number.startsWith("0.") ? "No verse with this text in the database." : "This sūtra number is not in the database.";
+      res.error = "No verse with this text in the database.";
       continue;
     }
 
@@ -177,6 +242,7 @@ export async function importPdfBatch(input: PdfImportBatch): Promise<BatchResult
       }
     }
   }
+  if (!dryRun) for (const c of touchedChapters) await resequenceChapter(c);
   return { ok: true, results };
 }
 

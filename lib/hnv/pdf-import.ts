@@ -29,7 +29,7 @@ export function analyseVolume(lines: Line[], numPages: number): Analysis {
   if (inv) parts.push({ kind: "invocation", first: inv.page, last: (heads.find((h) => h.page > inv.page)?.page ?? numPages + 1) - 1, label: "Invocation (Maṅgalācaraṇa)" });
   if (ch.length) parts.push({ kind: "sutras", first: ch[0].page, last: nextAfter(ch[ch.length - 1].page) - 1, label: ch.map((c) => c.t).join(", ") });
   if (aft) parts.push({ kind: "afterword", first: aft.page, last: (heads.find((h) => h.page > aft.page)?.page ?? numPages + 1) - 1, label: "Afterword (Granthopasaṁhāra)" });
-  const listHead = lines.find((l) => /^List of S[uū]tras in the Madhyama Version/i.test(txt(l)));
+  const listHead = lines.find((l) => /^List of S[uū]tras in the \S+ Version/i.test(txt(l)));
   if (listHead) {
     const end = heads.find((h) => h.page > listHead.page)?.page ?? numPages + 1;
     parts.push({ kind: "list", first: listHead.page, last: end - 1, label: "List of sūtras (appendix)" });

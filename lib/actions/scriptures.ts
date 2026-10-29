@@ -976,6 +976,8 @@ const DivisionRow = z.object({
   titleDeva: z.string().max(300).optional(),
   subtitle: z.string().max(300).optional(),
   expected: z.string().max(10).optional(),
+  /** prose of the division itself (a chapter summary …), HTML */
+  body: z.string().max(400_000).optional(),
 });
 
 export type ImportReport = {
@@ -1090,6 +1092,7 @@ export async function importScriptureRows(input: {
     if (d.titleDeva?.trim()) set.titleDeva = d.titleDeva.trim();
     if (d.subtitle?.trim()) set.subtitle = d.subtitle.trim();
     if (d.expected?.trim() && /^\d+$/.test(d.expected.trim())) set.expectedChildren = parseInt(d.expected.trim(), 10);
+    if (d.body?.trim()) set.bodyHtml = toHtml(d.body);
     if (Object.keys(set).length && id > 0 && !input.dryRun) await db.update(scriptureDivisions).set({ ...set, updatedBy: user.id }).where(eq(scriptureDivisions.id, id));
   }
 
@@ -1205,4 +1208,42 @@ export async function importScriptureRows(input: {
 function toHtml(s: string) {
   const t = s.trim();
   return sanitizeRich(/^<[a-z][\s\S]*>/i.test(t) ? t : plainToHtml(t));
+}
+
+// ======================================================= e-book import ===
+const KindIn = z.object({
+  key: z.string().trim().min(1).max(60).regex(/^[a-z0-9-]+$/),
+  name: z.string().trim().min(1).max(120),
+  author: z.string().trim().max(120),
+  language: z.enum(["sanskrit", "english"]),
+  pane: z.enum(["commentary", "verse", "translation"]),
+});
+
+/**
+ * The e-book import (Bhāgavatam): make sure every kind of commentary it brings
+ * exists for the book (synonyms, translation, purport, each ācārya's commentary).
+ * Existing kinds are left exactly as they are.
+ */
+export async function ensureCommentaryKinds(bookId: number, kinds: z.input<typeof KindIn>[]): Promise<{ ok: boolean; message: string; created: string[] }> {
+  const user = await requireUser("editor");
+  const parsed = z.array(KindIn).max(60).safeParse(kinds);
+  if (!parsed.success) return { ok: false, message: "The list of commentaries is not valid.", created: [] };
+  const db = getDb();
+  const [book] = await db.select().from(books).where(eq(books.id, Number(bookId))).limit(1);
+  if (!book) return { ok: false, message: "Book not found.", created: [] };
+  const have = await db.select().from(scriptureCommentaryTypes).where(eq(scriptureCommentaryTypes.bookId, book.id));
+  let sort = Math.max(0, ...have.map((t) => t.sort));
+  const created: string[] = [];
+  for (const k of parsed.data) {
+    if (have.some((t) => t.key === k.key)) continue;
+    sort += 10;
+    const [t] = await db
+      .insert(scriptureCommentaryTypes)
+      .values({ bookId: book.id, key: k.key, name: k.name, author: k.author, language: k.language, pane: k.pane, appliesTo: "verse", sort, updatedBy: user.id })
+      .returning();
+    await log(user, "scripture_commentary_types", t.id, "create", null, t, "e-book import");
+    created.push(k.name);
+  }
+  if (created.length) revalidateScriptures();
+  return { ok: true, message: created.length ? `Added: ${created.join(", ")}.` : "All kinds already exist.", created };
 }

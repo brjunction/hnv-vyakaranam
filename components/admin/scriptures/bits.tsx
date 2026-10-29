@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { ExternalLink, FileSpreadsheet, Gauge, ListTree, MessageSquareText, Settings2 } from "lucide-react";
+import { BookOpen, ExternalLink, FileSpreadsheet, Gauge, ListTree, MessageSquareText, Settings2 } from "lucide-react";
 
 // Small server-safe pieces shared by the Scriptures admin pages.
 
-export function BookTabs({ code, active }: { code: string; active: "structure" | "progress" | "commentaries" | "spreadsheet" | "settings" }) {
+export function BookTabs({ code, active }: { code: string; active: "structure" | "progress" | "commentaries" | "spreadsheet" | "ebooks" | "settings" }) {
   const tabs = [
     { k: "structure", label: "Structure", href: `/admin/scriptures/${code}`, icon: ListTree },
     { k: "progress", label: "Progress", href: `/admin/scriptures/${code}/progress`, icon: Gauge },
     { k: "commentaries", label: "Commentaries", href: `/admin/scriptures/${code}/commentaries`, icon: MessageSquareText },
     { k: "spreadsheet", label: "Spreadsheet", href: `/admin/scriptures/${code}/spreadsheet`, icon: FileSpreadsheet },
+    ...(code === "sb" ? ([{ k: "ebooks", label: "Import e-books", href: `/admin/scriptures/${code}/import-ebooks`, icon: BookOpen }] as const) : []),
     { k: "settings", label: "Settings", href: `/admin/scriptures/${code}/settings`, icon: Settings2 },
   ] as const;
   return (

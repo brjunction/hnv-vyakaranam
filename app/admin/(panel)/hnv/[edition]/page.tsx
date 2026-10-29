@@ -83,6 +83,18 @@ export default async function EditionAdmin({
             </span>
           </Link>
         )}
+        {canEdit && (
+          <Link
+            href={`/admin/hnv/${edition.slug}/import-docx`}
+            className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 hover:border-[var(--fg)]"
+          >
+            <FileText size={20} className="text-[var(--accent)]" />
+            <span>
+              <span className="block font-semibold">Import commentaries (Word)</span>
+              <span className="block text-sm text-[var(--fg-muted)]">Amṛta, Bāla-toṣaṇī from .docx</span>
+            </span>
+          </Link>
+        )}
       </div>
 
       {missing && (

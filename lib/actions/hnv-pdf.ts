@@ -262,3 +262,43 @@ export async function storedSutraTexts(edition: string): Promise<{ ok: boolean; 
   const rows = await db.select({ number: sutras.number, t: sutras.transliteration, s: sutras.sanskrit }).from(sutras).where(eq(sutras.editionId, ed.id));
   return { ok: true, sutras: rows.map((r) => ({ number: r.number, text: r.t || r.s })) };
 }
+
+/**
+ * Madhyama ↔ Bṛhat: every Madhyama sūtra without a Bṛhat number gets the
+ * number of the Bṛhat sūtra with the same text (words in brackets — the
+ * Bṛhat's additions — are ignored). Then each Madhyama sūtra shows
+ * "Bṛhat N" (and the Bṛhat one "Madhyama N"). Only clear matches are linked.
+ */
+export async function linkMadhyamaBrhat(dryRun: boolean): Promise<{ ok: boolean; message: string; linked: { m: string; b: string; score: number }[] }> {
+  const user = await requireUser("editor");
+  const db = getDb();
+  const eds = await db.select().from(editions).where(inArray(editions.slug, ["madhyama", "brhat"]));
+  const mid = eds.find((e) => e.slug === "madhyama")?.id;
+  const bid = eds.find((e) => e.slug === "brhat")?.id;
+  if (!mid || !bid) return { ok: false, message: "Both editions are needed.", linked: [] };
+  const strip = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/[([{][^)\]}]*[)\]}]/g, " ");
+  const m = (await db.select({ id: sutras.id, number: sutras.number, t: sutras.transliteration, brhat: sutras.brhatNumber }).from(sutras).where(eq(sutras.editionId, mid))).filter((r) => !r.number.startsWith("0.") && r.t.trim() && !r.brhat.trim());
+  const b = (await db.select({ number: sutras.number, t: sutras.transliteration }).from(sutras).where(eq(sutras.editionId, bid))).filter((r) => !r.number.startsWith("0.") && r.t.trim());
+  if (!b.length) return { ok: true, message: "The Bṛhat edition has no sūtra text yet to compare with.", linked: [] };
+  const linked: { id: number; m: string; b: string; score: number }[] = [];
+  const used = new Set<string>();
+  for (const r of m) {
+    let best = { n: "", s: 0, second: 0 };
+    const a = strip(r.t);
+    for (const x of b) {
+      const s = similarity(a, strip(x.t));
+      if (s > best.s) best = { n: x.number, s, second: best.s };
+      else if (s > best.second) best.second = s;
+    }
+    // a clear match: close, and clearly better than the next one
+    if (best.s >= 0.8 && best.s - best.second >= 0.08 && !used.has(best.n)) {
+      used.add(best.n);
+      linked.push({ id: r.id, m: r.number, b: best.n, score: Math.round(best.s * 100) / 100 });
+    }
+  }
+  if (!dryRun) {
+    for (const l of linked) await db.update(sutras).set({ brhatNumber: l.b, updatedBy: user.id }).where(eq(sutras.id, l.id));
+    revalidateHnv();
+  }
+  return { ok: true, message: `${linked.length} Madhyama sūtra(s) ${dryRun ? "would be" : "were"} linked to the Bṛhat (of ${m.length} without a link; ${b.length} Bṛhat sūtras have text).`, linked: linked.map(({ m, b, score }) => ({ m, b, score })) };
+}

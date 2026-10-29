@@ -50,6 +50,45 @@ export default function SutraCard({
       id={sutra.number}
       className="rounded-xl border border-[var(--border)] bg-[var(--bg-2)] overflow-hidden scroll-mt-24"
     >
+      {pageHref ? (
+        // On a chapter page: the sūtra opens its own reader page; "+" opens it in place.
+        <div className="flex items-start gap-2 p-4">
+          <Link href={pageHref} className="flex flex-1 items-start gap-4 text-left hover:opacity-90" title="Open this sūtra">
+        <span className="sutra-number shrink-0 text-xs px-2 py-1 rounded-full border border-[var(--accent)] text-[var(--accent)]">
+            {sutra.number}
+          </span>
+          <span className="flex-1">
+            <VerseLinesIn devanagari={sutra.sanskrit} iast={sutra.transliteration} script={script} className="sutra-main" />
+            <VerseLinesIn
+              devanagari={sutra.sanskrit}
+              iast={sutra.transliteration}
+              script={script === "iast" ? detectScript(sutra.sanskrit) ?? "devanagari" : "iast"}
+              className="sutra-second mt-0.5"
+            />
+          </span>
+          <span className="flex items-center gap-2 shrink-0">
+            {hasCommentary && (
+              <span
+                className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border border-[var(--color-saffron)] text-[var(--color-saffron)]"
+                title={sutra.commentaries.map((c) => c.name).join(", ")}
+              >
+                {sutra.commentaries.length === 1 ? sutra.commentaries[0].name : `${sutra.commentaries.length} commentaries`}
+              </span>
+            )}
+          </span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? "Close" : "Show here"}
+            title={isOpen ? "Close" : "Show here"}
+            className={`mt-0.5 h-7 w-7 shrink-0 rounded-full text-[var(--accent)] transition-transform hover:bg-[var(--border)] ${isOpen ? "rotate-45" : ""}`}
+          >
+            +
+          </button>
+        </div>
+      ) : (
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-start gap-4 p-4 text-left"
@@ -81,6 +120,7 @@ export default function SutraCard({
           </span>
         </span>
       </button>
+      )}
       {sutra.links.length > 0 && (
         <div className="-mt-2 flex flex-wrap gap-1.5 pb-3 pl-[4.25rem] pr-4">
           {sutra.links.map((l) =>

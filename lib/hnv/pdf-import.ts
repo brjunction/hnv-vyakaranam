@@ -1,5 +1,5 @@
 import type { Line } from "@/lib/hnv/pdf-extract";
-import { parseVolume, type Intro, type SutraBlock } from "@/lib/hnv/pdf-parse";
+import { PART_TITLE, parseVolume, type Intro, type SutraBlock } from "@/lib/hnv/pdf-parse";
 import { looseKey, parseSutraList, type ListParse } from "@/lib/hnv/pdf-sutras";
 
 // Finds the parts of an HNV volume (Invocation, chapters, Afterword, the list of
@@ -19,13 +19,16 @@ const txt = (l: Line) => l.pieces.map((p) => p.t).join("").trim();
 
 export function analyseVolume(lines: Line[], numPages: number): Analysis {
   const heads = lines
-    .filter((l) => l.size >= 16 && /^(Chapter|Invocation|Afterword|Appendix|Foreword|Introduction|Preface|Bibliography|Index|Glossary|Contents)\b/i.test(txt(l)))
+    .filter((l) => l.size >= 16 && (/^(Chapter|Invocation|Afterword|Appendix|Foreword|Introduction|Preface|Bibliography|Index|Glossary|Contents)\b/i.test(txt(l)) || PART_TITLE.test(txt(l)) || /prayers?\b/i.test(txt(l))))
     .map((l) => ({ page: l.page, t: txt(l) }));
-  const nextAfter = (page: number) => heads.find((h) => h.page > page && !/^Chapter\b/i.test(h.t))?.page ?? numPages + 1;
+  const isInv = (t: string) => /^Invocation\b|maṅgalācaraṇam$/i.test(t);
+  const isAft = (t: string) => /^Afterword\b|granthopasaṁhāraḥ$/i.test(t);
+  const isCh = (t: string) => /^Chapter\b|prakaraṇam$/i.test(t) && !isInv(t);
+  const nextAfter = (page: number) => heads.find((h) => h.page > page && !isCh(h.t))?.page ?? numPages + 1;
   const parts: Part[] = [];
-  const inv = heads.find((h) => /^Invocation\b/i.test(h.t));
-  const ch = heads.filter((h) => /^Chapter\b/i.test(h.t));
-  const aft = heads.find((h) => /^Afterword\b/i.test(h.t));
+  const inv = heads.find((h) => isInv(h.t));
+  const ch = heads.filter((h) => isCh(h.t));
+  const aft = heads.find((h) => isAft(h.t));
   if (inv) parts.push({ kind: "invocation", first: inv.page, last: (heads.find((h) => h.page > inv.page)?.page ?? numPages + 1) - 1, label: "Invocation (Maṅgalācaraṇa)" });
   if (ch.length) parts.push({ kind: "sutras", first: ch[0].page, last: nextAfter(ch[ch.length - 1].page) - 1, label: ch.map((c) => c.t).join(", ") });
   if (aft) parts.push({ kind: "afterword", first: aft.page, last: (heads.find((h) => h.page > aft.page)?.page ?? numPages + 1) - 1, label: "Afterword (Granthopasaṁhāra)" });
@@ -61,7 +64,7 @@ export function analyseVolume(lines: Line[], numPages: number): Analysis {
     out.intros.push(...r.intros);
     out.issues.push(...r.issues.map((i) => `${p.label}: ${i}`));
   }
-  if (!parts.some((p) => p.kind === "sutras")) out.issues.push("No chapter of sūtras was found in this file (no “Chapter …” heading).");
+  if (!parts.some((p) => p.kind === "sutras")) out.issues.push("No chapter of sūtras was found in this file (no “Chapter …” or “…-prakaraṇam” heading).");
   return out;
 }
 

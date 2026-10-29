@@ -60,8 +60,42 @@ const KEYS: [RegExp, string, string][] = [
 const PLAIN = new Set(["vrtti", "amrta", "samsodhini", "bala"]);
 
 /** A label at the start of a line (bold small caps up to the dash), or null. */
+const BOLD_LABELS: Record<string, string> = {
+  vrtti: "vrtti",
+  amrta: "amrta",
+  amrtasvadini: "amrta",
+  amrtasvaditika: "amrta",
+  amrtasvadinitika: "amrta",
+  samsodhini: "samsodhini",
+  bala: "bala",
+  balatosani: "bala",
+  balatosanitika: "bala",
+};
+const LABEL_NAME: Record<string, string> = { vrtti: "Vṛtti", amrta: "Amṛta", samsodhini: "Saṁśodhinī", bala: "Bāla" };
+
+/** Bṛhat volumes: the label is bold (italic), not small caps — "Amṛta—", "Bāla-toṣaṇī-ṭīkā²—". */
+function boldLabelOf(l: Line): { key: string; label: string; heading: string; rest: Piece[] } | null {
+  const first = l.pieces.find((p) => p.t.trim());
+  if (!first?.b) return null;
+  let acc = "";
+  for (let i = 0; i < l.pieces.length && i < 10; i++) {
+    const p = l.pieces[i];
+    if (/[—–]/.test(p.t)) {
+      const before = (acc + p.t.split(/[—–]/)[0]).trim();
+      const key = BOLD_LABELS[fold(before).replace(/[^a-z]/g, "")];
+      if (!key) return null;
+      const after = p.t.split(/[—–]/).slice(1).join("—");
+      const rest = [...(after.trim() ? [{ ...p, t: after }] : []), ...l.pieces.slice(i + 1)];
+      return { key, label: LABEL_NAME[key], heading: "", rest };
+    }
+    if (!p.b && !p.u) return null;
+    if (!p.u) acc += p.t;
+  }
+  return null;
+}
+
 function labelOf(l: Line): { key: string; label: string; heading: string; rest: Piece[] } | null {
-  if (!l.pieces[0]?.sc) return null;
+  if (!l.pieces[0]?.sc) return boldLabelOf(l);
   let acc = "";
   let i = 0;
   let dash = false;
@@ -180,7 +214,7 @@ function cellsOf(l: Line): Piece[][] {
       end = Math.max(end, p.x + p.w);
       continue;
     }
-    if (cur.length && p.x - end > 8.5) {
+    if (cur.length && p.x - end > 8.5 * G.scale) {
       cells.push(cur);
       cur = [];
     }
@@ -211,7 +245,7 @@ function segments(lines: Line[]): Segment[] {
       multi[j] &&
       (j === k ||
         (lines[j].page === lines[j - 1].page &&
-          (lines[j - 1].y - lines[j].y < 17 || (lines[j - 1].y - lines[j].y < 48 && aligned(multi[j - 1]!, multi[j]!)))))
+          (lines[j - 1].y - lines[j].y < 17 * G.scale || (lines[j - 1].y - lines[j].y < 48 * G.scale && aligned(multi[j - 1]!, multi[j]!)))))
     )
       j++;
     if (j - k >= 2) {
@@ -239,10 +273,10 @@ function paragraphs(lines: Line[], maxRight: number): { t: Tok[]; ls: Line[] }[]
     if (!ts.length) continue;
     let br = false;
     if (prev) {
-      if (prev.page === l.page) br = prev.y - l.y > 16.5;
+      if (prev.page === l.page) br = prev.y - l.y > 16.5 * G.scale;
       else br = rightEdge(prev) < maxRight - 30 && /[.:!?”’)]\s*$/.test(text(prev));
       // a centred line (heading, verse) is its own paragraph
-      const centred = (x: Line) => x.pieces[0].x >= 100 && rightEdge(x) < maxRight - 30;
+      const centred = (x: Line) => x.pieces[0].x >= G.left + 50 && rightEdge(x) < maxRight - 30;
       if (centred(l) !== centred(prev)) br = true;
     }
     // a bullet line always starts a new paragraph
@@ -293,8 +327,8 @@ function render(lines: Line[], notes: Notes, opts: { plain?: boolean; en?: boole
         // a short centred line on its own (not a verse quarter) is a small heading inside the text
         const plainLen = p.t.map((t) => t.t).join("").trim().length;
         const one = p.ls.length === 1 ? p.ls[0] : null;
-        if (!opts.plain && one && plainLen < 60 && one.pieces[0].x >= 100 && ratio(one, "i") < 0.5 && !/[.,;:/]$/.test(text(one).trim())) parts.push(`<h4${L}>${h}</h4>`);
-        else if (p.ls.every((l) => l.pieces[0].x >= 75) && p.ls.length <= 8 && ratio(p.ls[0], "i") > 0.6) {
+        if (!opts.plain && one && plainLen < 60 && one.pieces[0].x >= G.left + 50 && ratio(one, "i") < 0.5 && !/[.,;:/]$/.test(text(one).trim())) parts.push(`<h4${L}>${h}</h4>`);
+        else if (p.ls.every((l) => l.pieces[0].x >= G.left + 25) && p.ls.length <= 8 && ratio(p.ls[0], "i") > 0.6) {
           // an indented verse: keep its lines
           const lineH = (l: Line) => (opts.plain ? tidy(esc(l.pieces.filter((x) => !x.u).map((x) => x.t).join(""))) : html(toks(l.pieces), base));
           parts.push(`<p${L} style="text-align: center">${p.ls.map(lineH).join("<br>")}</p>`);
@@ -368,13 +402,62 @@ function attachMarks(body: Line[], fnText: Map<string, string>) {
 }
 
 // ------------------------------------------------------------------ main
-const BODY_TOP = 600;
-const BODY_BOTTOM = 30;
-const FOOT = 8.9;
+/**
+ * The page geometry of the volume being read (the Madhyama and Bṛhat volumes are
+ * set differently: 10 pt on 432×648 pages, 12 pt on 612×792 pages). Every size and
+ * distance used above is relative to it. Set at the start of parseVolume.
+ */
+/** A part's own title as its heading (Bṛhat volumes have no "Chapter …" line). */
+export const PART_TITLE = /(prakaraṇam|maṅgalācaraṇam|granthopasaṁhāraḥ)$/i;
+
+const G = {
+  body: 10,
+  left: 48,
+  scale: 1,
+  head: (l: Line) => l.y > 600 || l.y < 30,
+};
+
+function measure(lines: Line[]) {
+  const sizes = new Map<number, number>();
+  const lefts = new Map<number, number>();
+  let maxY = 0;
+  for (const l of lines) {
+    const n = text(l).length;
+    sizes.set(l.size, (sizes.get(l.size) ?? 0) + n);
+    if (l.pieces[0]) lefts.set(Math.round(l.pieces[0].x), (lefts.get(Math.round(l.pieces[0].x)) ?? 0) + n);
+    maxY = Math.max(maxY, l.y);
+  }
+  const top = (m: Map<number, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
+  G.body = top(sizes)[0]?.[0] ?? 10;
+  G.scale = G.body / 10;
+  const common = top(lefts).slice(0, 3).filter(([, c], _, arr) => c > arr[0][1] * 0.25).map(([x]) => x);
+  G.left = common.length ? Math.min(...common) : 48;
+  // running heads and page numbers: text repeated at the very top or bottom of many pages
+  const pages = new Set(lines.map((l) => l.page)).size || 1;
+  const key = (l: Line) => `${Math.round(l.y / 3)}|${text(l).replace(/\d+/g, "#").trim()}`;
+  const freq = new Map<string, number>();
+  for (const l of lines) if (l.y > maxY - 45 || l.y < 45) freq.set(key(l), (freq.get(key(l)) ?? 0) + 1);
+  // the top line of a page that stands apart from the text below it (a running head)
+  const apart = new Set<Line>();
+  const byPage = new Map<number, Line[]>();
+  for (const l of lines) byPage.set(l.page, [...(byPage.get(l.page) ?? []), l]);
+  for (const ls of byPage.values()) {
+    const s2 = [...ls].sort((a, b) => b.y - a.y);
+    if (s2.length > 1 && s2[0].y - s2[1].y >= G.body * 1.8 && s2[0].y > maxY - 45) apart.add(s2[0]);
+  }
+  G.head = (l: Line) => {
+    if (!(l.y > maxY - 45 || l.y < 45)) return false;
+    const t = text(l).trim();
+    if (/^\d{1,4}$/.test(t)) return true;
+    if ((freq.get(key(l)) ?? 0) >= Math.max(3, pages * 0.15)) return true;
+    // "34 Hari-nāmāmṛta-vyākaraṇam", "Saṁjñā 35" — but never a sūtra ("36. upendrāt …")
+    return apart.has(l) && t.length < 60 && !/^\d{1,4}\.\s/.test(t) && (/^\d{1,4}\s*[^\d.\s]/.test(t) || /[^\d\s]\s*\d{1,4}$/.test(t));
+  };
+}
 
 const isCentredHeading = (l: Line) => {
   const t = text(l).trim();
-  return l.pieces[0].x >= 100 && l.size >= 11.5 && l.size < 16 && t.length > 2 && t.length < 90 && !l.pieces[0].sc && (ratio(l, "b") > 0.6 || ratio(l, "i") > 0.6);
+  return l.pieces[0].x >= G.left + 50 && l.size >= G.body * 1.15 && l.size < G.body * 1.6 && t.length > 2 && t.length < 90 && !l.pieces[0].sc && (ratio(l, "b") > 0.6 || ratio(l, "i") > 0.6);
 };
 
 export type ParseOptions = {
@@ -392,6 +475,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
   const verses = opts.mode === "verses";
   const issues: string[] = [];
   const lines = all.filter((l) => l.page >= opts.firstPage && l.page <= opts.lastPage);
+  measure(lines);
 
   // 1 · footnotes ("20 For the details…", continued on the following small lines)
   const fnText = new Map<string, string>();
@@ -403,10 +487,10 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       body.push(l);
       continue;
     }
-    if (l.y > BODY_TOP || l.y < BODY_BOTTOM) continue; // running head, page number
+    if (G.head(l)) continue; // running head, page number
     const t = text(l).trim();
     if (!t || /^[\s,.;:‾/|]*$/.test(t)) continue; // leftovers of the dropped Devanagari
-    if (l.size <= FOOT && l.size >= 6.5) {
+    if (l.size <= G.body * 0.89 && l.size >= G.body * 0.6) {
       const m = /^(\d{1,3}|i|ii|iii|iv|v|vi|[a-e])\s+(\S.*)$/.exec(t);
       // a new footnote: the next number in the series (or a restart at 1), or a letter mark
       const num = /^\d/.test(m?.[1] ?? "") ? Number(m![1]) : NaN;
@@ -449,17 +533,17 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       if (!l.pieces.length) continue;
     }
     const t = l.pieces.filter((p) => !p.u).map((p) => p.t).join("").trim();
-    if (l.size >= 16 && /^(Chapter|Invocation|Afterword)\b/i.test(t)) {
-      intro = { kind: "chapter", title: [], lines: [], page: l.page, before: expected };
+    if (l.size >= 16 && (/^(Chapter|Invocation|Afterword)\b/i.test(t) || PART_TITLE.test(t))) {
+      intro = { kind: "chapter", title: PART_TITLE.test(t) ? [t] : [], lines: [], page: l.page, before: expected };
       rawIntros.push(intro);
       cur = null;
       titleMode = true;
-      prak = "";
+      prak = /prakaraṇam$/i.test(t) ? t.replace(/-?prakaraṇam$/i, "") : "";
       continue;
     }
     if (verses) {
       // a verse begins with its number alone, centred, 12 pt
-      if (/^\d{1,2}$/.test(t) && Number(t) === expected && l.size >= 11.5 && l.pieces[0].x >= 150) {
+      if (/^\d{1,2}$/.test(t) && Number(t) === expected && l.size >= G.body * 0.85 && l.pieces[0].x >= G.left + 60) {
         const section = intro?.kind === "section" ? intro.title.join(" — ") : "";
         cur = { number: expected, prakarana: prak, section, lines: [], first: l.page, last: l.page };
         raws.push(cur);
@@ -471,7 +555,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
     }
     const m = verses ? null : /^(\d{1,4})\.(?:\s+\S.*|\s*)$/.exec(t);
     const looksSutra =
-      m && Number(m[1]) === expected && !l.pieces[0].i && !l.pieces[0].b && !l.pieces[0].sc && l.size >= 9.5 && l.size <= 10.5 &&
+      m && Number(m[1]) === expected && !l.pieces[0].i && !l.pieces[0].b && !l.pieces[0].sc && Math.abs(l.size - G.body) <= 0.6 &&
       // confirmed by the Devanagari heading just above, or at least not English prose
       ((devSeen === expected && li - devAt <= 3) || !/(?<![\p{L}\p{M}-])(the|of|and|is|are|an|when|example|for|with|this|that|see|in)(?![\p{L}\p{M}-])/iu.test(t.replace(/^\d+\.\s*/, "")));
     if (looksSutra) {
@@ -484,7 +568,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       expected++;
       continue;
     }
-    if (titleMode && intro && intro.title.length < (intro.kind === "chapter" ? 5 : 2) && l.pieces[0].x >= 90 && t.length < 90 && !/^\d/.test(t) && (l.size >= 10.5 || intro.title.length > 0)) {
+    if (titleMode && intro && intro.title.length < (intro.kind === "chapter" ? 5 : 2) && (l.pieces[0].x >= G.left + 40 || l.size >= G.body * 1.12) && t.length < 90 && !/^\d/.test(t) && (l.size >= G.body * 1.05 || intro.title.length > 0)) {
       intro.title.push(t);
       if (!prak && l.size >= 13) prak = t.replace(/-?prakaraṇam$/i, "");
       continue;
@@ -512,7 +596,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
     let idx = 0;
     if (verses) {
       // the verse: its centred lines, up to the synonyms
-      while (idx < ls.length && (ls[idx].pieces[0].x >= 90 || ratio(ls[idx], "i") > 0.6) && ls[idx].pieces[0].x > 55 && !/—/.test(text(ls[idx])) && !labelOf(ls[idx])) sutLines.push(ls[idx++]);
+      while (idx < ls.length && (ls[idx].pieces[0].x >= G.left + 40 || ratio(ls[idx], "i") > 0.6) && ls[idx].pieces[0].x > G.left + 5 && !/—/.test(text(ls[idx])) && !labelOf(ls[idx])) sutLines.push(ls[idx++]);
     } else {
       sutLines.push({ ...ls[0], pieces: stripNumber(ls[0].pieces) });
       idx = 1;
@@ -586,7 +670,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       else byKey.set(c.key, { key: c.key, label: c.label, html: piece });
     }
     vrtti = vrtti.trim();
-    sutra = sutra.replace(/([[(])\s+/g, "$1").replace(/\s+([\])])/g, "$1");
+    sutra = sutra.replace(/^\d{1,4}\.\s*/, "").replace(/([[(])\s+/g, "$1").replace(/\s+([\])])/g, "$1");
     if (!sutra) warnings.push("no sūtra text");
     if (!translation) warnings.push("no translation found");
     if (!synonyms) warnings.push("no synonyms found");

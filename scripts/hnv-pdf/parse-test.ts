@@ -3,9 +3,9 @@ import fs from "fs";
 import { parseVolume } from "@/lib/hnv/pdf-parse";
 
 function main() {
-  const [file, a, b, start, out] = process.argv.slice(2);
+  const [file, a, b, start, out, mode, prefix] = process.argv.slice(2);
   const lines = JSON.parse(fs.readFileSync(file, "utf8"));
-  const r = parseVolume(lines, { firstPage: +a, lastPage: +b, startAt: +start });
+  const r = parseVolume(lines, { firstPage: +a, lastPage: +b, startAt: +start, mode: mode === "verses" ? "verses" : "sutras", prefix });
   const n = r.blocks.length;
   console.log("blocks", n, "first", r.blocks[0]?.number, "last", r.blocks[n - 1]?.number);
   console.log("issues", r.issues);
@@ -16,6 +16,9 @@ function main() {
   const keys = new Map<string, number>();
   r.blocks.forEach((x) => x.commentaries.forEach((c) => keys.set(c.key, (keys.get(c.key) ?? 0) + 1)));
   console.log([...keys].filter(([k]) => k.startsWith("other")));
-  fs.writeFileSync(out, JSON.stringify(r.blocks, null, 1));
+  console.log("intros", r.intros.length, r.intros.map((i) => `${i.kind}:${i.beforeSutra}:${i.title.slice(0, 50)} (${i.html.length})`));
+  const tables = r.blocks.reduce((a, x) => a + (JSON.stringify(x).match(/<table>/g)?.length ?? 0), 0);
+  console.log("tables", tables);
+  fs.writeFileSync(out, JSON.stringify(r, null, 1));
 }
 main();

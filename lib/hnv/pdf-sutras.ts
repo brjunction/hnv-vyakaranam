@@ -29,8 +29,8 @@ const clean = (s: string) => s.replace(/\s+/g, " ").replace(/\s+([,.;])/g, "$1")
 const join = (a: string, b: string) => (a.endsWith("-") ? a + b : `${a} ${b}`);
 
 /** `raw` = text of the appendix pages, either still in Balarama or already IAST. */
-export function parseSutraList(raw: string): ListParse {
-  const text = balaramaToUtf8(raw);
+export function parseSutraList(raw: string, opts: { unicode?: boolean } = {}): ListParse {
+  const text = opts.unicode ? raw : balaramaToUtf8(raw);
   const lines = text.split(/\r?\n/);
   const out: PdfSutra[] = [];
   const issues: string[] = [];
@@ -97,5 +97,21 @@ export const looseKey = (s: string) =>
     .replace(/[(),;:.]/g, "")
     .toLowerCase();
 
-/** Exact-ish key: only whitespace and quote style are normalised. */
-export const exactKey = (s: string) => s.normalize("NFC").replace(/\s+/g, " ").replace(/[’‘ʼ]/g, "’").trim();
+/** Exact-ish key: only whitespace and apostrophe style are normalised (' and ’ are the same avagraha). */
+export const exactKey = (s: string) => s.normalize("NFC").replace(/\s+/g, " ").replace(/['’‘ʼ]/g, "’").trim();
+
+/** 0…1: how alike two texts are (Dice coefficient of letter pairs, ignoring spacing and punctuation). */
+export function similarity(a: string, b: string): number {
+  const pairs = (s: string) => {
+    const k = looseKey(s);
+    const m = new Map<string, number>();
+    for (let i = 0; i < k.length - 1; i++) m.set(k.slice(i, i + 2), (m.get(k.slice(i, i + 2)) ?? 0) + 1);
+    return { m, n: Math.max(0, k.length - 1) };
+  };
+  const A = pairs(a);
+  const B = pairs(b);
+  if (!A.n || !B.n) return 0;
+  let both = 0;
+  for (const [p, c] of A.m) both += Math.min(c, B.m.get(p) ?? 0);
+  return (2 * both) / (A.n + B.n);
+}

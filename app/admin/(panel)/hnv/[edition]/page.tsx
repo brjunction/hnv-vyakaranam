@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileSpreadsheet, MessageSquareText, Search } from "lucide-react";
+import { FileSpreadsheet, FileText, MessageSquareText, Search } from "lucide-react";
 import { hasRole, requireUser } from "@/lib/auth/session";
 import { countDrafts, getEdition, listChaptersAdmin, listCommentaryTypesAdmin, listEditions } from "@/lib/data/hnvAdmin";
 import { moveChapter, saveChapter } from "@/lib/actions/hnv";
@@ -39,7 +39,7 @@ export default async function EditionAdmin({
       />
       <EditionSwitch active={edition.slug} editions={editions.map((e) => ({ slug: e.slug, name: EDITION_NAMES[e.slug] ?? e.name }))} />
 
-      <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] mb-6">
+      <div className="grid gap-4 md:grid-cols-[1fr_auto_auto_auto] mb-6">
         <form action="/admin/hnv/find" className="flex gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
           <input type="hidden" name="edition" value={edition.slug} />
           <label className="sr-only" htmlFor="find-n">Sūtra number</label>
@@ -71,6 +71,18 @@ export default async function EditionAdmin({
             <span className="block text-sm text-[var(--fg-muted)]">Download · upload</span>
           </span>
         </Link>
+        {canEdit && (
+          <Link
+            href={`/admin/hnv/${edition.slug}/import-pdf`}
+            className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 hover:border-[var(--fg)]"
+          >
+            <FileText size={20} className="text-[var(--accent)]" />
+            <span>
+              <span className="block font-semibold">Import from PDF</span>
+              <span className="block text-sm text-[var(--fg-muted)]">Fill &amp; correct from the volumes</span>
+            </span>
+          </Link>
+        )}
       </div>
 
       {missing && (

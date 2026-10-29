@@ -96,7 +96,7 @@ export default function SutraCard({
         <div hidden={!isOpen} className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
           {sutra.synonyms.trim() && (
             <Block label="Synonyms">
-              <RichText value={sutra.synonyms} className="leading-relaxed" />
+              {isHtml(sutra.synonyms) ? <RichIn html={sutra.synonyms} english script={script} className="leading-relaxed" /> : <RichText value={sutra.synonyms} className="leading-relaxed" />}
             </Block>
           )}
           <Block label="Vṛtti">
@@ -117,7 +117,7 @@ export default function SutraCard({
           </Block>
           <Block label="Translation">
             {sutra.translation.trim() ? (
-              <RichText value={sutra.translation} className="leading-relaxed" />
+              isHtml(sutra.translation) ? <RichIn html={sutra.translation} english script={script} className="leading-relaxed" /> : <RichText value={sutra.translation} className="leading-relaxed" />
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}
@@ -125,7 +125,7 @@ export default function SutraCard({
           {showNotes &&
             sutra.commentaries.map((c) => (
               <Block key={c.key} label={c.author ? `${c.name} · ${c.author}` : c.name}>
-                <RichText value={c.html} />
+                {isHtml(c.html) ? <RichIn html={c.html} english script={script} /> : <RichText value={c.html} />}
               </Block>
             ))}
         </div>

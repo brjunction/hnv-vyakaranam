@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
-  Cloud, CloudOff, Download, Eraser, Expand, FilePlus2, FolderPlus, GripHorizontal, Link2, Maximize2, Minimize2, NotebookPen, PanelBottom, PanelLeft, PanelRight, PanelTop,
+  Cloud, Download, Eraser, Expand, FilePlus2, FolderPlus, GripHorizontal, Link2, Maximize2, Minimize2, NotebookPen, PanelBottom, PanelLeft, PanelRight, PanelTop,
   PenLine, Search, Square, Trash2, Upload, X,
 } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
@@ -314,9 +314,9 @@ export function NotebookBody({ page = false, onClose, header }: { page?: boolean
         {!sec.pages.length && !results && <li className="px-3 py-8 text-center text-sm text-[var(--fg-muted)]">No pages yet. Start one with “Page”.</li>}
       </ul>
       <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--border)] p-2 text-xs text-[var(--fg-muted)]">
-        <span className="mr-auto inline-flex items-center gap-1" title={user ? `Signed in as ${user.name}` : "Not signed in"}>
-          {user ? <Cloud size={13} /> : <CloudOff size={13} />}
-          {user ? status || "Online" : <Link href={`/admin/login?next=${encodeURIComponent("/notes")}`} className="underline">Sign in to save online</Link>}
+        <span className="mr-auto inline-flex items-center gap-1" title={user ? `Signed in as ${user.name}` : ""}>
+          {user && <Cloud size={13} />}
+          {user ? status || "Online" : ""}
         </span>
         <button type="button" onClick={renameSection} className="ui-btn ui-btn-sm">Rename</button>
         <button type="button" onClick={deleteSection} className="ui-btn ui-btn-sm" title="Delete this section">

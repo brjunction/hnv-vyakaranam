@@ -86,7 +86,16 @@ export function analyseVolume(input: Line[], numPages: number): Analysis {
     let startAt = 1;
     if (p.kind === "sutras") {
       const first = lines.find((l) => l.page >= p.first && l.page <= p.last && l.devSutra);
-      startAt = first?.devSutra ?? Number(/^(\d+)\./.exec(lines.find((l) => l.page >= p.first && /^\d+\.(\s|$)/.test(txt(l)))?.pieces[0]?.t ?? "")?.[1] ?? 1);
+      // the first number that the next two follow ("1." of a footnote or a list is not a sūtra)
+      const nums = new Set(
+        lines
+          .filter((l) => l.page >= p.first && l.page <= p.last)
+          .map((l) => /^(\d+)\.(\s|$)/.exec(txt(l))?.[1])
+          .filter((x): x is string => !!x)
+          .map(Number)
+      );
+      const seq = [...nums].sort((a, b) => a - b).find((n) => nums.has(n + 1) && nums.has(n + 2));
+      startAt = seq ?? first?.devSutra ?? 1;
     }
     const r = parseVolume(lines, {
       firstPage: p.first,

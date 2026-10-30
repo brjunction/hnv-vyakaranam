@@ -1,3 +1,4 @@
+import GlobalIast from "@/components/GlobalIast";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -160,6 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteChrome header={<Header />} footer={<Footer />}>
           {children}
         </SiteChrome>
+        <GlobalIast />
         <Analytics/>
         <SpeedInsights/>
       </body>

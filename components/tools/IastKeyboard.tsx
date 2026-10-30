@@ -3,15 +3,10 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Eraser } from "lucide-react";
 
-// IAST keyboard: type plain letters, then press Left Shift (on its own) to
+// IAST keyboard: type plain letters, then press Right Shift (on its own) to
 // turn the letter before the cursor into the next one with a diacritic:
 // a → ā → a, s → ś → ṣ → s, n → ṅ → ñ → ṇ … The buttons insert directly.
 
-const CYCLE: Record<string, string> = {};
-for (const ring of ["aā", "iī", "uū", "rṛṝ", "lḷḹ", "nṅñṇ", "tṭ", "dḍ", "sśṣ", "mṁṃ", "hḥ", "AĀ", "IĪ", "UŪ", "RṚṜ", "LḶḸ", "NṄÑṆ", "TṬ", "DḌ", "SŚṢ", "MṀṂ", "HḤ"]) {
-  const c = [...ring];
-  c.forEach((ch, i) => (CYCLE[ch] = c[(i + 1) % c.length]));
-}
 const KEYS = ["ā", "ī", "ū", "ṛ", "ṝ", "ḷ", "ḹ", "ṅ", "ñ", "ṭ", "ḍ", "ṇ", "ś", "ṣ", "ṁ", "ṃ", "ḥ", "’", "—", "।", "॥"];
 
 export default function IastKeyboard() {
@@ -19,22 +14,7 @@ export default function IastKeyboard() {
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
   const [caps, setCaps] = useState(false);
-  const shiftAlone = useRef(false);
 
-  const replaceBefore = (fn: (ch: string) => string | null) => {
-    const el = ref.current;
-    if (!el) return;
-    const at = el.selectionStart;
-    if (at === 0 || at !== el.selectionEnd) return;
-    // the textarea's own value: it is always current, even between quick key presses
-    const cur = el.value;
-    const next = fn(cur[at - 1]);
-    if (!next) return;
-    const v = cur.slice(0, at - 1) + next + cur.slice(at);
-    el.value = v;
-    el.setSelectionRange(at, at);
-    setText(v);
-  };
   const insert = (s: string) => {
     const el = ref.current;
     if (!el) return;
@@ -50,8 +30,7 @@ export default function IastKeyboard() {
   return (
     <div className="grid gap-4">
       <p className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-4 text-sm leading-relaxed">
-        Type normally. To add a diacritic, press <kbd className="rounded border border-[var(--border)] px-1.5">Left Shift</kbd> on its own right after the letter — press it again to go on:
-        a → ā, i → ī, u → ū, r → ṛ → ṝ, l → ḷ → ḹ, n → ṅ → ñ → ṇ, t → ṭ, d → ḍ, s → ś → ṣ, m → ṁ → ṃ, h → ḥ. Or tap the letters below.
+        This works in every text box on the site (search, notes, the converter …). Type normally. To add a diacritic, press <kbd className="rounded border border-[var(--border)] px-1.5">Shift</kbd> (left or right) on its own right after the letter — press again for the next: a → ā, i → ī, u → ū, r → ṛ → ṝ, l → ḷ → ḹ, n → ṇ → ṅ → ñ, t → ṭ, d → ḍ, s → ṣ → ś, m → ṁ → ṃ, h → ḥ. Or tap the letters below.
       </p>
       <div className="flex flex-wrap gap-1.5">
         {KEYS.map((k) => {
@@ -70,17 +49,10 @@ export default function IastKeyboard() {
         ref={ref}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          shiftAlone.current = e.key === "Shift" && e.location === 1;
-        }}
-        onKeyUp={(e) => {
-          if (e.key === "Shift" && e.location === 1 && shiftAlone.current) replaceBefore((ch) => CYCLE[ch] ?? null);
-          shiftAlone.current = false;
-        }}
         rows={10}
         spellCheck={false}
         autoFocus
-        placeholder="Type here… e.g. krsna, then Left Shift after r, s and n"
+        placeholder="Type here… e.g. kr Shift s Shift n Shift a → kṛṣṇa"
         className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4 text-xl leading-relaxed outline-none focus:border-[var(--accent)]"
       />
       <div className="flex flex-wrap gap-2">

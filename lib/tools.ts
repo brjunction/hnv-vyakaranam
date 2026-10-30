@@ -45,7 +45,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     blurb: "Everyday helpers",
     tools: [
       { slug: "converter", name: "Script & Font Converter", blurb: "Balarama, IAST, Devanagari, Bengali, Odia, HK, ITRANS, SLP1 — Sanskrit-aware", icon: Languages, ready: true },
-      { slug: "keyboard", name: "IAST Keyboard", blurb: "Type ā, ṛ, ṣ … — Left Shift after a letter adds its diacritic", icon: Keyboard, ready: true },
+      { slug: "keyboard", name: "IAST Keyboard", blurb: "Type ā, ṛ, ṣ … — Shift after a letter adds its diacritic", icon: Keyboard, ready: true },
       { slug: "citation", name: "Citation Generator", blurb: "Cite any sūtra, verse or page — MLA, APA, Chicago", icon: Quote, ready: true },
     ],
   },

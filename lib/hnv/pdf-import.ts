@@ -104,6 +104,9 @@ export function analyseVolume(input: Line[], numPages: number): Analysis {
         if (k > best) (best = k), (seq = n);
       }
       if (best < 3) seq = undefined;
+      // the first run of five or more (the sūtras' own start), else the longest
+      const early = [...nums].sort((a, b) => a - b).find((n) => !nums.has(n - 1) && [1, 2, 3, 4].every((k) => nums.has(n + k)));
+      if (early !== undefined) seq = early;
       startAt = seq ?? first?.devSutra ?? 1;
     }
     const r = parseVolume(lines, {

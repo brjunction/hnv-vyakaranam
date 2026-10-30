@@ -525,6 +525,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
   // verses numbered on the page (Madhyama) or not (Bṛhat)?
   const numberedVerses =
     verses && body.filter((l) => /^\d{1,2}$/.test(text(l).trim()) && l.size >= G.body * 0.85 && l.pieces[0]?.x >= G.left + 60).length >= 2;
+  const skipped: number[] = [];
   const unconfirmed: number[] = [];
 
   let devSeen = -1; // the last Devanagari sūtra heading ("N / …"), and where
@@ -583,11 +584,17 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
       }
     }
     const m = verses ? null : /^(\d{1,4})\.(?:\s+\S.*|\s*)$/.exec(t);
+    // a sūtra missing or unreadable in the PDF must not stop the rest: the next one or two are taken too
+    const gap = m ? Number(m[1]) - expected : -1;
     const looksSutra =
-      m && Number(m[1]) === expected && !l.pieces[0].i && !l.pieces[0].b && !l.pieces[0].sc && Math.abs(l.size - G.body) <= 0.6 &&
+      m && (gap === 0 || ((gap === 1 || gap === 2) && t.length > 6 && l.pieces[0].x <= G.left + 4)) && !l.pieces[0].i && !l.pieces[0].b && !l.pieces[0].sc && Math.abs(l.size - G.body) <= 0.6 &&
       // confirmed by the Devanagari heading just above, or at least not English prose
       ((devSeen === expected && li - devAt <= 3) || (t.replace(/^\d+\.\s*/, "").match(/(?<![\p{L}\p{M}-])(the|of|and|is|are|an|when|example|for|with|this|that|see|in)(?![\p{L}\p{M}-])/giu)?.length ?? 0) < 2);
     if (looksSutra) {
+      if (gap > 0) {
+        for (let k = expected; k < expected + gap; k++) skipped.push(k);
+        expected += gap;
+      }
       if (!(devSeen === expected && li - devAt <= 3)) unconfirmed.push(expected);
       const section = intro?.kind === "section" ? intro.title.join(" — ") : "";
       cur = { number: expected, prakarana: prak, section, lines: [l], first: l.page, last: l.page };
@@ -730,6 +737,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
     .filter((i) => i.title || i.html);
 
   if (raws.length && raws[raws.length - 1].number + 1 !== expected) issues.push("Internal: sūtra counter mismatch.");
+  if (skipped.length) issues.push(`${skipped.length} sūtra(s) not found in the PDF (the next one was taken): ${skipped.join(", ")} — check them after the import.`);
   if (unconfirmed.length) issues.push(`${unconfirmed.length} sūtra(s) found without the Devanagari heading above them (checked by style only): ${unconfirmed.slice(0, 40).join(", ")}${unconfirmed.length > 40 ? " …" : ""}.`);
   // A footnote whose mark was not found is never dropped: it goes to the end of
   // the sūtra (or introduction) printed on its page, with a warning.

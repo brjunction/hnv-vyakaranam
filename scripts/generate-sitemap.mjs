@@ -57,6 +57,8 @@ add("/tools/text/keyboard", { changefreq: "monthly", priority: 0.6 });
 add("/tools/text/citation", { changefreq: "monthly", priority: 0.5 });
 add("/tools/dictionary/dhatu", { changefreq: "monthly", priority: 0.8 });
 add("/tools/dictionary/avyaya", { changefreq: "monthly", priority: 0.7 });
+add("/tools/dictionary/term-mapper", { changefreq: "monthly", priority: 0.7 });
+add("/tools/grammar/concordance", { changefreq: "monthly", priority: 0.8 });
 add("/memorize", { changefreq: "weekly", priority: 0.7 });
 add("/brhat/memorize", { changefreq: "weekly", priority: 0.6 });
 add("/scriptures/search", { changefreq: "monthly", priority: 0.5 });

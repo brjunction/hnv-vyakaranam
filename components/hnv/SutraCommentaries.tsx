@@ -67,6 +67,7 @@ export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
 
 /** The commentaries of one sūtra, one at a time (tabs). */
 type Com = PublicSutra["commentaries"][number] & { vrtti?: boolean };
+const isSanskrit = (c: { name: string }) => /\(Sanskrit\)/i.test(c.name);
 export function SutraCommentaries({ commentaries, script }: { commentaries: Com[]; script: ReturnType<typeof useReaderPrefs>[0]["script"] }) {
   const [active, setActive] = useState(0);
   if (!commentaries.length) return null;
@@ -75,22 +76,40 @@ export function SutraCommentaries({ commentaries, script }: { commentaries: Com[
     <section className="mt-8 lg:mt-0" aria-label="Commentaries">
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--fg-muted)]">Commentaries</h2>
       {commentaries.length > 1 && (
-        <div role="tablist" className="mb-4 flex flex-wrap gap-2">
-          {commentaries.map((x, i) => (
-            <button
-              key={x.key}
-              type="button"
-              role="tab"
-              aria-selected={i === active}
-              onClick={() => setActive(i)}
-              className={`rounded-full border px-3.5 py-1.5 text-sm ${i === active ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--color-ink)]" : "border-[var(--border)]"}`}
-            >
-              {x.name}
-            </button>
-          ))}
+        <div role="tablist" className="mb-4 grid gap-2">
+          {(["en", "sa"] as const).map((g) => {
+            const list = commentaries.map((x, i) => ({ x, i })).filter(({ x }) => (isSanskrit(x) ? "sa" : "en") === g);
+            if (!list.length) return null;
+            const both = commentaries.some((x) => isSanskrit(x)) && commentaries.some((x) => !isSanskrit(x));
+            return (
+              <div key={g} className="flex flex-wrap items-center gap-2">
+                {both && <span className="w-20 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--fg-muted)]">{g === "en" ? "English" : "Sanskrit"}</span>}
+                {list.map(({ x, i }) => (
+                  <button
+                    key={x.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === active}
+                    onClick={() => setActive(i)}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm ${
+                      i === active
+                        ? g === "sa"
+                          ? "border-[var(--color-saffron)] bg-[var(--color-saffron)] text-white"
+                          : "border-[var(--accent)] bg-[var(--accent)] text-[var(--color-ink)]"
+                        : g === "sa"
+                          ? "border-[var(--color-saffron)]/50 text-[var(--color-saffron)]"
+                          : "border-[var(--border)]"
+                    }`}
+                  >
+                    {x.name.replace(/\s*\((Sanskrit|English)\)$/, "")}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
-      <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-5 sm:p-6">
+      <article className={`rounded-2xl border p-5 sm:p-6 ${isSanskrit(c) ? "border-[var(--color-saffron)]/40 bg-[color-mix(in_srgb,var(--color-saffron)_6%,var(--bg-2))]" : "border-[var(--border)] bg-[var(--bg-2)]"}`}>
         <h3 className="mb-3 font-semibold">
           {c.name}
           {c.author && <span className="font-normal text-[var(--fg-muted)]"> · {c.author}</span>}

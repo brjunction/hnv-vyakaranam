@@ -224,7 +224,7 @@ export function getChapterList(edition: string): Promise<ChapterSummary[]> {
 
 /** One chapter with its sections, sūtras and commentaries; null if not found. */
 export function getPublicChapter(edition: string, slug: string): Promise<PublicChapter | null> {
-  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v3", edition, slug], {
+  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v4", edition, slug], {
     tags: [tags.hnvAll, tags.hnvChapter(edition, slug)],
     revalidate: 86400,
   })();

@@ -20,7 +20,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
       { slug: "dhatu", name: "Dhātu Dictionary", blurb: "Śrīla Jīva Gosvāmī’s Dhātu-saṅgraha: gaṇa, pada, iṭ and meaning", icon: Sprout, ready: true },
       { slug: "avyaya", name: "Avyaya-saṅgraha", blurb: "Indeclinable words with Sanskrit and English meanings", icon: BookText, ready: true },
       { slug: "glossary", name: "HNV Glossary", blurb: "HNV technical terms with sūtra links", icon: BookText },
-      { slug: "term-mapper", name: "Pāṇini ↔ HNV Terms", blurb: "Saṁjñās side by side", icon: ArrowLeftRight },
+      { slug: "term-mapper", name: "Pāṇini ↔ HNV Terms", blurb: "Saṁjñās, tenses, compounds and kṛt suffixes side by side", icon: ArrowLeftRight, ready: true },
       { slug: "amarakosa", name: "Amarakośa", blurb: "Synonyms and antonyms by kāṇḍa and varga", icon: Network },
     ],
   },
@@ -29,6 +29,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     name: "HNV Grammar Tools",
     blurb: "Rules applied, with their sūtras",
     tools: [
+      { slug: "concordance", name: "Sūtra Concordance", blurb: "Every Bṛhat sūtra with Madhyama, Aṣṭādhyāyī and Siddhānta-kaumudī", icon: Network, ready: true },
       { slug: "sandhi", name: "Sandhi Splitter / Joiner", blurb: "Join two words or split a compound form", icon: Combine },
       { slug: "declension", name: "Declension Generator", blurb: "Śabda-rūpa: full 8 × 3 tables", icon: TableProperties },
       { slug: "case-identifier", name: "Case Identifier", blurb: "Form → stem, case, number, gender", icon: ScanSearch },

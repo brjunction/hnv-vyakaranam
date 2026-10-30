@@ -915,3 +915,12 @@ export const revisions = pgTable(
 // See docs/11-future-modules.md for their planned shape; they are added by
 // their own migration when that phase starts.
 // ---------------------------------------------------------------------------
+
+/** The notebook of a signed-in user (sections → pages, rich text + drawings), saved online. */
+export const userNotebooks = pgTable("user_notebooks", {
+  userId: integer("user_id")
+    .primaryKey()
+    .references(() => adminUsers.id, { onDelete: "cascade" }),
+  data: jsonb("data").notNull().default({}),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

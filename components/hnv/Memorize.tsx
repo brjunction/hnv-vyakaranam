@@ -48,8 +48,8 @@ export default function Memorize({ chapters, sutraBase }: { chapters: MemoChapte
           <button type="button" onClick={() => setSize((s) => Math.max(0.6, +(s - 0.05).toFixed(2)))} aria-label="Smaller">
             <Minus size={14} />
           </button>
-          <span className="px-1.5 text-xs tabular-nums">
-            <Type size={13} className="inline" /> {Math.round(size * 100)}%
+          <span className="inline-flex items-center gap-1 px-1.5 text-xs leading-none tabular-nums">
+            <Type size={13} className="shrink-0" /> {Math.round(size * 100)}%
           </span>
           <button type="button" onClick={() => setSize((s) => Math.min(1.4, +(s + 0.05).toFixed(2)))} aria-label="Larger">
             <Plus size={14} />

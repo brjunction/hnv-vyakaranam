@@ -1247,13 +1247,12 @@ button.ng-cell.empty:hover { border-color: #e8c766; transform: translateY(-1px);
 
 /* Sūtra parts, each with its own look (synonyms · translation · vṛtti) */
 .sutra-part { border-radius: 0.75rem; padding: 0.75rem 0.9rem; border-left: 3px solid transparent; }
-.sutra-part-syn { background: color-mix(in srgb, var(--color-blue-light, #6b9bd8) 10%, transparent); border-left-color: var(--color-blue-light, #6b9bd8); }
+.sutra-part-syn { background: transparent; border-left-color: transparent; padding-left: 0; padding-right: 0; }
 .sutra-part-trans { background: color-mix(in srgb, var(--color-gold) 9%, transparent); border-left-color: var(--color-gold); }
 .sutra-part-vrtti { background: color-mix(in srgb, var(--color-saffron) 8%, transparent); border-left-color: var(--color-saffron); }
 .vrtti-sa, .vrtti-sa * { font-style: italic; }
 .vrtti-sa [lang="en"], .vrtti-sa [lang="en"] * { font-style: normal; }
-.vrtti-en { font-weight: 600; color: var(--color-vermillion); }
-.dark .vrtti-en { color: #f0a07a; }
+.vrtti-en { font-weight: 600; }
 
 /* Memorisation: every sūtra, small, in columns */
 .memo-cols { column-gap: 1.5rem; column-rule: 1px solid var(--border); list-style: none; padding: 0; margin: 0; }

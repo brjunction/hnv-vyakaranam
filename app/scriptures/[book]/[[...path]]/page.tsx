@@ -8,6 +8,8 @@ import {
   type BookInfo, type TreeNode,
 } from "@/lib/scriptures/core";
 import ChapterView from "@/components/scriptures/ChapterView";
+import LangSwitch from "@/components/scriptures/LangSwitch";
+import { hasHindi } from "@/lib/scriptures/core";
 import Reader from "@/components/scriptures/Reader";
 import RichText from "@/components/RichText";
 import Shelf from "@/components/scriptures/Shelf";
@@ -128,9 +130,9 @@ function deepVerses(tree: TreeNode[], n: TreeNode): number {
 }
 
 /** Grid of sub-divisions (cantos / chapters). */
-function DivisionGrid({ book, tree, nodes }: { book: BookInfo; tree: TreeNode[]; nodes: TreeNode[] }) {
+function DivisionGrid({ book, tree, nodes, hi = false }: { book: BookInfo; tree: TreeNode[]; nodes: TreeNode[]; hi?: boolean }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${hi ? "has-hi" : ""}`}>
       {nodes.map((n) => {
         const kids = childrenOf(tree, n.id);
         const total = deepVerses(tree, n);
@@ -142,8 +144,8 @@ function DivisionGrid({ book, tree, nodes }: { book: BookInfo; tree: TreeNode[];
               <span className="mb-1 block text-xs uppercase tracking-[0.2em] text-[var(--color-saffron)]">
                 {levelName(book, n.depth)} {n.number}
               </span>
-              <span className="block font-semibold leading-snug">{n.title || `${levelName(book, n.depth)} ${n.number}`}</span>
-              {n.titleDeva && <span className="mt-0.5 block font-devanagari text-[var(--fg-muted)]">{n.titleDeva}</span>}
+              <span className={`block font-semibold leading-snug ${n.titleDeva ? "t-en" : ""}`}>{n.title || `${levelName(book, n.depth)} ${n.number}`}</span>
+              {n.titleDeva && <span className="t-hi mt-0.5 block font-devanagari text-[var(--fg-muted)]">{n.titleDeva}</span>}
               {n.subtitle && <span className="mt-0.5 block text-sm italic text-[var(--fg-muted)]">{n.subtitle}</span>}
               <span className="mt-3 flex flex-wrap gap-1.5">
                 {kids.length > 0 && (
@@ -260,17 +262,20 @@ export default async function ScripturePage({ params }: { params: Promise<Params
         <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--color-saffron)]">
           {book.title} · {levelName(book, node.depth)} {node.path.join(".")}
         </p>
-        <h1 className="flex flex-wrap items-baseline gap-x-3 text-xl font-semibold leading-tight sm:text-2xl">
-          {node.titleDeva && <span className="font-devanagari font-normal">{node.titleDeva}</span>}
-          <span>{node.title || `${levelName(book, node.depth)} ${node.number}`}</span>
+        <h1 className={`flex flex-wrap items-baseline gap-x-3 text-xl font-semibold leading-tight sm:text-2xl ${hasHindi(data.types) ? "has-hi" : ""}`}>
+          {node.titleDeva && <span className="t-hi font-devanagari font-normal">{node.titleDeva}</span>}
+          <span className={node.titleDeva ? "t-en" : ""}>{node.title || `${levelName(book, node.depth)} ${node.number}`}</span>
         </h1>
         {node.subtitle && <p className="mt-1 text-sm italic text-[var(--fg-muted)]">{node.subtitle}</p>}
       </header>
 
       {kids.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[node.depth + 1] ?? "Parts"}s</h2>
-          <DivisionGrid book={book} tree={tree} nodes={kids} />
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-saffron)]">{book.levels[node.depth + 1] ?? "Parts"}s</h2>
+          {hasHindi(data.types) && <LangSwitch />}
+        </div>
+          <DivisionGrid book={book} tree={tree} nodes={kids} hi={hasHindi(data.types)} />
         </section>
       )}
 

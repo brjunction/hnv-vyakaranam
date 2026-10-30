@@ -9,15 +9,15 @@ import { chanakyaToUnicode } from "@/lib/text/chanakya";
 //   regular ~16pt, from "तात्पर्य :"                the purport (italics kept)
 // Paragraphs begin indented. Running heads / page numbers are dropped.
 
-export type PdfLine = { page: number; y: number; x: number; size: number; bold: boolean; parts: { t: string; i: boolean; b: boolean }[] };
+export type PdfLine = { page: number; y: number; x: number; size: number; bold: boolean; parts: { t: string; i: boolean; b: boolean; f?: string }[] };
 export type HindiVerse = { chapter: number; key: string; from: number; to: number; synonyms: string; translation: string; purport: string };
-export type HindiResult = { canto: number; verses: HindiVerse[]; chapters: number[]; issues: string[] };
+export type HindiResult = { canto: number; verses: HindiVerse[]; chapters: number[]; titles: Record<number, string>; issues: string[] };
 
 const NUM: Record<string, number> = {};
 "एक दो तीन चार पाँच छह सात आठ नौ दस ग्यारह बारह तेरह चौदह पन्द्रह सोलह सत्रह अठारह उन्नीस बीस इक्कीस बाईस तेईस चौबीस पच्चीस छब्बीस सत्ताईस अट्ठाईस उनतीस तीस इकतीस बत्तीस तैंतीस चौंतीस पैंतीस छत्तीस सैंतीस अड़तीस उनतालीस चालीस इकतालीस बयालीस तैंतालीस चवालीस पैंतालीस छियालीस सैंतालीस अड़तालीस उनचास पचास इक्यावन बावन तिरपन चौवन पचपन छप्पन सत्तावन अट्ठावन उनसठ साठ इकसठ बासठ तिरसठ चौंसठ पैंसठ छियासठ सड़सठ अड़सठ उनहत्तर सत्तर इकहत्तर बहत्तर तिहत्तर चौहत्तर पचहत्तर छिहत्तर सतहत्तर अठहत्तर उन्यासी अस्सी इक्यासी बयासी तिरासी चौरासी पचासी छियासी सत्तासी अठासी नवासी नब्बे"
   .split(" ")
   .forEach((w, i) => (NUM[w] = i + 1));
-const ALT: Record<string, number> = { छः: 6, छ: 6, पांच: 5, पन्द्रह: 15, पंद्रह: 15, चौंतीस: 34, उन्तीस: 29, उन्नचास: 49, सडसठ: 67 };
+const ALT: Record<string, number> = { "तेइस": 23, "तेईस": 23, "अ_ाईस": 28, "अट्ठाईस": 28, "अट्ठारह": 18, "अट्ठावन": 58,  छः: 6, छ: 6, पांच: 5, पन्द्रह: 15, पंद्रह: 15, चौंतीस: 34, उन्तीस: 29, उन्नचास: 49, सडसठ: 67 };
 const hindiNumber = (w: string) => NUM[w.trim()] ?? ALT[w.trim()] ?? (/^[०-९0-9]+$/.test(w.trim()) ? deva(w.trim()) : 0);
 const deva = (s: string) => Number(s.replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d))));
 
@@ -29,7 +29,8 @@ function lineText(l: PdfLine): { text: string; html: string } {
   let html = "";
   let prevI: boolean | null = null;
   for (const p of l.parts) {
-    const u = chanakyaToUnicode(p.t);
+    // only Chanakya text is converted (numbers and English in other fonts stay as they are)
+    const u = !p.f || /chanakya/i.test(p.f) ? chanakyaToUnicode(p.t) : p.t;
     if (prevI !== null && prevI !== p.i && !/\s$/.test(text) && !/^\s/.test(u)) {
       text += " ";
       html += " ";
@@ -61,6 +62,8 @@ function synonymsHtml(s: string): string {
 export function parseHindiSb(lines: PdfLine[], canto: number): HindiResult {
   const verses: HindiVerse[] = [];
   const chapters: number[] = [];
+  const titles: Record<number, string> = {};
+  let wantTitle = false;
   const issues: string[] = [];
   let chapter = 0;
   let mode: "" | "verse" | "syn" | "trans" | "purp" = "";
@@ -69,6 +72,9 @@ export function parseHindiSb(lines: PdfLine[], canto: number): HindiResult {
   let cur: HindiVerse | null = null;
   let para = "";
   let paraIsTrans = false;
+  let numberless = 0;
+  let quote: string[] = [];
+  let modeBefore: "" | "verse" | "syn" | "trans" | "purp" = "";
   // body size and left margin, from the regular text
   const sizes = lines.map((l) => l.size).sort((a, b) => a - b);
   const body = sizes[Math.floor(sizes.length * 0.6)] || 16;
@@ -97,37 +103,72 @@ export function parseHindiSb(lines: PdfLine[], canto: number): HindiResult {
       chapter = n || chapter + 1;
       chapters.push(chapter);
       mode = "";
+      wantTitle = true;
       continue;
     }
     if (!chapter) continue;
     const { text, html } = lineText(l);
-    if (!text || /^[०-९0-9]+$/.test(text)) continue; // page numbers
-    // ---- verse lines (bold, a little smaller than the body)
-    const isVerse = l.bold && l.size < body - 0.4 && l.size > body - 3 && !/—/.test(text);
-    if (isVerse) {
-      if (mode !== "verse") {
-        finishVerse();
-        verseNums = [];
-      }
-      mode = "verse";
-      for (const m of text.matchAll(/॥\s*([०-९0-9]+)\s*॥/g)) verseNums.push(deva(m[1]));
-      continue;
+    // the chapter's Hindi title: the first line after "Chapter …" (one or two lines in the large type)
+    if (wantTitle && text && !/^[०-९0-9]+$/.test(text)) {
+      if (!titles[chapter]) titles[chapter] = text;
+      else if (l.size >= (lines[k - 1]?.size ?? 0) - 0.5 && l.size > body + 1) titles[chapter] += " " + text;
+      else wantTitle = false;
+      if (wantTitle) continue;
     }
+    if (!text || /^[०-९0-9]+$/.test(text)) continue; // page numbers
     if (/^शब्दार्थ$/.test(text)) {
       mode = "syn";
       syn = "";
+      continue;
+    }
+    // ---- verse lines (bold, a little smaller than the body)
+    const speaker = l.bold && /उवाच\s*[—:–-]?\s*$/.test(text) && text.length < 60;
+    const isVerse = speaker || (l.bold && l.size < body - 0.4 && l.size > body - 3 && !/—/.test(text));
+    if (isVerse) {
+      if (mode !== "verse") {
+        // don't close the purport yet: a verse quoted in it looks the same
+        quote = [];
+        modeBefore = mode;
+        verseNums = [];
+      }
+      mode = "verse";
+      quote.push(html);
+      for (const m of text.matchAll(/॥\s*([०-९0-9]+)\s*॥/g)) verseNums.push(deva(m[1]));
+      for (const m of raw.matchAll(/\|\|\s*([0-9]+)\s*\|\|/g)) verseNums.push(Number(m[1]));
       continue;
     }
     if (mode === "syn" && l.size < body - 2) {
       syn += (syn && !syn.endsWith("-") ? " " : "") + text;
       continue;
     }
-    if (mode === "verse" || mode === "syn") {
+    if (mode === "verse") {
+      // no "शब्दार्थ" after it: a verse quoted in the purport
+      if (cur && (modeBefore as string) === "purp") {
+        flushPara();
+        cur.purport += `<p style="text-align:center"><i lang="sa">${quote.join("<br>")}</i></p>`;
+        mode = "purp";
+        paraIsTrans = false;
+      } else mode = modeBefore;
+    }
+    if (mode === "syn") {
+      finishVerse();
       // the translation begins
       if (!verseNums.length) {
-        issues.push(`Page ${l.page}: a verse without its number.`);
-        mode = "";
-        continue;
+        // printed without its number (the prose verses of Canto 5 …): the next one
+        const last = verses.filter((v) => v.chapter === chapter).pop();
+        verseNums = [last ? last.to + 1 : 1];
+        numberless++;
+      }
+      // the digit ५ (5) is missing from the font's text in some PDFs ("१५" reads "१"):
+      // a number that is the expected one without its 5s is the expected one
+      {
+        const last = verses.filter((v) => v.chapter === chapter).pop();
+        let expect = last ? last.to + 1 : 1;
+        verseNums = verseNums.map((n) => {
+          const fixed = n !== expect && String(expect).replace(/5/g, "") === String(n) ? expect : n;
+          expect = fixed + 1;
+          return fixed;
+        });
       }
       const from = Math.min(...verseNums);
       const to = Math.max(...verseNums);
@@ -153,5 +194,6 @@ export function parseHindiSb(lines: PdfLine[], canto: number): HindiResult {
     para += (para && !para.endsWith("-") ? " " : "") + html;
   }
   finishVerse();
-  return { canto, verses, chapters, issues };
+  if (numberless) issues.push(`${numberless} verse(s) printed without a number were numbered in sequence.`);
+  return { canto, verses, chapters, titles, issues };
 }

@@ -1263,3 +1263,8 @@ button.ng-cell.empty:hover { border-color: #e8c766; transform: translateY(-1px);
 .memo-num { flex-shrink: 0; min-width: 2.2em; text-align: center; font-size: 0.72em; line-height: 1.6; padding: 0 0.45em; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
 .memo-num:hover { background: var(--accent); color: var(--color-ink); }
 .memo-text, .memo-text * { font-size: 1em !important; line-height: 1.45 !important; margin: 0 !important; }
+
+/* Scripture contents: chapter titles in English or Hindi (LangSwitch) */
+html:not([data-scr-lang="hi"]) .has-hi .t-hi { display: none; }
+html[data-scr-lang="hi"] .has-hi .t-en { display: none; }
+html[data-scr-lang="hi"] .has-hi .t-hi { color: var(--fg); font-weight: 600; }

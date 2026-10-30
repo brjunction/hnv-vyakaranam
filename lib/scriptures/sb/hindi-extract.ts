@@ -40,7 +40,7 @@ export async function pdfLines(doc: Doc, onPage?: (n: number) => void): Promise<
       const i = /italic/i.test(name);
       r.x = Math.min(r.x, Math.round(it.transform[4]));
       r.size = Math.max(r.size, size);
-      r.parts.push({ t: it.str, i, b });
+      r.parts.push({ t: it.str, i, b, f: name.replace(/^[A-Z]{6}\+/, "") });
       const len = it.str.trim().length;
       r.cnt.all += len;
       if (b) r.cnt.b += len;

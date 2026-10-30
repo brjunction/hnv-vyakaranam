@@ -22,6 +22,7 @@ type Row = { location: string; verse: string; c: Record<string, string> };
 export default function HindiSbImport({ bookId }: { bookId: number }) {
   const [files, setFiles] = useState<{ name: string; canto: number; verses: number; issues: string[] }[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
+  const [divisions, setDivisions] = useState<{ location: string; titleDeva: string }[]>([]);
   const [missing, setMissing] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,6 +51,7 @@ export default function HindiSbImport({ bookId }: { bookId: number }) {
       }
       const info: typeof files = [];
       const merged = new Map<string, Row>();
+      const divs: { location: string; titleDeva: string }[] = [];
       const miss: string[] = [];
       for (const f of [...list]) {
         const canto = Number(/canto[-_ ]?0*(\d+)/i.exec(f.name)?.[1] ?? 0);
@@ -61,6 +63,7 @@ export default function HindiSbImport({ bookId }: { bookId: number }) {
         const lines = await pdfLines(doc as never, (n) => n % 20 === 0 && setStatus(`${f.name}: page ${n} of ${doc.numPages}…`));
         const r = parseHindiSb(lines, canto);
         info.push({ name: f.name, canto, verses: r.verses.length, issues: r.issues });
+        for (const [ch, t] of Object.entries(r.titles)) if (byLoc.has(`${canto}.${ch}`)) divs.push({ location: `${canto}.${ch}`, titleDeva: t });
         for (const v of r.verses as HindiVerse[]) {
           const loc = `${canto}.${v.chapter}`;
           const target = (byLoc.get(loc) ?? []).find((e) => e.from <= v.from && v.from <= e.to);
@@ -80,6 +83,7 @@ export default function HindiSbImport({ bookId }: { bookId: number }) {
       }
       setFiles(info);
       setRows([...merged.values()]);
+      setDivisions(divs);
       setMissing(miss);
     } catch (e) {
       setReport(`Could not read the files: ${(e as Error).message}`);
@@ -114,8 +118,8 @@ export default function HindiSbImport({ bookId }: { bookId: number }) {
     if (cur.length) batches.push(cur);
     for (let i = 0; i < batches.length; i++) {
       setStatus(`${dryRun ? "Checking" : "Importing"} … ${Math.round((i / batches.length) * 100)}%`);
-      let r = await importScriptureRows({ bookId, rows: batches[i], divisions: [], dryRun, createDivisions: false }).catch((e: Error) => ({ ok: false, message: e.message, created: 0, updated: 0, unchanged: 0, divisionsCreated: 0, errors: [] }));
-      if (!r.ok && !r.errors.length) r = await importScriptureRows({ bookId, rows: batches[i], divisions: [], dryRun, createDivisions: false }).catch((e: Error) => ({ ok: false, message: e.message, created: 0, updated: 0, unchanged: 0, divisionsCreated: 0, errors: [] }));
+      let r = await importScriptureRows({ bookId, rows: batches[i], divisions: i === 0 ? divisions : [], dryRun, createDivisions: false }).catch((e: Error) => ({ ok: false, message: e.message, created: 0, updated: 0, unchanged: 0, divisionsCreated: 0, errors: [] }));
+      if (!r.ok && !r.errors.length) r = await importScriptureRows({ bookId, rows: batches[i], divisions: i === 0 ? divisions : [], dryRun, createDivisions: false }).catch((e: Error) => ({ ok: false, message: e.message, created: 0, updated: 0, unchanged: 0, divisionsCreated: 0, errors: [] }));
       created += r.created;
       updated += r.updated;
       unchanged += r.unchanged;
@@ -159,7 +163,9 @@ export default function HindiSbImport({ bookId }: { bookId: number }) {
       )}
       {rows.length > 0 && (
         <>
-          <p className="mt-3 text-sm">{rows.length.toLocaleString()} of Śrīla Prabhupāda&apos;s verses get Hindi text.</p>
+          <p className="mt-3 text-sm">
+            {rows.length.toLocaleString()} of Śrīla Prabhupāda&apos;s verses get Hindi text; {divisions.length} chapters get their Hindi title. Text imported before is replaced.
+          </p>
           {missing.length > 0 && (
             <p className="mt-2 flex items-start gap-2 text-xs text-amber-700">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" /> Not found in the Bhāgavatam (skipped): {missing.slice(0, 40).join(", ")}

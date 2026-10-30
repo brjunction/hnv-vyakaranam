@@ -586,7 +586,7 @@ export function parseVolume(all: Line[], opts: ParseOptions): ParseResult {
     const looksSutra =
       m && Number(m[1]) === expected && !l.pieces[0].i && !l.pieces[0].b && !l.pieces[0].sc && Math.abs(l.size - G.body) <= 0.6 &&
       // confirmed by the Devanagari heading just above, or at least not English prose
-      ((devSeen === expected && li - devAt <= 3) || !/(?<![\p{L}\p{M}-])(the|of|and|is|are|an|when|example|for|with|this|that|see|in)(?![\p{L}\p{M}-])/iu.test(t.replace(/^\d+\.\s*/, "")));
+      ((devSeen === expected && li - devAt <= 3) || (t.replace(/^\d+\.\s*/, "").match(/(?<![\p{L}\p{M}-])(the|of|and|is|are|an|when|example|for|with|this|that|see|in)(?![\p{L}\p{M}-])/giu)?.length ?? 0) < 2);
     if (looksSutra) {
       if (!(devSeen === expected && li - devAt <= 3)) unconfirmed.push(expected);
       const section = intro?.kind === "section" ? intro.title.join(" — ") : "";

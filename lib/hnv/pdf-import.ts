@@ -94,7 +94,16 @@ export function analyseVolume(input: Line[], numPages: number): Analysis {
           .filter((x): x is string => !!x)
           .map(Number)
       );
-      const seq = [...nums].sort((a, b) => a - b).find((n) => nums.has(n + 1) && nums.has(n + 2));
+      // the start of the longest run of consecutive numbers
+      let seq: number | undefined;
+      let best = 0;
+      for (const n of [...nums].sort((a, b) => a - b)) {
+        if (nums.has(n - 1)) continue;
+        let k = 0;
+        while (nums.has(n + k)) k++;
+        if (k > best) (best = k), (seq = n);
+      }
+      if (best < 3) seq = undefined;
       startAt = seq ?? first?.devSutra ?? 1;
     }
     const r = parseVolume(lines, {

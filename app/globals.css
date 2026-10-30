@@ -278,7 +278,18 @@ body {
 .hnv-wiki.hnv-wiki #hnv-layout { min-height: calc(100dvh - 4rem); }
 .hnv-wiki.hnv-wiki #sidebar { top: 4rem; height: calc(100dvh - 4rem); }
 .hnv-wiki.hnv-wiki #main { min-width: 0; }
-.hnv-wiki.hnv-wiki table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hnv-wiki.hnv-wiki table { display: table; width: 100%; max-width: 100%; }
+.hnv-wiki.hnv-wiki .paradigm-wrap, .hnv-wiki.hnv-wiki .table-row { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hnv-wiki.hnv-wiki #main { width: 100%; max-width: 1240px; margin: 0 auto; }
+@media (min-width: 1024px) {
+  .hnv-wiki.hnv-wiki[data-folded="1"] #sidebar { display: none; }
+  .hnv-wiki.hnv-wiki[data-folded="1"] #main { max-width: 1400px; }
+}
+@media (max-width: 640px) {
+  .hnv-wiki.hnv-wiki table.decl { min-width: 0; }
+  .hnv-wiki.hnv-wiki table.decl th, .hnv-wiki.hnv-wiki table.decl td { padding: 6px 5px; }
+  .hnv-wiki.hnv-wiki #main { overflow-x: auto; }
+}
 .hnv-wiki.hnv-wiki img { max-width: 100%; height: auto; }
 /* The wiki in the site's own design: palette, type, cards and tables follow
    the site tokens (light and dark), the sidebar is the site's own panel. */
@@ -300,7 +311,7 @@ body {
 .hnv-wiki.hnv-wiki .nav-items a.sub { color: var(--fg-muted); padding-left: 22px; }
 .hnv-wiki.hnv-wiki .nav-items a:hover { background: var(--hover); color: var(--fg); opacity: 1; }
 .hnv-wiki.hnv-wiki .nav-items a.active { background: var(--accent); color: var(--color-ink); opacity: 1; font-weight: 600; }
-.hnv-wiki.hnv-wiki #main { padding: 32px 40px 64px; max-width: 1100px; }
+.hnv-wiki.hnv-wiki #main { padding: 32px 40px 64px; }
 .hnv-wiki.hnv-wiki h2 { color: var(--fg); font-weight: 600; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); position: relative; padding-bottom: 12px; }
 .hnv-wiki.hnv-wiki h2::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 3px; border-radius: 3px; background: var(--color-saffron); }
 .hnv-wiki.hnv-wiki h3 { color: var(--color-saffron); font-weight: 600; }

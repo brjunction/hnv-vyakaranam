@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpenText, X } from "lucide-react";
+import { BookOpenText, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 
 /**
  * Hosts the wiki's HTML + script inside the site layout, and adds a mobile
@@ -12,6 +12,20 @@ import { BookOpenText, X } from "lucide-react";
 export default function WikiShell({ css, html, js }: { css: string; html: string; js: string }) {
   const host = useRef<HTMLDivElement>(null);
   const [drawer, setDrawer] = useState(false);
+  // desktop: the section list can be folded away for a full-width page
+  const [folded, setFolded] = useState(false);
+  useEffect(() => {
+    try {
+      setFolded(localStorage.getItem("hnv:wiki-folded") === "1");
+    } catch {}
+  }, []);
+  const fold = () => {
+    const v = !folded;
+    setFolded(v);
+    try {
+      localStorage.setItem("hnv:wiki-folded", v ? "1" : "0");
+    } catch {}
+  };
 
   useEffect(() => {
     const el = host.current;
@@ -49,7 +63,17 @@ export default function WikiShell({ css, html, js }: { css: string; html: string
         {drawer ? "Close" : "Sections"}
       </button>
       {drawer && <div className="lg:hidden fixed inset-0 z-[45] bg-black/40" onClick={() => setDrawer(false)} aria-hidden />}
-      <div ref={host} className="hnv-wiki" data-drawer={drawer ? "open" : "closed"} dangerouslySetInnerHTML={{ __html: html }} />
+      <button
+        type="button"
+        onClick={fold}
+        className="wiki-fold-btn hidden lg:inline-flex fixed right-5 bottom-5 z-[60] items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg)] px-4 py-2.5 text-sm font-medium shadow-lg hover:border-[var(--accent)]"
+        aria-pressed={folded}
+        title={folded ? "Show the sections" : "Hide the sections (full width)"}
+      >
+        {folded ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+        {folded ? "Sections" : "Hide"}
+      </button>
+      <div ref={host} className="hnv-wiki" data-drawer={drawer ? "open" : "closed"} data-folded={folded ? "1" : "0"} dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
 }

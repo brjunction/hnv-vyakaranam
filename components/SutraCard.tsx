@@ -6,10 +6,11 @@ import Link from "next/link";
 import RichText, { isHtml } from "@/components/RichText";
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import { detectScript, type ScriptName } from "@/lib/scriptures/core";
+import { splitVrtti } from "@/lib/hnv/vrtti";
 
-function Block({ label, children }: { label: string; children: React.ReactNode }) {
+function Block({ label, children, tone }: { label: string; children: React.ReactNode; tone?: "syn" | "trans" | "vrtti" }) {
   return (
-    <div>
+    <div className={tone ? `sutra-part sutra-part-${tone}` : ""}>
       <p className="text-xs uppercase tracking-wider text-[var(--color-saffron)] mb-1">{label}</p>
       {children}
     </div>
@@ -141,27 +142,27 @@ export default function SutraCard({
       {(
         <div hidden={!isOpen} className="px-4 pb-5 pt-1 border-t border-[var(--border)] space-y-4">
           {!compact && sutra.synonyms.trim() && (
-            <Block label="Synonyms">
+            <Block label="Synonyms" tone="syn">
               {isHtml(sutra.synonyms) ? <RichIn html={sutra.synonyms} english script={script} className="leading-relaxed" /> : <RichText value={sutra.synonyms} className="leading-relaxed" />}
             </Block>
           )}
-          {compact !== "vrtti" && <Block label="Translation">
+          {compact !== "vrtti" && <Block label="Translation" tone="trans">
             {sutra.translation.trim() ? (
               isHtml(sutra.translation) ? <RichIn html={sutra.translation} english script={script} className="leading-relaxed" /> : <RichText value={sutra.translation} className="leading-relaxed" />
             ) : (
               <p className="text-sm text-[var(--fg-muted)]">—</p>
             )}
           </Block>}
-          {compact !== "translation" && <Block label="Vṛtti">
+          {compact !== "translation" && <Block label="Vṛtti" tone="vrtti">
             {sutra.vrtti.trim() ? (
               isHtml(sutra.vrtti) ? (
-                <RichIn html={sutra.vrtti} english={false} script={script} className="text-base leading-relaxed" />
+                <RichIn html={splitVrtti(sutra.vrtti).sanskrit} english={false} script={script} className="vrtti-sa text-base leading-relaxed" />
               ) : (
                 <VerseLinesIn
                   devanagari={detectScript(sutra.vrtti) ? sutra.vrtti : ""}
                   iast={detectScript(sutra.vrtti) ? "" : sutra.vrtti}
                   script={script}
-                  className="!text-base !leading-relaxed"
+                  className="vrtti-sa !text-base !leading-relaxed"
                 />
               )
             ) : (

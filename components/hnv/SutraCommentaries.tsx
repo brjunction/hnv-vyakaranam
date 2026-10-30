@@ -7,6 +7,7 @@ import type { PublicSutra } from "@/lib/data/hnv";
 import SutraCard from "@/components/SutraCard";
 import { RichIn } from "@/components/scriptures/ScriptText";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
+import { splitVrtti } from "@/lib/hnv/vrtti";
 
 /**
  * A sūtra's own page. Two readers, switched with the icons at the top:
@@ -30,7 +31,10 @@ export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
     } catch {}
   };
   const card = <SutraCard sutra={sutra} forceOpen showNotes={false} script={prefs.script} />;
-  const has = sutra.commentaries.length > 0;
+  // the vṛtti's English translation is shown among the commentaries (first, bold and coloured)
+  const vEn = splitVrtti(sutra.vrtti).english;
+  const commentaries = vEn ? [{ key: "vrtti-translation", name: "Vṛtti translation", author: "", html: vEn, vrtti: true }, ...sutra.commentaries] : sutra.commentaries;
+  const has = commentaries.length > 0;
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
@@ -49,12 +53,12 @@ export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
       {!has || mode === "simple" ? (
         <>
           {card}
-          <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
+          <SutraCommentaries commentaries={commentaries} script={prefs.script} />
         </>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start">
           <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">{card}</div>
-          <SutraCommentaries commentaries={sutra.commentaries} script={prefs.script} />
+          <SutraCommentaries commentaries={commentaries} script={prefs.script} />
         </div>
       )}
     </>
@@ -62,7 +66,8 @@ export default function SutraFull({ sutra }: { sutra: PublicSutra }) {
 }
 
 /** The commentaries of one sūtra, one at a time (tabs). */
-export function SutraCommentaries({ commentaries, script }: { commentaries: PublicSutra["commentaries"]; script: ReturnType<typeof useReaderPrefs>[0]["script"] }) {
+type Com = PublicSutra["commentaries"][number] & { vrtti?: boolean };
+export function SutraCommentaries({ commentaries, script }: { commentaries: Com[]; script: ReturnType<typeof useReaderPrefs>[0]["script"] }) {
   const [active, setActive] = useState(0);
   if (!commentaries.length) return null;
   const c = commentaries[Math.min(active, commentaries.length - 1)];
@@ -90,7 +95,7 @@ export function SutraCommentaries({ commentaries, script }: { commentaries: Publ
           {c.name}
           {c.author && <span className="font-normal text-[var(--fg-muted)]"> · {c.author}</span>}
         </h3>
-        <RichIn html={c.html} english script={script} className="leading-relaxed" />
+        <RichIn html={c.html} english script={script} className={`leading-relaxed ${c.vrtti ? "vrtti-en" : ""}`} />
       </article>
     </section>
   );

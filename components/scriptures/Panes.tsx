@@ -45,6 +45,15 @@ export function LangPicker({ prefs, setPrefs }: { prefs: ReaderPrefs; setPrefs: 
   );
 }
 
+/** Anvaya on / off — it shows only when this is on (the same switch as on the chapter page). */
+export function AnvayaToggle({ prefs, setPrefs }: { prefs: ReaderPrefs; setPrefs: SetPrefs }) {
+  return (
+    <button type="button" className="ui-btn" aria-pressed={prefs.chapterAnvaya} onClick={() => setPrefs({ chapterAnvaya: !prefs.chapterAnvaya })} title="Show the Anvaya">
+      <span className="font-devanagari">अन्वयः</span> Anvaya
+    </button>
+  );
+}
+
 /** A− / A+ for one side; each side (verse / commentary) has its own. */
 export function SizeControl({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   const step = (d: number) => onChange(Math.min(1.6, Math.max(0.8, Math.round((value + d) * 100) / 100)));
@@ -120,11 +129,11 @@ export function TranslationBlock({ type, html, script, compact = false }: { type
 
 /** Everything that belongs WITH the verse (not commentaries), always in this order: synonyms (word-for-word), Anvaya, Translation. */
 const COMPANION_ORDER: Record<string, number> = { verse: 0, anvaya: 1, translation: 2 };
-export function VerseCompanions({ types, c, script, compact = false }: { types: CommentaryType[]; c: Record<number, string>; script: ScriptName; compact?: boolean }) {
+export function VerseCompanions({ types, c, script, compact = false, anvaya = false }: { types: CommentaryType[]; c: Record<number, string>; script: ScriptName; compact?: boolean; /** shown only when the reader turns it on */ anvaya?: boolean }) {
   return (
     <>
       {types
-        .filter((t) => t.appliesTo !== "division" && t.pane !== "commentary")
+        .filter((t) => t.appliesTo !== "division" && t.pane !== "commentary" && (anvaya || t.pane !== "anvaya"))
         .map((t, i) => ({ t, i }))
         .sort((a, b) => (COMPANION_ORDER[a.t.pane] ?? 0) - (COMPANION_ORDER[b.t.pane] ?? 0) || a.i - b.i)
         .map(({ t }) =>
@@ -172,7 +181,7 @@ export function VersePane({
       ) : (
         <p className="text-[var(--fg-muted)]">The verse text hasn't been added yet.</p>
       )}
-      <VerseCompanions types={types} c={verse.c} script={prefs.script} />
+      <VerseCompanions types={types} c={verse.c} script={prefs.script} anvaya={prefs.chapterAnvaya} />
     </div>
   );
 }

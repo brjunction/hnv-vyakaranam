@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Columns2, Copy, Eye, EyeOff, Keyboard, List, Share2, X } from "lucide-react";
-import { LangPicker, ScriptPicker, SizeControl, VersePane } from "@/components/scriptures/Panes";
+import { AnvayaToggle, LangPicker, ScriptPicker, SizeControl, VersePane } from "@/components/scriptures/Panes";
 import { hasHindi, typesForLang } from "@/lib/scriptures/core";
 import { CommentaryNav } from "@/components/scriptures/CommentaryNav";
 import { useMarks, useReaderPrefs } from "@/components/scriptures/prefs";
@@ -226,6 +226,7 @@ export default function Reader({
     <div className="flex flex-wrap items-center gap-1.5">
       <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
       {hasHindi(data.types) && <LangPicker prefs={prefs} setPrefs={setPrefs} />}
+      {types.some((t) => t.pane === "anvaya") && <AnvayaToggle prefs={prefs} setPrefs={setPrefs} />}
       <DictButton />
       <button type="button" onClick={() => copy("verse")} className="ui-icon-btn" title={copied === "verse" ? "Copied" : "Copy verse"} aria-label="Copy verse">
         {copied === "verse" ? <Check size={16} /> : <Copy size={16} />}
@@ -372,6 +373,7 @@ export default function Reader({
         </button>
         <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
       {hasHindi(data.types) && <LangPicker prefs={prefs} setPrefs={setPrefs} />}
+      {types.some((t) => t.pane === "anvaya") && <AnvayaToggle prefs={prefs} setPrefs={setPrefs} />}
         <DictButton />
       </div>
 

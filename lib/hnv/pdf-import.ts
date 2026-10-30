@@ -42,6 +42,13 @@ export function normaliseLines(lines: Line[]): Line[] {
       .map((l) => ({ ...l, pieces: l.pieces.filter((p) => p.x < cut) }))
       .filter((l) => l.pieces.some((p) => p.t.trim()));
   }
+  // editor's notes after a sūtra number: "1241(SK 3080A). ārambhe …" → "1241. ārambhe …"
+  const NOTE = /^(\d{1,4})\(+[^)]*\)+\s*\./;
+  out = out.map((l) => {
+    const full = l.pieces.map((p) => p.t).join("");
+    if (!NOTE.test(full.trim())) return l;
+    return { ...l, pieces: [{ ...l.pieces[0], t: full.trim().replace(NOTE, "$1.") }] };
+  });
   if (body > 10.5) return out;
   const f = 12 / body;
   return out.map((l) => ({ ...l, size: l.size * f, y: l.y * f, pieces: l.pieces.map((p) => ({ ...p, x: p.x * f, w: p.w * f })) }));

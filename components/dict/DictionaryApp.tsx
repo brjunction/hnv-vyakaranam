@@ -1,5 +1,6 @@
 "use client";
 
+import { addDevanagari, buildTermMap, toHnvTerms, type TermMap } from "@/lib/dict/hnv-terms";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -169,7 +170,8 @@ function ScopePicker({ dicts, scope, setScope }: { dicts: DictInfo[]; scope: str
 }
 
 // ---------------------------------------------------------------- article
-function WorkCard({ c, open, onToggle, id }: { c: Card; open: boolean; onToggle: () => void; id: string }) {
+function WorkCard({ c, open, onToggle, id, terms }: { c: Card; open: boolean; onToggle: () => void; id: string; terms?: TermMap | null }) {
+  const fix = (h: string) => (terms ? toHnvTerms(h, terms) : h);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [tall, setTall] = useState(false);
@@ -190,13 +192,13 @@ function WorkCard({ c, open, onToggle, id }: { c: Card; open: boolean; onToggle:
         <div className="dict-card-body">
           <div ref={bodyRef} className={`relative ${tall && !full ? "max-h-[600px] overflow-hidden" : ""}`}>
             {n === 1 ? (
-              <div className="dict-article leading-relaxed" dangerouslySetInnerHTML={{ __html: c.senses[0].html }} />
+              <div className="dict-article leading-relaxed" dangerouslySetInnerHTML={{ __html: fix(c.senses[0].html) }} />
             ) : (
               <ol className="dict-senses">
                 {c.senses.map((x, i) => (
                   <li key={i}>
                     <span className="dict-sense-n">{i + 1}</span>
-                    <div className="dict-article min-w-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: x.html }} />
+                    <div className="dict-article min-w-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: fix(x.html) }} />
                   </li>
                 ))}
               </ol>
@@ -238,6 +240,25 @@ export default function DictionaryApp() {
   const [tab, setTab] = useState<string>("all");
   const [mobileEntry, setMobileEntry] = useState(false);
   const [ready, setReady] = useState(false);
+  // "HNV terms": Pāṇini's grammatical terms in the entries shown as Śrīla Jīva Gosvāmī's
+  const [hnvOn, setHnvOn] = useState(false);
+  const [hnvTerms, setHnvTerms] = useState<TermMap | null>(null);
+  useEffect(() => {
+    try {
+      setHnvOn(localStorage.getItem("hnv:dict-hnv-terms") === "1");
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("hnv:dict-hnv-terms", hnvOn ? "1" : "0");
+    } catch {}
+    if (!hnvOn) return setHnvTerms(null);
+    let live = true;
+    addDevanagari(buildTermMap()).then((m) => live && setHnvTerms(m));
+    return () => {
+      live = false;
+    };
+  }, [hnvOn]);
   const [note, setNote] = useState("");
   const [failed, setFailed] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
@@ -490,6 +511,15 @@ export default function DictionaryApp() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setHnvOn((v) => !v)}
+              aria-pressed={hnvOn}
+              title="Show Pāṇini’s grammatical terms in the entries as Śrīla Jīva Gosvāmī’s (Harināmāmṛta) terms — hover a term for Pāṇini’s"
+              className={`h-11 rounded-xl border px-3 text-sm shadow-sm ${hnvOn ? "border-[var(--accent)] bg-[var(--accent)] font-medium text-[var(--color-ink)]" : "border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]"}`}
+            >
+              HNV terms
+            </button>
             <ScopePicker dicts={dicts} scope={scope} setScope={setScope} />
             <div className="inline-flex h-11 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-1 text-sm shadow-sm">
               {(["word", "meaning"] as const).map((m) => (
@@ -683,7 +713,7 @@ export default function DictionaryApp() {
                                   .filter((c) => c.section === sec)
                                   .map((c) => {
                                     const i = cards.indexOf(c);
-                                    return <WorkCard key={c.key} id={`card-${i}`} c={c} open={isOpen(c, i)} onToggle={() => toggleCard(c, i)} />;
+                                    return <WorkCard key={c.key} id={`card-${i}`} c={c} open={isOpen(c, i)} onToggle={() => toggleCard(c, i)} terms={hnvTerms} />;
                                   })}
                               </div>
                             </div>

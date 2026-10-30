@@ -1323,3 +1323,6 @@ button.ng-cell.empty:hover { border-color: #e8c766; transform: translateY(-1px);
 html:not([data-scr-lang="hi"]) .has-hi .t-hi { display: none; }
 html[data-scr-lang="hi"] .has-hi .t-en { display: none; }
 html[data-scr-lang="hi"] .has-hi .t-hi { color: var(--fg); font-weight: 600; }
+
+/* Dictionary: a Pāṇinian term shown as the HNV term (hover for Pāṇini's) */
+.hnv-term { text-decoration: underline dotted var(--accent); text-underline-offset: 3px; color: var(--color-saffron); font-weight: 600; cursor: help; }

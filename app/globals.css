@@ -280,6 +280,51 @@ body {
 .hnv-wiki.hnv-wiki #main { min-width: 0; }
 .hnv-wiki.hnv-wiki table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .hnv-wiki.hnv-wiki img { max-width: 100%; height: auto; }
+/* The wiki in the site's own design: palette, type, cards and tables follow
+   the site tokens (light and dark), the sidebar is the site's own panel. */
+.hnv-wiki.hnv-wiki {
+  --saffron: var(--color-saffron); --gold: var(--accent); --dark: var(--fg); --cream: var(--bg);
+  --light: var(--bg-2); --border: var(--border); --hover: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: var(--bg); color: var(--fg); font-family: inherit;
+}
+.hnv-wiki.hnv-wiki #hnv-layout { background: var(--bg); }
+.hnv-wiki.hnv-wiki #sidebar { background: var(--bg-2); color: var(--fg); border-right: 1px solid var(--border); }
+.hnv-wiki.hnv-wiki #sidebar h1 { color: var(--color-saffron); border-bottom: 1px solid var(--border); font-weight: 600; letter-spacing: 0.2em; font-size: 0.72rem; }
+.hnv-wiki.hnv-wiki #search { background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; }
+.hnv-wiki.hnv-wiki #search::placeholder { color: var(--fg-muted); }
+.hnv-wiki.hnv-wiki #search:focus { outline: none; border-color: var(--accent); }
+.hnv-wiki.hnv-wiki .nav-group { border-bottom: 1px solid var(--border); }
+.hnv-wiki.hnv-wiki .nav-group-title { color: var(--fg-muted); font-weight: 600; }
+.hnv-wiki.hnv-wiki .nav-group-title:hover { background: var(--hover); color: var(--fg); }
+.hnv-wiki.hnv-wiki .nav-items a { color: var(--fg); opacity: 0.85; border-radius: 10px; margin: 1px 8px; padding: 6px 12px; }
+.hnv-wiki.hnv-wiki .nav-items a.sub { color: var(--fg-muted); padding-left: 22px; }
+.hnv-wiki.hnv-wiki .nav-items a:hover { background: var(--hover); color: var(--fg); opacity: 1; }
+.hnv-wiki.hnv-wiki .nav-items a.active { background: var(--accent); color: var(--color-ink); opacity: 1; font-weight: 600; }
+.hnv-wiki.hnv-wiki #main { padding: 32px 40px 64px; max-width: 1100px; }
+.hnv-wiki.hnv-wiki h2 { color: var(--fg); font-weight: 600; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); position: relative; padding-bottom: 12px; }
+.hnv-wiki.hnv-wiki h2::after { content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 3px; border-radius: 3px; background: var(--color-saffron); }
+.hnv-wiki.hnv-wiki h3 { color: var(--color-saffron); font-weight: 600; }
+.hnv-wiki.hnv-wiki h4 { color: var(--fg); }
+.hnv-wiki.hnv-wiki p, .hnv-wiki.hnv-wiki li { line-height: 1.7; }
+.hnv-wiki.hnv-wiki .note { background: var(--bg-2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; color: var(--fg); }
+.hnv-wiki.hnv-wiki .sutra-box { background: var(--bg-2); border: 1px solid var(--border); border-left: 3px solid var(--color-saffron); border-radius: 12px; color: var(--fg); }
+.hnv-wiki.hnv-wiki .sutra-box .snum { color: var(--color-saffron); }
+.hnv-wiki.hnv-wiki .paradigm-wrap { border-radius: 14px; }
+.hnv-wiki.hnv-wiki .paradigm-label { border-radius: 999px; margin-bottom: 6px; padding: 3px 12px; }
+.hnv-wiki.hnv-wiki table.decl { border-collapse: separate; border-spacing: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--bg); }
+.hnv-wiki.hnv-wiki table.decl th { background: var(--bg-2); color: var(--fg-muted); border-bottom: 1px solid var(--border); letter-spacing: 0.08em; }
+.hnv-wiki.hnv-wiki table.decl td { border: 0; border-top: 1px solid var(--border); color: var(--fg); }
+.hnv-wiki.hnv-wiki table.decl td + td { border-left: 1px solid var(--border); }
+.hnv-wiki.hnv-wiki table.decl td:first-child { background: var(--bg-2); color: var(--fg); border-right: 1px solid var(--border); }
+.hnv-wiki.hnv-wiki table.decl tr:hover td:not(:first-child) { background: var(--hover); }
+.hnv-wiki.hnv-wiki [data-s] { text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent); text-underline-offset: 4px; }
+.hnv-wiki.hnv-wiki #tt { background: var(--bg); color: var(--fg); border: 1px solid var(--accent); border-radius: 14px; box-shadow: 0 18px 48px rgb(0 0 0 / 0.22); padding: 12px 14px; }
+.hnv-wiki.hnv-wiki #tt .tt-sutra { color: var(--color-saffron); border-bottom: 1px solid var(--border); }
+.hnv-wiki.hnv-wiki #tt .tt-skt { color: var(--fg); }
+.hnv-wiki.hnv-wiki #tt .tt-mean, .hnv-wiki.hnv-wiki #tt .tt-deriv { color: var(--fg-muted); border-color: var(--border); }
+.hnv-wiki.hnv-wiki .qa-item { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; }
+.hnv-wiki.hnv-wiki .badge { border-radius: 999px; }
+.dark .hnv-wiki.hnv-wiki .paradigm-label { filter: brightness(1.25); }
 @media (max-width: 1023px) {
   .hnv-wiki.hnv-wiki #hnv-layout { display: block; }
   .hnv-wiki.hnv-wiki #sidebar {

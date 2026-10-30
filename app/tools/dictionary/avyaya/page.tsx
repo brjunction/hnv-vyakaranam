@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import PageHead from "@/components/PageHead";
-import WordList from "@/components/tools/WordList";
+import AvyayaSearch from "@/components/tools/AvyayaSearch";
 import avyayas from "@/lib/data/static/avyayas.json";
 
 export const metadata: Metadata = {
@@ -14,14 +14,7 @@ export default function AvyayaPage() {
     <>
       <PageHead title="Avyaya-śabda-saṅgraha" intro="The indeclinable words (avyayas), with their meanings in Sanskrit and in English." />
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <WordList
-          rows={avyayas as Record<string, string>[]}
-          cols={[
-            { key: "w", label: "Avyaya", sa: true, width: "16%" },
-            { key: "s", label: "Sanskrit meaning", sa: true, width: "34%" },
-            { key: "e", label: "English meaning" },
-          ]}
-        />
+        <AvyayaSearch rows={avyayas as Record<string, string>[]} />
       </div>
     </>
   );

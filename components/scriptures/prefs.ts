@@ -33,6 +33,8 @@ export type ReaderPrefs = {
   chapterAnvaya: boolean;
   /** Commentary shown on the chapter page, per book. */
   chapterComm: Record<string, string>;
+  /** Language of the translation, synonyms and purport ("hi" where the book has Hindi). */
+  lang: "en" | "hi";
 };
 
 const DEFAULTS: ReaderPrefs = {
@@ -51,6 +53,7 @@ const DEFAULTS: ReaderPrefs = {
   chapterMode: "translation",
   chapterAnvaya: false,
   chapterComm: {},
+  lang: "en",
 };
 const KEY = "scr:prefs";
 const EVENT = "scr-prefs";

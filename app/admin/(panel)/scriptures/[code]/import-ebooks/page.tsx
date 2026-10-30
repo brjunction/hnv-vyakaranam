@@ -4,6 +4,7 @@ import { getBookAdmin } from "@/lib/data/scripturesAdmin";
 import { Crumbs } from "@/components/admin/hnv/bits";
 import { BookTabs } from "@/components/admin/scriptures/bits";
 import EbookImport from "@/components/admin/scriptures/EbookImport";
+import HindiSbImport from "@/components/admin/scriptures/HindiSbImport";
 
 export const metadata = { title: "Import e-books" };
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export default async function ImportEbooks({ params }: { params: Promise<{ code:
       <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">{book.title}</h1>
       <BookTabs code={book.code} active="ebooks" />
       <EbookImport bookId={book.id} bookTitle={book.title} book={book.code === "bg" ? "bg" : "sb"} />
+      {book.code === "sb" && <HindiSbImport bookId={book.id} />}
     </>
   );
 }

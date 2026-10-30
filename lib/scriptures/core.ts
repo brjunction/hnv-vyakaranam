@@ -234,3 +234,15 @@ export async function convertScript(text: string, from: ScriptName, to: ScriptNa
   if (to === "oriya") return dropFinal(out.replace(/(?<=[\u0B00-\u0B7F])(?<!\u0B4D)\u0B2F(?!\u0B3C)/g, "\u0B5F"), "\u0B4D");
   return dropFinal(out, "\u094D");
 }
+
+/**
+ * Translation languages: a kind whose key ends in "_hi" is the Hindi version
+ * of the kind without it (translation_hi ↔ translation). In Hindi, those
+ * replace the English ones; in English, the Hindi ones are hidden.
+ */
+export function typesForLang<T extends { key: string }>(types: T[], lang: "en" | "hi"): T[] {
+  const hi = new Set(types.filter((t) => t.key.endsWith("_hi")).map((t) => t.key.slice(0, -3)));
+  if (!hi.size) return types;
+  return lang === "hi" ? types.filter((t) => !hi.has(t.key)) : types.filter((t) => !t.key.endsWith("_hi"));
+}
+export const hasHindi = (types: { key: string }[]) => types.some((t) => t.key.endsWith("_hi"));

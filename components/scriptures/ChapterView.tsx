@@ -2,20 +2,21 @@
 
 import Link from "next/link";
 import { BookOpenText, MessageSquareText } from "lucide-react";
-import { AnvayaBlock, ScriptPicker, SizeControl, TranslationBlock } from "@/components/scriptures/Panes";
+import { AnvayaBlock, LangPicker, ScriptPicker, SizeControl, TranslationBlock } from "@/components/scriptures/Panes";
 import { RichIn, VerseLinesIn } from "@/components/scriptures/ScriptText";
 import { useReaderPrefs } from "@/components/scriptures/prefs";
 import Select from "@/components/ui/Select";
 import SynonymsBlock from "@/components/scriptures/SynonymsBlock";
-import { versePath, type DivisionData } from "@/lib/scriptures/core";
+import { hasHindi, typesForLang, versePath, type DivisionData } from "@/lib/scriptures/core";
 import DictButton from "@/components/DictButton";
 
 // A whole chapter on one page: every verse at once, with a view switch —
 // Verses · + Translation · + Commentary (choose which) — and an Anvaya toggle.
 
 export default function ChapterView({ data }: { data: DivisionData }) {
-  const { book, division, verses, types } = data;
+  const { book, division, verses } = data;
   const [prefs, setPrefs] = useReaderPrefs();
+  const types = typesForLang(data.types, prefs.lang);
   const verseTypes = types.filter((t) => t.appliesTo !== "division");
   const anvayaT = verseTypes.filter((t) => t.pane === "anvaya");
   const transT = verseTypes.filter((t) => t.pane === "translation");
@@ -81,6 +82,7 @@ export default function ChapterView({ data }: { data: DivisionData }) {
               )}
               <span className="ml-auto flex flex-wrap items-center gap-2">
                 <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+                {hasHindi(data.types) && <LangPicker prefs={prefs} setPrefs={setPrefs} />}
                 <DictButton />
                 <SizeControl value={prefs.fontScale} onChange={(v) => setPrefs({ fontScale: v })} label="verse" />
                 {mode === "commentary" && <SizeControl value={prefs.commScale} onChange={(v) => setPrefs({ commScale: v })} label="commentary" />}

@@ -1250,3 +1250,14 @@ export async function ensureCommentaryKinds(bookId: number, kinds: z.input<typeo
   if (created.length) revalidateScriptures();
   return { ok: true, message: created.length ? `Added: ${created.join(", ")}.` : "All kinds already exist.", created };
 }
+
+/** Every verse number of a book ("12.1.3-4"), for importers that attach text to existing verses. */
+export async function listVerseNumbers(bookId: number): Promise<string[]> {
+  await requireUser("editor");
+  const rows = await getDb()
+    .select({ n: scriptureVerses.verseNo })
+    .from(scriptureVerses)
+    .innerJoin(scriptureDivisions, eq(scriptureDivisions.id, scriptureVerses.divisionId))
+    .where(eq(scriptureDivisions.bookId, Number(bookId)));
+  return rows.map((r) => r.n);
+}

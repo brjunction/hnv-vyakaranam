@@ -408,6 +408,8 @@ export default function NotebookButton({ className = "" }: { className?: string 
   const [dock, setDock] = useState<Dock>("right");
   const [big, setBig] = useState(false);
   const [xy, setXy] = useState({ x: 80, y: 90 });
+  // size chosen by dragging an edge (px); 0 = the default
+  const [wh, setWh] = useState({ w: 0, h: 0 });
   useEffect(() => {
     setMounted(true);
     try {
@@ -415,13 +417,14 @@ export default function NotebookButton({ className = "" }: { className?: string 
       if (p.dock) setDock(p.dock);
       if (p.big) setBig(true);
       if (p.xy) setXy(p.xy);
+      if (p.wh) setWh(p.wh);
     } catch {}
   }, []);
   useEffect(() => {
     try {
-      localStorage.setItem("hnv:notebook-panel", JSON.stringify({ dock, big, xy }));
+      localStorage.setItem("hnv:notebook-panel", JSON.stringify({ dock, big, xy, wh }));
     } catch {}
-  }, [dock, big, xy]);
+  }, [dock, big, xy, wh]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -438,23 +441,59 @@ export default function NotebookButton({ className = "" }: { className?: string 
     window.addEventListener("pointerup", upf);
   };
 
+  /** Drag an edge (or the corner) to resize. */
+  const resize = (edge: "l" | "r" | "t" | "b" | "c") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const box = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+    setBig(false);
+    const mv = (ev: PointerEvent) => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const clampW = (v: number) => Math.max(280, Math.min(W, v));
+      const clampH = (v: number) => Math.max(200, Math.min(H, v));
+      if (edge === "l") setWh((s) => ({ ...s, w: clampW(box.right - ev.clientX) }));
+      if (edge === "r") setWh((s) => ({ ...s, w: clampW(ev.clientX - box.left) }));
+      if (edge === "t") setWh((s) => ({ ...s, h: clampH(box.bottom - ev.clientY) }));
+      if (edge === "b") setWh((s) => ({ ...s, h: clampH(ev.clientY - box.top) }));
+      if (edge === "c") setWh({ w: clampW(ev.clientX - box.left), h: clampH(ev.clientY - box.top) });
+    };
+    const upf = () => (window.removeEventListener("pointermove", mv), window.removeEventListener("pointerup", upf));
+    window.addEventListener("pointermove", mv);
+    window.addEventListener("pointerup", upf);
+  };
   const full = dock === "full" || big;
   const style: React.CSSProperties =
     dock === "full"
       ? { inset: 0 }
       : dock === "right"
-        ? { top: 0, bottom: 0, right: 0, width: big ? "100vw" : "min(50vw, 100vw)", minWidth: "min(28rem, 100vw)" }
+        ? { top: 0, bottom: 0, right: 0, width: big ? "100vw" : wh.w || "min(50vw, 100vw)", minWidth: "min(18rem, 100vw)" }
         : dock === "left"
-          ? { top: 0, bottom: 0, left: 0, width: big ? "100vw" : "min(50vw, 100vw)", minWidth: "min(28rem, 100vw)" }
+          ? { top: 0, bottom: 0, left: 0, width: big ? "100vw" : wh.w || "min(50vw, 100vw)", minWidth: "min(18rem, 100vw)" }
           : dock === "bottom"
-            ? { left: 0, right: 0, bottom: 0, height: big ? "100dvh" : "50dvh" }
+            ? { left: 0, right: 0, bottom: 0, height: big ? "100dvh" : wh.h || "50dvh" }
             : dock === "top"
-              ? { left: 0, right: 0, top: 0, height: big ? "100dvh" : "50dvh" }
+              ? { left: 0, right: 0, top: 0, height: big ? "100dvh" : wh.h || "50dvh" }
               : dock === "center"
                 ? big
                   ? { inset: 0 }
-                  : { left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: "min(64rem, 96vw)", height: "min(80dvh, 46rem)" }
-                : { left: xy.x, top: xy.y, width: big ? "90vw" : "min(40rem, 94vw)", height: big ? "85dvh" : "min(70dvh, 40rem)", resize: "both", overflow: "hidden" };
+                  : { left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: wh.w || "min(64rem, 96vw)", height: wh.h || "min(80dvh, 46rem)" }
+                : { left: xy.x, top: xy.y, width: big ? "90vw" : wh.w || "min(40rem, 94vw)", height: big ? "85dvh" : wh.h || "min(70dvh, 40rem)" };
+  const handle = (edge: "l" | "r" | "t" | "b" | "c", cls: string) => (
+    <div onPointerDown={resize(edge)} className={`absolute z-10 touch-none ${cls}`} aria-hidden title="Drag to resize" />
+  );
+  const handles =
+    dock === "full" ? null : dock === "right" ? handle("l", "inset-y-0 left-0 w-2 cursor-ew-resize hover:bg-[var(--accent)]/30")
+    : dock === "left" ? handle("r", "inset-y-0 right-0 w-2 cursor-ew-resize hover:bg-[var(--accent)]/30")
+    : dock === "bottom" ? handle("t", "inset-x-0 top-0 h-2 cursor-ns-resize hover:bg-[var(--accent)]/30")
+    : dock === "top" ? handle("b", "inset-x-0 bottom-0 h-2 cursor-ns-resize hover:bg-[var(--accent)]/30")
+    : (
+      <>
+        {handle("r", "inset-y-0 right-0 w-2 cursor-ew-resize hover:bg-[var(--accent)]/30")}
+        {handle("b", "inset-x-0 bottom-0 h-2 cursor-ns-resize hover:bg-[var(--accent)]/30")}
+        {handle("c", "bottom-0 right-0 h-4 w-4 cursor-nwse-resize bg-[var(--accent)]/40 rounded-tl")}
+      </>
+    );
 
   const header = (
     <div onPointerDown={drag} className={`flex items-center gap-1 border-b border-[var(--border)] px-3 py-2 ${dock === "float" ? "cursor-move select-none" : ""}`}>
@@ -495,6 +534,7 @@ export default function NotebookButton({ className = "" }: { className?: string 
         createPortal(
           // no backdrop: the page behind stays visible and usable
           <aside className="fixed z-[95] flex flex-col overflow-hidden rounded-none border border-[var(--border)] bg-[var(--bg)] shadow-2xl sm:rounded-xl" style={style}>
+            {handles}
             <NotebookBody header={header} onClose={() => setOpen(false)} />
           </aside>,
           document.body

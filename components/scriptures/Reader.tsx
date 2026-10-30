@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Columns2, Copy, Eye, EyeOff, Keyboard, List, Share2, X } from "lucide-react";
-import { ScriptPicker, SizeControl, VersePane } from "@/components/scriptures/Panes";
+import { LangPicker, ScriptPicker, SizeControl, VersePane } from "@/components/scriptures/Panes";
+import { hasHindi, typesForLang } from "@/lib/scriptures/core";
 import { CommentaryNav } from "@/components/scriptures/CommentaryNav";
 import { useMarks, useReaderPrefs } from "@/components/scriptures/prefs";
 import Select from "@/components/ui/Select";
@@ -64,6 +65,7 @@ export default function Reader({
   const router = useRouter();
   const desktop = useIsDesktop();
   const [prefs, setPrefs] = useReaderPrefs();
+  const types = typesForLang(data.types, prefs.lang);
   const history = useMarks("history");
   const verse = data.verses.find((v) => v.key === verseKey) ?? data.verses[0];
   const ref = verseRef(book, verse?.verseNo ?? "");
@@ -120,7 +122,7 @@ export default function Reader({
 
   if (!verse) return <p className="text-[var(--fg-muted)]">No verses here yet.</p>;
 
-  const hasComm = data.types.some((t) => t.pane === "commentary" && t.appliesTo !== "division");
+  const hasComm = types.some((t) => t.pane === "commentary" && t.appliesTo !== "division");
   const fontStyle = { fontSize: `${prefs.fontScale}rem` };
   const commStyle = { fontSize: `${prefs.commScale}rem` };
   const verseSize = <SizeControl value={prefs.fontScale} onChange={(v) => setPrefs({ fontScale: v })} label="verse" />;
@@ -223,6 +225,7 @@ export default function Reader({
   const actions = (
     <div className="flex flex-wrap items-center gap-1.5">
       <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+      {hasHindi(data.types) && <LangPicker prefs={prefs} setPrefs={setPrefs} />}
       <DictButton />
       <button type="button" onClick={() => copy("verse")} className="ui-icon-btn" title={copied === "verse" ? "Copied" : "Copy verse"} aria-label="Copy verse">
         {copied === "verse" ? <Check size={16} /> : <Copy size={16} />}
@@ -238,8 +241,8 @@ export default function Reader({
     </div>
   );
 
-  const versePane = <VersePane verse={verse} refLabel={ref} types={data.types} prefs={prefs} setPrefs={setPrefs} />;
-  const commPane = <CommentaryNav bookCode={book.code} c={verse.c} types={data.types} prefs={prefs} setPrefs={setPrefs} keys={!embedded} />;
+  const versePane = <VersePane verse={verse} refLabel={ref} types={types} prefs={prefs} setPrefs={setPrefs} />;
+  const commPane = <CommentaryNav bookCode={book.code} c={verse.c} types={types} prefs={prefs} setPrefs={setPrefs} keys={!embedded} />;
 
   // -------------------------------------------------------- embedded (dual)
   if (embedded) {
@@ -368,6 +371,7 @@ export default function Reader({
           {ref} <ChevronDown size={16} />
         </button>
         <ScriptPicker prefs={prefs} setPrefs={setPrefs} />
+      {hasHindi(data.types) && <LangPicker prefs={prefs} setPrefs={setPrefs} />}
         <DictButton />
       </div>
 

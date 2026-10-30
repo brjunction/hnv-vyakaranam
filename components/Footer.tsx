@@ -49,7 +49,7 @@ export default function Footer() {
   return (
     <footer className="mt-7 border-t border-[var(--border)] bg-[var(--bg-2)]">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1.1fr_2.4fr]">
-        <div>
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
           <Link href="/" className="inline-flex items-center gap-2.5">
             <Image src="/hnvlogo.png" alt="" width={40} height={40} />
             <span className="font-semibold">Harināmāmṛta-Vyākaraṇam</span>
@@ -60,7 +60,7 @@ export default function Footer() {
           <p className="mt-4 font-devanagari text-lg text-[var(--accent)]">श्री हरिनामामृत व्याकरणम्</p>
           <p className="mt-1 text-xs text-[var(--fg-muted)]">The Grammar of the Holy Names of Lord Hari</p>
         </div>
-        <nav aria-label="Site map" className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <nav aria-label="Site map" className="grid grid-cols-2 gap-8 text-center sm:grid-cols-4 lg:text-left">
           {COLUMNS.map((c) => (
             <div key={c.title}>
               <p className="mb-3 text-sm font-semibold">{c.title}</p>
@@ -84,7 +84,7 @@ export default function Footer() {
         </nav>
       </div>
       <div className="border-t border-[var(--border)]">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-5 py-4 text-xs text-[var(--fg-muted)]">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-5 py-4 text-center text-xs text-[var(--fg-muted)] sm:flex-row sm:flex-wrap sm:justify-between sm:text-left">
           <p>Harināmāmṛta-Vyākaraṇam — the masterpiece of Sanskrit grammar.</p>
           <p>Hare Kṛṣṇa Hare Kṛṣṇa Kṛṣṇa Kṛṣṇa Hare Hare · Hare Rāma Hare Rāma Rāma Rāma Hare Hare</p>
         </div>

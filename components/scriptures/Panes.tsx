@@ -31,6 +31,20 @@ export function ScriptPicker({ prefs, setPrefs }: { prefs: ReaderPrefs; setPrefs
   );
 }
 
+/** English / हिन्दी — for books that have a Hindi translation. */
+export function LangPicker({ prefs, setPrefs }: { prefs: ReaderPrefs; setPrefs: SetPrefs }) {
+  return (
+    <span className="ui-seg" role="group" aria-label="Language">
+      <button type="button" aria-pressed={prefs.lang !== "hi"} onClick={() => setPrefs({ lang: "en" })}>
+        English
+      </button>
+      <button type="button" aria-pressed={prefs.lang === "hi"} onClick={() => setPrefs({ lang: "hi" })} className="font-devanagari">
+        हिन्दी
+      </button>
+    </span>
+  );
+}
+
 /** A− / A+ for one side; each side (verse / commentary) has its own. */
 export function SizeControl({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   const step = (d: number) => onChange(Math.min(1.6, Math.max(0.8, Math.round((value + d) * 100) / 100)));

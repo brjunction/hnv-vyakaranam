@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ExternalLink, Pencil, Plus } from "lucide-react";
 import { hasRole, requireUser } from "@/lib/auth/session";
 import { getChapterAdmin } from "@/lib/data/hnvAdmin";
-import { addSection, deleteChapter, deleteSection, moveSection, renameSection, saveChapter } from "@/lib/actions/hnv";
+import { addSection, deleteChapter, deleteSection, moveSection, renameSection, saveChapter, saveChapterAudio } from "@/lib/actions/hnv";
 import { PageHeader, Panel } from "@/components/admin/ui";
 import { ActionForm, Field, SubmitButton, inputCls } from "@/components/admin/ActionForm";
 import { Crumbs, EDITION_NAMES, MoveButtons, PUBLIC_BASE, StatusBadge } from "@/components/admin/hnv/bits";
@@ -251,6 +251,26 @@ export default async function ChapterAdmin({
               </select>
             </Field>
             <SubmitButton>Add section</SubmitButton>
+          </ActionForm>
+        </Panel>
+      )}
+      {canEdit && (
+        <Panel title="Recitation audio">
+          <p className="text-sm text-[var(--fg-muted)]">
+            Links only (one per line, played in order) — e.g. from Google Drive, archive.org or SoundCloud. Readers can play the whole chapter (the chapter links, then every section&apos;s, in
+            order) or one section.
+          </p>
+          <ActionForm action={saveChapterAudio} className="mt-4 grid gap-4">
+            <input type="hidden" name="chapterId" value={ch.id} />
+            <Field label="Whole chapter">
+              <textarea name="audio" defaultValue={ch.audio} rows={2} className={inputCls} placeholder="https://…" />
+            </Field>
+            {sections.map((s, i) => (
+              <Field key={s.id} label={`${i + 1}. ${s.title}`}>
+                <textarea name={`sec-${s.id}`} defaultValue={s.audio} rows={1} className={inputCls} placeholder="https://…" />
+              </Field>
+            ))}
+            <SubmitButton>Save audio links</SubmitButton>
           </ActionForm>
         </Panel>
       )}

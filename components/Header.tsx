@@ -24,6 +24,16 @@ const STUDY: NavItem[] = [
       { href: "/laghu/chapters", label: "Laghu" },
     ],
   },
+  {
+    href: "/memorize",
+    label: "Memorise sūtras",
+    desc: "Every sūtra at once, small and in columns — sūtras only.",
+    icon: BookSearch,
+    links: [
+      { href: "/memorize", label: "Madhyama" },
+      { href: "/brhat/memorize", label: "Bṛhat" },
+    ],
+  },
   { href: "/practice", label: "Practice", desc: "Sandhi exercises by topic and level — every answer shows its sūtra.", icon: LandPlot },
   // Served as a raw static HTML page (its own document) — a plain <a> navigates to it.
   { href: "/hnv-wiki", label: "HNV-Wiki", desc: "The sūtras explained simply, with meanings and examples.", icon: Earth, external: true },
@@ -58,7 +68,7 @@ const ABOUT: NavItem[] = [
   { href: "/about/acknowledgements", label: "Acknowledgements", desc: "With gratitude to all whose work makes this possible.", icon: Earth },
   { href: "/about/contact", label: "Contact", desc: "Write or call: questions, corrections and seva.", icon: Mail },
 ];
-const STUDY_PREFIXES = ["/chapters", "/brhat", "/laghu", "/practice", "/hnv-wiki"];
+const STUDY_PREFIXES = ["/chapters", "/brhat", "/laghu", "/practice", "/hnv-wiki", "/memorize"];
 const SCRIPTURE_PREFIXES = ["/scriptures", "/songs"];
 
 

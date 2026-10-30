@@ -623,3 +623,35 @@ export async function publishSutraDrafts(_prev: ActionState, form: FormData): Pr
   revalidateHnv();
   return ok(`Published ${drafts.length} draft${drafts.length === 1 ? "" : "s"}.`);
 }
+
+// ============================================================== audio ====
+/** Recitation audio of a chapter and its sections: links only (one per line), never files. */
+export async function saveChapterAudio(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser("editor");
+  const id = Id.parse(str(form, "chapterId"));
+  const clean = (v: string) => {
+    const lines = v.split(/\s*\n\s*/).map((x) => x.trim()).filter(Boolean);
+    const bad = lines.find((l) => !/^https?:\/\/\S+$/.test(l));
+    if (bad) throw new Error(`Not a link: ${bad.slice(0, 80)}`);
+    return lines.join("\n");
+  };
+  const db = getDb();
+  try {
+    const [before] = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1);
+    if (!before) return fail("That chapter no longer exists.");
+    const audio = clean(str(form, "audio"));
+    await db.update(chapters).set({ audio, updatedBy: user.id }).where(eq(chapters.id, id));
+    const secs = await db.select().from(subchapters).where(eq(subchapters.chapterId, id));
+    for (const s of secs) {
+      const v = form.get(`sec-${s.id}`);
+      if (typeof v !== "string") continue;
+      const a = clean(v);
+      if (a !== s.audio) await db.update(subchapters).set({ audio: a }).where(eq(subchapters.id, s.id));
+    }
+    await log(user, "chapters", id, "update", before, { ...before, audio });
+  } catch (e) {
+    return fail((e as Error).message);
+  }
+  revalidateHnv();
+  return ok("Recitation links saved.");
+}

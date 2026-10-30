@@ -18,6 +18,11 @@ export default async function EditionChapterIndex({ edition }: { edition: Editio
       <p className="text-sm text-[var(--fg-muted)] mb-6 max-w-xl">
         Every prakaraṇa of Hari-nāmāmṛta Vyākaraṇa, {e.name} version, sūtra by sūtra.
       </p>
+      {edition !== "laghu" && (
+        <a href={edition === "brhat" ? "/brhat/memorize" : "/memorize"} className="mb-6 -mt-3 inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-3 py-1.5 text-sm hover:border-[var(--accent)]">
+          All sūtras at once — for memorisation →
+        </a>
+      )}
 
       {list.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--border)] p-10 text-center text-[var(--fg-muted)]">

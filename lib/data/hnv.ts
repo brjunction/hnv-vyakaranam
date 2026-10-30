@@ -34,7 +34,7 @@ export type PublicSutra = {
   links: { label: string; href: string | null }[];
 };
 
-export type PublicSection = { slug: string; title: string; sutras: PublicSutra[] };
+export type PublicSection = { slug: string; title: string; sutras: PublicSutra[]; /** recitation links */ audio?: string[] };
 
 export type ChapterSummary = {
   slug: string;
@@ -49,7 +49,8 @@ export type ChapterSummary = {
   sutraCount: number;
 };
 
-export type PublicChapter = ChapterSummary & { sections: PublicSection[] };
+export type PublicChapter = ChapterSummary & { sections: PublicSection[]; /** recitation links of the whole chapter */ audio?: string[] };
+const audioLines = (s: string | null | undefined) => (s ?? "").split(/\s*\n\s*/).map((x) => x.trim()).filter((x) => /^https?:\/\//.test(x));
 
 function label(kind: "sutras" | "verses", typed: string, numbers: string[]): string {
   if (kind === "verses") return typed || (numbers.length ? `${numbers.length} verses` : "");
@@ -194,6 +195,7 @@ async function readChapter(edition: string, slug: string): Promise<PublicChapter
     slug: sec.slug,
     title: sec.title,
     sutras: rows.filter((r) => r.subchapterId === sec.id).map(toPublic),
+    audio: audioLines((sec as { audio?: string }).audio),
   }));
   const loose = rows.filter((r) => r.subchapterId === null || !secs.some((s) => s.id === r.subchapterId));
   if (loose.length) sections.push({ slug: "other", title: "Other sūtras", sutras: loose.map(toPublic) });
@@ -208,6 +210,7 @@ async function readChapter(edition: string, slug: string): Promise<PublicChapter
     rangeLabel: label(ch.kind, ch.rangeLabel, rows.map((r) => r.number)),
     sutraCount: rows.length,
     sections,
+    audio: audioLines((ch as { audio?: string }).audio),
   };
 }
 
@@ -221,7 +224,7 @@ export function getChapterList(edition: string): Promise<ChapterSummary[]> {
 
 /** One chapter with its sections, sūtras and commentaries; null if not found. */
 export function getPublicChapter(edition: string, slug: string): Promise<PublicChapter | null> {
-  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v2", edition, slug], {
+  return unstable_cache(() => readChapter(edition, slug), ["hnv:chapter:v3", edition, slug], {
     tags: [tags.hnvAll, tags.hnvChapter(edition, slug)],
     revalidate: 86400,
   })();
@@ -254,4 +257,43 @@ export async function getSutraPage(edition: string, number: string) {
   const i = all.findIndex((x) => x.sutra.number === number);
   if (i < 0) return null;
   return { chapter, section: all[i].section, sutra: all[i].sutra, prev: all[i - 1]?.sutra ?? null, next: all[i + 1]?.sutra ?? null };
+}
+
+export type MemoChapter = { slug: string; title: string; sections: { title: string; sutras: { n: string; d: string; i: string }[] }[] };
+
+/** Every sūtra of an edition — number and text only (the memorisation page). */
+async function readMemorize(edition: string): Promise<MemoChapter[]> {
+  if (!isDbConfigured) return [];
+  const db = getDb();
+  const eid = await editionId(edition);
+  if (!eid) return [];
+  const [chs, secs, rows] = await Promise.all([
+    db.select({ id: chapters.id, slug: chapters.slug, title: chapters.title, kind: chapters.kind }).from(chapters).where(and(eq(chapters.editionId, eid), eq(chapters.status, "published"))).orderBy(asc(chapters.sort), asc(chapters.id)),
+    db.select({ id: subchapters.id, chapterId: subchapters.chapterId, title: subchapters.title }).from(subchapters).orderBy(asc(subchapters.sort), asc(subchapters.id)),
+    db
+      .select({ number: sutras.number, chapterId: sutras.chapterId, subchapterId: sutras.subchapterId, sanskrit: sutras.sanskrit, transliteration: sutras.transliteration })
+      .from(sutras)
+      .where(and(eq(sutras.editionId, eid), eq(sutras.status, "published")))
+      .orderBy(asc(sutras.position), asc(sutras.id)),
+  ]);
+  const out: MemoChapter[] = [];
+  for (const c of chs) {
+    if (c.kind === "verses") continue;
+    const mine = rows.filter((r) => r.chapterId === c.id && !r.number.startsWith("0."));
+    if (!mine.length) continue;
+    const ss = secs.filter((s) => s.chapterId === c.id);
+    const groups: MemoChapter["sections"] = [];
+    for (const s of ss) {
+      const list = mine.filter((r) => r.subchapterId === s.id);
+      if (list.length) groups.push({ title: s.title, sutras: list.map((r) => ({ n: r.number, d: r.sanskrit, i: r.transliteration })) });
+    }
+    const loose = mine.filter((r) => !r.subchapterId || !ss.some((s) => s.id === r.subchapterId));
+    if (loose.length) groups.unshift({ title: "", sutras: loose.map((r) => ({ n: r.number, d: r.sanskrit, i: r.transliteration })) });
+    out.push({ slug: c.slug, title: c.title, sections: groups });
+  }
+  return out;
+}
+
+export function getMemorize(edition: string): Promise<MemoChapter[]> {
+  return unstable_cache(() => readMemorize(edition), ["hnv:memorize:v1", edition], { tags: [tags.hnvAll], revalidate: 86400 })();
 }

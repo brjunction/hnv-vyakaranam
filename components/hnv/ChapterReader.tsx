@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ChapterView from "@/components/ChapterView";
+import ChapterAudio from "@/components/hnv/ChapterAudio";
 import type { PublicChapter } from "@/lib/data/hnv";
 
 /** One chapter page: heading, then every section and sūtra. */
@@ -22,6 +23,7 @@ export default function ChapterReader({ chapter, backHref }: { chapter: PublicCh
         </p>
       )}
 
+      <ChapterAudio chapter={chapter} />
       <ChapterView chapter={chapter} sutraBase={backHref.replace(/chapters\/?$/, "sutras")} />
     </div>
   );

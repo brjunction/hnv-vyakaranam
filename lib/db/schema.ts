@@ -146,6 +146,8 @@ export const chapters = pgTable(
     kind: text("kind", { enum: CHAPTER_KINDS }).notNull().default("sutras"),
     /** Human label, e.g. "1–86" or "6 verses". */
     rangeLabel: text("range_label").notNull().default(""),
+    /** Recitation audio: links, one per line (played in order). Links only — no files are stored. */
+    audio: text("audio").notNull().default(""),
     sort: integer("sort").notNull().default(0),
     status: status(),
     createdAt: createdAt(),
@@ -164,6 +166,8 @@ export const subchapters = pgTable(
       .references(() => chapters.id, { onDelete: "cascade" }),
     slug: text("slug").notNull(),
     title: text("title").notNull(),
+    /** Recitation audio of this section: links, one per line. */
+    audio: text("audio").notNull().default(""),
     sort: integer("sort").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

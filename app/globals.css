@@ -1254,3 +1254,12 @@ button.ng-cell.empty:hover { border-color: #e8c766; transform: translateY(-1px);
 .vrtti-sa [lang="en"], .vrtti-sa [lang="en"] * { font-style: normal; }
 .vrtti-en { font-weight: 600; color: var(--color-vermillion); }
 .dark .vrtti-en { color: #f0a07a; }
+
+/* Memorisation: every sūtra, small, in columns */
+.memo-cols { column-gap: 1.5rem; column-rule: 1px solid var(--border); list-style: none; padding: 0; margin: 0; }
+@media (max-width: 640px) { .memo-cols { column-count: 1 !important; } }
+@media (min-width: 641px) and (max-width: 1024px) { .memo-cols { column-count: min(var(--memo-cols, 2), 2); } }
+.memo-item { break-inside: avoid; display: flex; align-items: baseline; gap: 0.45em; padding: 0.22em 0; }
+.memo-num { flex-shrink: 0; min-width: 2.2em; text-align: center; font-size: 0.72em; line-height: 1.6; padding: 0 0.45em; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
+.memo-num:hover { background: var(--accent); color: var(--color-ink); }
+.memo-text, .memo-text * { font-size: 1em !important; line-height: 1.45 !important; margin: 0 !important; }

@@ -21,6 +21,9 @@ const COMMENTARY = {
   amrta: { name: "Amṛta", sort: 5 },
   samsodhini: { name: "Saṁśodhinī", sort: 10 },
   bala: { name: "Bāla", sort: 15 },
+  // Bṛhat: the PDFs carry the English of the Amṛta and Bāla; the Sanskrit (Word files) keeps amrta / bala
+  amrta_en: { name: "Amṛta (English)", sort: 6 },
+  bala_en: { name: "Bāla-toṣaṇī (English)", sort: 16 },
 } as const;
 type CKey = keyof typeof COMMENTARY;
 
@@ -76,7 +79,11 @@ export async function importPdfBatch(input: PdfImportBatch): Promise<BatchResult
   const user = await requireUser("editor");
   const parsed = Batch.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid data.", results: [] };
-  const { edition, dryRun, replace, fields, items } = parsed.data;
+  const { edition, dryRun, replace, fields } = parsed.data;
+  const items = parsed.data.items.map((i) => ({
+    ...i,
+    commentaries: i.commentaries.map((c) => ({ ...c, key: (edition === "brhat" && (c.key === "amrta" || c.key === "bala") ? `${c.key}_en` : c.key) as CKey })),
+  }));
   const db = getDb();
   const [ed] = await db.select().from(editions).where(eq(editions.slug, edition)).limit(1);
   if (!ed) return { ok: false, message: `There is no edition “${edition}”.`, results: [] };

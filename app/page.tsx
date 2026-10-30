@@ -152,35 +152,6 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* What is new — with the ācāryas' Sanskrit commentaries */}
-          <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
-            {[
-              {
-                href: "/scriptures/sb",
-                tag: "Śrīla Prabhupāda",
-                title: "Śrīmad-Bhāgavatam",
-                text: "Śrīla Prabhupāda’s translation and purports — with the Sanskrit commentaries of Śrīdhara Svāmī, Jīva Gosvāmī, Viśvanātha Cakravartī, Baladeva and more.",
-              },
-              {
-                href: "/scriptures/bg",
-                tag: "Bhagavad-gītā As It Is",
-                title: "Bhagavad-gītā",
-                text: "Every verse with synonyms, translation and purport — and the Sanskrit commentaries of Śrīdhara, Madhusūdana, Viśvanātha and Baladeva.",
-              },
-              {
-                href: "/chapters",
-                tag: "Madhyama · Bṛhat · Laghu",
-                title: "Harināmāmṛta sūtras",
-                text: "All three editions — the Bṛhat with its 3181 sūtras — with the Sanskrit commentaries Amṛta, Saṁśodhinī and Bāla-toṣaṇī.",
-              },
-            ].map((x) => (
-              <Link key={x.href} href={x.href} className="lift group rounded-2xl border border-[var(--accent)]/40 bg-[var(--bg-2)]/85 p-4 backdrop-blur hover:border-[var(--accent)]">
-                <span className="mb-2 inline-block rounded-full bg-[var(--accent)]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-saffron)]">New · {x.tag}</span>
-                <span className="block font-semibold group-hover:text-[var(--accent)]">{x.title} →</span>
-                <span className="mt-1 block text-sm leading-relaxed text-[var(--fg-muted)]">{x.text}</span>
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -268,6 +239,40 @@ export default async function Home() {
       </section>
 
       {/* ------------------------------------------------------- Play & learn */}
+      <section className="reveal mx-auto max-w-6xl px-5 py-12">
+        <h2 className="mb-1 text-center text-xs uppercase tracking-[0.3em] text-[var(--color-saffron)]">New on the site</h2>
+        <p className="mb-6 text-center text-xl font-semibold sm:text-2xl">Scriptures and sūtras with the ācāryas&apos; Sanskrit commentaries</p>
+          {/* What is new — with the ācāryas' Sanskrit commentaries */}
+        <div className="grid gap-3 text-left sm:grid-cols-3">
+          {[
+            {
+              href: "/scriptures/sb",
+              tag: "Śrīla Prabhupāda",
+              title: "Śrīmad-Bhāgavatam",
+              text: "Śrīla Prabhupāda’s translation and purports — with the Sanskrit commentaries of Śrīdhara Svāmī, Jīva Gosvāmī, Viśvanātha Cakravartī, Baladeva and more.",
+            },
+            {
+              href: "/scriptures/bg",
+              tag: "Bhagavad-gītā As It Is",
+              title: "Bhagavad-gītā",
+              text: "Every verse with synonyms, translation and purport — and the Sanskrit commentaries of Śrīdhara, Madhusūdana, Viśvanātha and Baladeva.",
+            },
+            {
+              href: "/chapters",
+              tag: "Madhyama · Bṛhat · Laghu",
+              title: "Harināmāmṛta sūtras",
+              text: "All three editions — the Bṛhat with its 3181 sūtras — with the Sanskrit commentaries Amṛta, Saṁśodhinī and Bāla-toṣaṇī.",
+            },
+          ].map((x) => (
+            <Link key={x.href} href={x.href} className="lift group rounded-2xl border border-[var(--accent)]/40 bg-[var(--bg-2)]/85 p-4 backdrop-blur hover:border-[var(--accent)]">
+              <span className="mb-2 inline-block rounded-full bg-[var(--accent)]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-saffron)]">New · {x.tag}</span>
+              <span className="block font-semibold group-hover:text-[var(--accent)]">{x.title} →</span>
+              <span className="mt-1 block text-sm leading-relaxed text-[var(--fg-muted)]">{x.text}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="reveal border-y border-[var(--border)] bg-[var(--bg-2)]">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 sm:py-16 lg:grid-cols-[1.25fr_1fr]">
           <Link href="/practice/games/rama-ravana" className="lift block overflow-hidden rounded-2xl border border-[var(--border)]" aria-label="Play the Rāma–Rāvaṇa Sandhi battle">

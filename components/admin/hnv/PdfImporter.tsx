@@ -302,7 +302,7 @@ function Results({ results, imported }: { results: ItemResult[]; imported: boole
   const textChanges = results.filter((r) => r.sutra && r.sutra.change !== "same" && !r.created);
   const count = (pick: (r: ItemResult) => string | undefined, v: string) => results.filter((r) => pick(r) === v).length;
   const fields = ["synonyms", "translation", "vrtti"] as const;
-  const coms = ["intro", "amrta", "samsodhini", "bala"] as const;
+  const coms = ["intro", "amrta", "amrta_en", "samsodhini", "bala", "bala_en"] as const;
   return (
     <div className="mt-5 grid gap-4">
       <Box tone="ok" title={imported ? "Imported" : "Preview — nothing has been written yet"}>
@@ -332,10 +332,10 @@ function Results({ results, imported }: { results: ItemResult[]; imported: boole
             ))}
             {coms.map((k) => (
               <tr key={k}>
-                <td className="pr-4">{{ intro: "Introductions", amrta: "Amṛta", samsodhini: "Saṁśodhinī", bala: "Bāla" }[k]}</td>
-                <td>{count((r) => r.commentaries[k], "fill")}</td>
-                <td>{count((r) => r.commentaries[k], "replace")}</td>
-                <td>{count((r) => r.commentaries[k], "same") + count((r) => r.commentaries[k], "keep")}</td>
+                <td className="pr-4">{{ intro: "Introductions", amrta: "Amṛta", amrta_en: "Amṛta (English)", samsodhini: "Saṁśodhinī", bala: "Bāla", bala_en: "Bāla-toṣaṇī (English)" }[k]}</td>
+                <td>{count((r) => (r.commentaries as Record<string, string | undefined>)[k], "fill")}</td>
+                <td>{count((r) => (r.commentaries as Record<string, string | undefined>)[k], "replace")}</td>
+                <td>{count((r) => (r.commentaries as Record<string, string | undefined>)[k], "same") + count((r) => (r.commentaries as Record<string, string | undefined>)[k], "keep")}</td>
               </tr>
             ))}
           </tbody>

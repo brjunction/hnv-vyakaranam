@@ -55,7 +55,16 @@ export function loadWiki(): WikiParts {
   const css = file.slice(file.indexOf("<style>") + 7, file.indexOf("</style>"));
   const bodyStart = file.indexOf(">", file.indexOf("<body")) + 1;
   const scriptStart = file.lastIndexOf("<script>");
-  const js = file.slice(scriptStart + 8, file.lastIndexOf("</script>"));
+  let js = file.slice(scriptStart + 8, file.lastIndexOf("</script>"));
+  // The tooltip must live inside .hnv-wiki, where the wiki's (scoped) styles apply.
+  js = js.replace("document.body.appendChild(tt);", "(document.querySelector('.hnv-wiki') || document.body).appendChild(tt);");
+  // Phones have no hover: a tap on a form shows its sūtras too.
+  js += `
+document.addEventListener('click', function (e) {
+  var el = e.target && e.target.closest ? e.target.closest('[data-s]') : null;
+  if (!el) { tt.style.display = 'none'; return; }
+  el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: e.clientX, clientY: e.clientY }));
+});`;
   let html = file.slice(bodyStart, scriptStart);
   // Drop the wiki's own top bar — the site header replaces it.
   html = html.replace(/<div id="hnv-topbar">[\s\S]*?<\/div>/, "");

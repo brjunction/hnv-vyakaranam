@@ -133,6 +133,30 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/tools/text/keyboard</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/tools/text/citation</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/tools/dictionary/dhatu</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.harinamamrta-vyakaranam.com/tools/dictionary/avyaya</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.harinamamrta-vyakaranam.com/memorize</loc>
     <lastmod>2026-10-30</lastmod>
     <changefreq>weekly</changefreq>

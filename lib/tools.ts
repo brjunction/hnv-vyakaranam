@@ -17,7 +17,8 @@ export const TOOL_GROUPS: ToolGroup[] = [
     blurb: "Look up words in any script",
     tools: [
       { slug: "search", name: "Dictionary", blurb: "Monier-Williams, Apte and more — search in any script", icon: BookA, ready: true },
-      { slug: "dhatu", name: "Dhātu Dictionary", blurb: "Roots with gaṇa, pada and meaning, HNV and Pāṇini", icon: Sprout },
+      { slug: "dhatu", name: "Dhātu Dictionary", blurb: "Śrīla Jīva Gosvāmī’s Dhātu-saṅgraha: gaṇa, pada, iṭ and meaning", icon: Sprout, ready: true },
+      { slug: "avyaya", name: "Avyaya-saṅgraha", blurb: "Indeclinable words with Sanskrit and English meanings", icon: BookText, ready: true },
       { slug: "glossary", name: "HNV Glossary", blurb: "HNV technical terms with sūtra links", icon: BookText },
       { slug: "term-mapper", name: "Pāṇini ↔ HNV Terms", blurb: "Saṁjñās side by side", icon: ArrowLeftRight },
       { slug: "amarakosa", name: "Amarakośa", blurb: "Synonyms and antonyms by kāṇḍa and varga", icon: Network },
@@ -43,8 +44,8 @@ export const TOOL_GROUPS: ToolGroup[] = [
     blurb: "Everyday helpers",
     tools: [
       { slug: "converter", name: "Script & Font Converter", blurb: "Balarama, IAST, Devanagari, Bengali, Odia, HK, ITRANS, SLP1 — Sanskrit-aware", icon: Languages, ready: true },
-      { slug: "keyboard", name: "IAST Keyboard", blurb: "Type ā, ṛ, ṣ … easily", icon: Keyboard },
-      { slug: "citation", name: "Citation Generator", blurb: "Cite any sūtra, verse or page", icon: Quote },
+      { slug: "keyboard", name: "IAST Keyboard", blurb: "Type ā, ṛ, ṣ … — Left Shift after a letter adds its diacritic", icon: Keyboard, ready: true },
+      { slug: "citation", name: "Citation Generator", blurb: "Cite any sūtra, verse or page — MLA, APA, Chicago", icon: Quote, ready: true },
     ],
   },
 ];

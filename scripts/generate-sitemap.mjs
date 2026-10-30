@@ -53,6 +53,10 @@ for (const g of ["rama-ravana", "lanka-dash", "sandhi-forge", "nama-grid", "rule
 add("/tools", { changefreq: "monthly", priority: 0.7 });
 add("/tools/dictionary/search", { changefreq: "weekly", priority: 0.9 });
 add("/tools/text/converter", { changefreq: "monthly", priority: 0.8 });
+add("/tools/text/keyboard", { changefreq: "monthly", priority: 0.6 });
+add("/tools/text/citation", { changefreq: "monthly", priority: 0.5 });
+add("/tools/dictionary/dhatu", { changefreq: "monthly", priority: 0.8 });
+add("/tools/dictionary/avyaya", { changefreq: "monthly", priority: 0.7 });
 add("/memorize", { changefreq: "weekly", priority: 0.7 });
 add("/brhat/memorize", { changefreq: "weekly", priority: 0.6 });
 add("/scriptures/search", { changefreq: "monthly", priority: 0.5 });

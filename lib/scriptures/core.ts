@@ -240,9 +240,8 @@ export async function convertScript(text: string, from: ScriptName, to: ScriptNa
  * of the kind without it (translation_hi ↔ translation). In Hindi, those
  * replace the English ones; in English, the Hindi ones are hidden.
  */
-export function typesForLang<T extends { key: string }>(types: T[], lang: "en" | "hi"): T[] {
-  const hi = new Set(types.filter((t) => t.key.endsWith("_hi")).map((t) => t.key.slice(0, -3)));
-  if (!hi.size) return types;
-  return lang === "hi" ? types.filter((t) => !hi.has(t.key)) : types.filter((t) => !t.key.endsWith("_hi"));
+export function typesForLang<T extends { key: string }>(types: T[], _lang: "en" | "hi"): T[] {
+  // Hindi is switched off for now (owner, 2026-10-30): Hindi kinds are never shown.
+  return types.filter((t) => !t.key.endsWith("_hi"));
 }
-export const hasHindi = (types: { key: string }[]) => types.some((t) => t.key.endsWith("_hi"));
+export const hasHindi = (_types: { key: string }[]) => false;

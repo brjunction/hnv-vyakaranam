@@ -152,14 +152,14 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* What is new — read in English and Hindi, with the ācāryas' Sanskrit commentaries */}
+          {/* What is new — with the ācāryas' Sanskrit commentaries */}
           <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
             {[
               {
                 href: "/scriptures/sb",
-                tag: "English · हिन्दी",
+                tag: "Śrīla Prabhupāda",
                 title: "Śrīmad-Bhāgavatam",
-                text: "Śrīla Prabhupāda’s translation and purports, in English and Hindi — with the Sanskrit commentaries of Śrīdhara Svāmī, Jīva Gosvāmī, Viśvanātha Cakravartī, Baladeva and more.",
+                text: "Śrīla Prabhupāda’s translation and purports — with the Sanskrit commentaries of Śrīdhara Svāmī, Jīva Gosvāmī, Viśvanātha Cakravartī, Baladeva and more.",
               },
               {
                 href: "/scriptures/bg",

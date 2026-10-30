@@ -50,11 +50,11 @@ export function normaliseLines(lines: Line[]): Line[] {
 export function analyseVolume(input: Line[], numPages: number): Analysis {
   const lines = normaliseLines(input);
   const heads = lines
-    .filter((l) => l.size >= 13.5 && (/^(Chapter|Invocation|Afterword|Appendix|Foreword|Introduction|Preface|Bibliography|Index|Glossary|Contents)\b/i.test(txt(l)) || PART_TITLE.test(txt(l)) || /prayers?\b/i.test(txt(l))))
+    .filter((l) => (l.size >= 13.5 || (txt(l).length < 50 && /^(Atha\s|Invocation$)|prakaraṇam\d*$/i.test(txt(l)))) && (/^(Chapter|Invocation|Afterword|Appendix|Foreword|Introduction|Preface|Bibliography|Index|Glossary|Contents)\b/i.test(txt(l)) || PART_TITLE.test(txt(l)) || /prayers?\b/i.test(txt(l))))
     .map((l) => ({ page: l.page, t: txt(l) }));
   const isInv = (t: string) => /^Invocation\b|maṅgalācaraṇam$/i.test(t);
   const isAft = (t: string) => /^Afterword\b|granthopasaṁhāraḥ$/i.test(t);
-  const isCh = (t: string) => /^Chapter\b|prakaraṇam$/i.test(t) && !isInv(t);
+  const isCh = (t: string) => /^Chapter\b|prakaraṇam\d*$/i.test(t) && !isInv(t);
   const nextAfter = (page: number) => heads.find((h) => h.page > page && !isCh(h.t))?.page ?? numPages + 1;
   const parts: Part[] = [];
   const inv = heads.find((h) => isInv(h.t));

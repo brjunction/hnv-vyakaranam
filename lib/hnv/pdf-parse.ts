@@ -408,7 +408,7 @@ function attachMarks(body: Line[], fnText: Map<string, string>) {
  * distance used above is relative to it. Set at the start of parseVolume.
  */
 /** A part's own title as its heading (Bṛhat volumes have no "Chapter …" line). */
-export const PART_TITLE = /(prakaraṇam|maṅgalācaraṇam|granthopasaṁhāraḥ)$/i;
+export const PART_TITLE = /(prakaraṇam\d*|maṅgalācaraṇam|granthopasaṁhāraḥ)$/i;
 
 const G = {
   body: 10,

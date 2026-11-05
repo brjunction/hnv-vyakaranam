@@ -3,6 +3,7 @@
 import { addDevanagari, buildTermMap, toHnvTerms, type TermMap } from "@/lib/dict/hnv-terms";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useFeatures } from "@/components/FeaturesProvider";
 import {
   BookA, Search, X, ArrowLeft, Loader2, Library, ChevronDown, Check, Star, Link2, ChevronsDownUp, ChevronsUpDown,
   AArrowDown, AArrowUp, History, Layers, CheckCheck, Eraser,
@@ -225,7 +226,8 @@ function WorkCard({ c, open, onToggle, id, terms }: { c: Card; open: boolean; on
 }
 
 // ---------------------------------------------------------------- page
-export default function DictionaryApp({ hnvTermsEnabled = false }: { hnvTermsEnabled?: boolean } = {}) {
+export default function DictionaryApp() {
+  const hnvTermsEnabled = useFeatures()["dict-hnv-terms"];
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get("q") ?? "");
   const [mode, setMode] = useState<"word" | "meaning">(sp.get("mode") === "meaning" ? "meaning" : "word");
@@ -271,7 +273,8 @@ export default function DictionaryApp({ hnvTermsEnabled = false }: { hnvTermsEna
   const entryAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    setScopeState(load<string[]>(LS.scope, []));
+    const only = sp.get("only");
+    setScopeState(only ? [`~${only.toLowerCase()}`] : load<string[]>(LS.scope, []));
     setRecent(load<string[]>(LS.recent, []));
     setStars(load<string[]>(LS.stars, []));
     setSize(load<number>(LS.size, 1));
@@ -334,7 +337,16 @@ export default function DictionaryApp({ hnvTermsEnabled = false }: { hnvTermsEna
         if (!res.ok) throw new Error("search failed");
         const data = (await res.json()) as { results: Hit[]; dictionaries: DictInfo[]; note?: string; translated?: { from: string; text: string } };
         setFailed(false);
-        if (data.dictionaries) setDicts(data.dictionaries);
+        if (data.dictionaries) {
+          setDicts(data.dictionaries);
+          // "?only=amara" → the matching dictionaries, by their real names
+          setScopeState((s) => {
+            if (!s.some((x) => x.startsWith("~"))) return s;
+            const want = s.map((x) => x.slice(1));
+            const got = (data.dictionaries as DictInfo[]).filter((d) => want.some((w) => { const hay = `${d.slug} ${d.name} ${d.shortName}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); return hay.includes(w) || (w === "amar" && /अमर/.test(hay)); })).map((d) => d.slug);
+            return got.length ? got : s;
+          });
+        }
         setHits(q.trim() ? data.results ?? [] : []);
         setNote(
           mode === "meaning" && q.trim()

@@ -2,6 +2,8 @@ import GlobalIast from "@/components/GlobalIast";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import FeaturesProvider from "@/components/FeaturesProvider";
+import { getFeatures } from "@/lib/features";
 import Footer from "@/components/Footer";
 import SiteChrome from "@/components/SiteChrome";
 import { SITE_URL } from "@/lib/site";
@@ -143,7 +145,7 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -158,9 +160,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
       
         <SeoJsonLd />
-        <SiteChrome header={<Header />} footer={<Footer />}>
-          {children}
-        </SiteChrome>
+        <FeaturesProvider value={await getFeatures()}>
+          <SiteChrome header={<Header />} footer={<Footer />}>
+            {children}
+          </SiteChrome>
+        </FeaturesProvider>
         <GlobalIast />
         <Analytics/>
         <SpeedInsights/>

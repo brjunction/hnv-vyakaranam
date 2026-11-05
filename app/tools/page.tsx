@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TOOL_GROUPS, toolHref } from "@/lib/tools";
+import { toolGroupsFor, toolHref } from "@/lib/tools";
+import { getFeatures } from "@/lib/features";
 import PageHead from "@/components/PageHead";
 
 export const metadata: Metadata = {
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
   description: "Sanskrit dictionaries, HNV grammar tools and text utilities.",
 };
 
-export default function ToolsPage() {
+export default async function ToolsPage() {
+  const TOOL_GROUPS = toolGroupsFor(await getFeatures());
   return (
     <>
     <PageHead title="Tools" intro="Dictionaries, grammar tools that show the sūtra behind every change, and text utilities." />

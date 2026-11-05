@@ -1326,3 +1326,8 @@ html[data-scr-lang="hi"] .has-hi .t-hi { color: var(--fg); font-weight: 600; }
 
 /* Dictionary: a Pāṇinian term shown as the HNV term (hover for Pāṇini's) */
 .hnv-term { text-decoration: underline dotted var(--accent); text-underline-offset: 3px; color: var(--color-saffron); font-weight: 600; cursor: help; }
+
+/* Notebook (Word-like editor): compact paragraphs — Enter gives a normal line, not a big gap */
+.rich-word p { margin: 0 0 0.35em; line-height: 1.5; }
+.rich-word h2, .rich-word h3, .rich-word h4 { margin: 0.6em 0 0.3em; }
+.rich-word li > p { margin: 0; }

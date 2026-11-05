@@ -39,6 +39,13 @@ export type DictMeta = {
 const NO_SECTION = { id: 0, key: "other", name: "Other", sort: 1e6 };
 
 /** Group for the picker: saved category, else the first folder under the uploaded root. */
+/** Is this dictionary chosen? "~amara" picks every dictionary whose slug or name contains "amara". */
+function pickDict(m: { slug: string; name?: string; shortName?: string }, list?: string[]) {
+  if (!list?.length) return true;
+  const hay = `${m.slug} ${m.name ?? ""} ${m.shortName ?? ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return list.some((x) => (x.startsWith("~") ? hay.includes(x.slice(1).toLowerCase()) || (x === "~amar" && /अमर/.test(hay)) : x === m.slug));
+}
+
 export function categoryFromRef(ifoRef: string): string {
   const path = ifoRef.replace(/^s3:dict\/[^/]+\//, "");
   const dirs = path.split("/").slice(0, -1);
@@ -198,7 +205,7 @@ export async function searchDictionaries(
 ) {
   const limit = Math.min(opts.limit ?? 50, 100);
   const all = opts.metas ?? (await listDictionaries());
-  const metas = all.filter((m) => !opts.dict?.length || opts.dict.includes(m.slug));
+  const metas = all.filter((m) => pickDict(m, opts.dict));
   const hits = new Map<string, { h: SearchHit; score: number }>();
   const add = (label: string, dict: string, match: SearchHit["match"], score: number) => {
     const key = label.toLowerCase();
@@ -418,7 +425,7 @@ export async function lookupHeadword(headword: string, opts: { dict?: string[]; 
   const label = headword.trim().toLowerCase().normalize("NFC");
   const k = fold(label) || label;
   const c = shardOf(k);
-  const metas = (opts.metas ?? (await listDictionaries())).filter((m) => !opts.dict?.length || opts.dict.includes(m.slug));
+  const metas = (opts.metas ?? (await listDictionaries())).filter((m) => pickDict(m, opts.dict));
   const out: EntryResult = { headword: headword.trim(), deva: iastToDeva(headword.trim()), entries: [] };
   const shards = await Promise.all(metas.map((m) => loadShard(m, c)));
   const jobs: Promise<EntryResult["entries"][number] | null>[] = [];

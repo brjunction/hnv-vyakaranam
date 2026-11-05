@@ -8,6 +8,7 @@ import {
   PenLine, Search, Square, Trash2, Upload, X,
 } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import { useFeatures } from "@/components/FeaturesProvider";
 import { loadMyNotebook, saveMyNotebook, whoAmI, type NotebookData } from "@/lib/actions/notebook";
 
 // The site-wide notebook, like OneNote: sections (coloured tabs) → pages.
@@ -194,6 +195,7 @@ function InkPad({ value, onChange }: { value: string; onChange: (dataUrl: string
 // ------------------------------------------------------------------ body
 /** Sections · pages · the open page. */
 export function NotebookBody({ page = false, onClose, header }: { page?: boolean; onClose?: () => void; header?: React.ReactNode }) {
+  const wordEditor = useFeatures()["notes-editor"];
   const { book, change, user, status } = useBook();
   const [secId, setSecId] = useState<string | null>(null);
   const [pageId, setPageId] = useState<string | null>(null);
@@ -368,7 +370,7 @@ export function NotebookBody({ page = false, onClose, header }: { page?: boolean
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="p-3">
-          <RichTextEditor key={pg.id} name="note" defaultValue={pg.html} minHeight={260} placeholder="Write anything…" onChange={(html) => html !== pg.html && setPage({ html })} />
+          <RichTextEditor key={pg.id} word={wordEditor} name="note" defaultValue={pg.html} minHeight={260} placeholder="Write anything…" onChange={(html) => html !== pg.html && setPage({ html })} />
         </div>
         {(draw || pg.ink) && <InkPad value={pg.ink} onChange={(ink) => setPage({ ink })} />}
       </div>

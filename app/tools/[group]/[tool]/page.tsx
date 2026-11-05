@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { TOOL_GROUPS, findTool, toolHref } from "@/lib/tools";
+import { notFound, redirect } from "next/navigation";
+import { getFeatures } from "@/lib/features";
+import { TOOL_GROUPS, findTool, toolGroupsFor, toolHref } from "@/lib/tools";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return TOOL_GROUPS.flatMap((g) => g.tools.filter((t) => !t.ready).map((t) => ({ group: g.slug, tool: t.slug })));
+  return TOOL_GROUPS.flatMap((g) => g.tools.filter((t) => !t.ready && !t.ownPage).map((t) => ({ group: g.slug, tool: t.slug })));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ group: string; tool: string }> }): Promise<Metadata> {
@@ -19,8 +20,11 @@ export default async function ComingSoon({ params }: { params: Promise<{ group: 
   const { group, tool } = await params;
   const f = findTool(group, tool);
   if (!f) notFound();
+  const groups = toolGroupsFor(await getFeatures());
+  const live = groups.flatMap((g) => g.tools).find((t) => t.slug === tool);
+  if (live?.ready && live.href) redirect(live.href);
   const Icon = f.tool.icon;
-  const ready = TOOL_GROUPS.flatMap((g) => g.tools.filter((t) => t.ready).map((t) => ({ g, t })));
+  const ready = groups.flatMap((g) => g.tools.filter((t) => t.ready).map((t) => ({ g, t })));
   return (
     <div className="max-w-2xl mx-auto px-5 py-10 text-center">
       <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] text-[var(--accent)]">

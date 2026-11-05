@@ -6,7 +6,8 @@ import StarterKit from "@tiptap/starter-kit";
 import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
 import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle, Color } from "@tiptap/extension-text-style";
+import { TextStyle, Color, FontSize, FontFamily } from "@tiptap/extension-text-style";
+import { ParaFormat } from "@/components/admin/paraFormat";
 import Highlight from "@tiptap/extension-highlight";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
@@ -70,6 +71,56 @@ function Btn({
 }
 
 const Sep = () => <span className="mx-1 h-6 w-px bg-[var(--border)]" aria-hidden />;
+
+const FONTS = [
+  { v: "", label: "Default font" },
+  { v: "Georgia, 'Times New Roman', serif", label: "Serif" },
+  { v: "system-ui, 'Segoe UI', Arial, sans-serif", label: "Sans" },
+  { v: "'Noto Sans Devanagari', 'Noto Serif Devanagari', serif", label: "Devanagari" },
+  { v: "ui-monospace, Menlo, monospace", label: "Mono" },
+];
+const SIZES = ["", "11px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px"];
+const LINE = ["", "1", "1.15", "1.4", "1.6", "2", "2.5"];
+const SPACE = ["", "0", "0.25em", "0.5em", "0.75em", "1em", "1.5em"];
+
+/** Word-style second row: font, size, line and paragraph spacing (the notebook). */
+function WordBar({ editor }: { editor: Editor }) {
+  const s = useEditorState({
+    editor,
+    selector: ({ editor: e }) => {
+      const t = e.getAttributes("textStyle");
+      const p = e.isActive("heading") ? e.getAttributes("heading") : e.getAttributes("paragraph");
+      return { font: t.fontFamily ?? "", size: t.fontSize ?? "", line: p.lineHeight ?? "", space: p.spaceAfter ?? "" };
+    },
+  });
+  const sel = "h-8 rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 text-xs";
+  const keep = (e: React.MouseEvent) => e.stopPropagation();
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--border)] px-2 py-1.5" onMouseDown={keep}>
+      <select aria-label="Font" title="Font" className={sel} value={s.font} onChange={(e) => (e.target.value ? editor.chain().focus().setFontFamily(e.target.value).run() : editor.chain().focus().unsetFontFamily().run())}>
+        {FONTS.map((f) => <option key={f.label} value={f.v}>{f.label}</option>)}
+      </select>
+      <select aria-label="Font size" title="Font size" className={sel} value={s.size} onChange={(e) => (e.target.value ? editor.chain().focus().setFontSize(e.target.value).run() : editor.chain().focus().unsetFontSize().run())}>
+        {SIZES.map((z) => <option key={z} value={z}>{z ? z.replace("px", "") : "Size"}</option>)}
+      </select>
+      <Btn title="Smaller text" onClick={() => { const i = Math.max(1, SIZES.indexOf(s.size || "16px") - 1); editor.chain().focus().setFontSize(SIZES[i]).run(); }}><span className="text-xs">A−</span></Btn>
+      <Btn title="Bigger text" onClick={() => { const i = Math.min(SIZES.length - 1, SIZES.indexOf(s.size || "16px") + 1); editor.chain().focus().setFontSize(SIZES[i]).run(); }}><span className="text-sm">A+</span></Btn>
+      <span className="mx-1 h-6 w-px bg-[var(--border)]" aria-hidden />
+      <label className="flex items-center gap-1 text-xs text-[var(--fg-muted)]">
+        Line
+        <select aria-label="Line spacing" className={sel} value={s.line} onChange={(e) => editor.chain().focus().setParaFormat({ lineHeight: e.target.value || null }).run()}>
+          {LINE.map((z) => <option key={z} value={z}>{z || "Auto"}</option>)}
+        </select>
+      </label>
+      <label className="flex items-center gap-1 text-xs text-[var(--fg-muted)]">
+        After ¶
+        <select aria-label="Space after paragraph" className={sel} value={s.space} onChange={(e) => editor.chain().focus().setParaFormat({ spaceAfter: e.target.value || null }).run()}>
+          {SPACE.map((z) => <option key={z} value={z}>{z === "" ? "Auto" : z === "0" ? "None" : z}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+}
 
 function Toolbar({
   editor, onPickImage, uploading, full, setFull,
@@ -259,8 +310,11 @@ export default function RichTextEditor({
   placeholder,
   minHeight = 140,
   devanagari = false,
+  word = false,
   onChange,
 }: {
+  /** Word-like extras: font, size, line and paragraph spacing; compact paragraphs. */
+  word?: boolean;
   /** Form field name; the HTML is submitted under it. */
   name: string;
   defaultValue?: string;
@@ -308,6 +362,7 @@ export default function RichTextEditor({
       }),
       TextStyle,
       Color,
+      ...(word ? [FontSize, FontFamily, ParaFormat] : []),
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
@@ -322,7 +377,7 @@ export default function RichTextEditor({
     content: initial,
     editorProps: {
       attributes: {
-        class: `rich-content rich-editor focus:outline-none px-4 py-3 ${devanagari ? "font-devanagari" : ""}`,
+        class: `rich-content rich-editor focus:outline-none px-4 py-3 ${devanagari ? "font-devanagari" : ""} ${word ? "rich-word" : ""}`,
         "data-placeholder": placeholder ?? "",
       },
       handlePaste: (_view, event) => {
@@ -374,6 +429,7 @@ export default function RichTextEditor({
         ) : (
           <div className="h-11 border-b border-[var(--border)]" />
         )}
+        {editor && word && <WordBar editor={editor} />}
         <div className={full ? "flex-1 overflow-y-auto" : ""} style={full ? undefined : { minHeight }}>
           <EditorContent editor={editor} />
         </div>

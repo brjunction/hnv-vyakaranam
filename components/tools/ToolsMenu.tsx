@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Wrench, ChevronDown } from "lucide-react";
-import { TOOL_GROUPS, toolHref } from "@/lib/tools";
+import { toolGroupsFor, toolHref } from "@/lib/tools";
+import { useFeatures } from "@/components/FeaturesProvider";
 
 /** The grouped tool list (used in the desktop dropdown and the mobile menu). */
 export function ToolsGrid({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
+  const TOOL_GROUPS = toolGroupsFor(useFeatures());
   return (
     <div className={compact ? "grid gap-5" : "grid gap-6 md:grid-cols-3"}>
       {TOOL_GROUPS.map((g) => (

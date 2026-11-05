@@ -7,6 +7,7 @@ import { CASES, ENDINGS, NUMBERS as NUM_N, decline, gendersFor, stemFromForm, ty
 import { conjugate, rootOf, GANA_NAMES, PERSONS, EXTRA_DHATUS, type DhatuRow } from "@/lib/grammar/dhatu";
 import dhatus from "@/lib/data/static/dhatus.json";
 import sutras from "@/lib/data/static/madhyama-sutras.json";
+import { useFeatures } from "@/components/FeaturesProvider";
 
 // Declensions — nāma (śabda-rūpa) and dhātu (dhātu-rūpa), every form with the
 // Madhyama sūtras that make it. Click a form to see its sūtras.
@@ -173,13 +174,16 @@ function Dhatu({ script }: { script: "iast" | "deva" }) {
 }
 
 export default function DeclensionTool() {
-  const [tab, setTab] = useState<"nama" | "dhatu">("nama");
+  const f = useFeatures();
+  const tabs = (["nama", "dhatu"] as const).filter((t) => f[t === "nama" ? "tool-nama" : "tool-dhatu"]);
+  const [tab0, setTab] = useState<"nama" | "dhatu">("nama");
+  const tab = tabs.includes(tab0) ? tab0 : tabs[0] ?? "nama";
   const [script, setScript] = useState<"iast" | "deva">("iast");
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--bg)] p-1 text-sm">
-          {(["nama", "dhatu"] as const).map((m) => (
+          {tabs.map((m) => (
             <button key={m} type="button" onClick={() => setTab(m)} className={`rounded-lg px-4 py-1.5 ${tab === m ? "bg-[var(--accent)] font-medium text-[var(--color-ink)]" : "text-[var(--fg-muted)]"}`}>
               {m === "nama" ? "Nāma (śabda-rūpa)" : "Dhātu (dhātu-rūpa)"}
             </button>

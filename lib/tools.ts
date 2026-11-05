@@ -10,7 +10,7 @@ import {
 import type { Features, FeatureKey } from "@/lib/feature-list";
 
 /** feature: hidden ("coming soon") until the developer switches it on; href: opens elsewhere; ownPage: has its own route */
-export type Tool = { slug: string; name: string; blurb: string; icon: LucideIcon; ready?: boolean; feature?: FeatureKey; href?: string; ownPage?: boolean };
+export type Tool = { slug: string; name: string; blurb: string; icon: LucideIcon; ready?: boolean; feature?: FeatureKey | FeatureKey[]; href?: string; ownPage?: boolean };
 export type ToolGroup = { slug: "dictionary" | "grammar" | "text"; name: string; blurb: string; tools: Tool[] };
 
 export const TOOL_GROUPS: ToolGroup[] = [
@@ -33,7 +33,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { slug: "concordance", name: "Sūtra Concordance", blurb: "Every Bṛhat sūtra with Madhyama, Aṣṭādhyāyī and Siddhānta-kaumudī", icon: Network, ready: true },
       { slug: "sandhi", name: "Sandhi Joiner & Splitter", blurb: "Join or split words, every change with its sūtra", icon: Combine, feature: "tool-sandhi", ownPage: true },
-      { slug: "declension", name: "Declensions — nāma & dhātu", blurb: "Every form of a noun or dhātu, with the sūtras applied", icon: TableProperties, feature: "tool-declensions", ownPage: true },
+      { slug: "declension", name: "Declensions — nāma & dhātu", blurb: "Every form of a noun or dhātu, with the sūtras applied", icon: TableProperties, feature: ["tool-nama", "tool-dhatu"], ownPage: true },
       { slug: "case-identifier", name: "Case Identifier", blurb: "Form → stem, case, number, gender", icon: ScanSearch },
       { slug: "krdanta-taddhita", name: "Kṛdanta / Taddhita", blurb: "Derived forms, step by step", icon: Workflow },
       { slug: "samasa", name: "Samāsa Solver", blurb: "Compound → type and vigraha", icon: Puzzle },
@@ -57,7 +57,7 @@ export const toolHref = (g: ToolGroup, t: Tool) => (t.ready && t.href ? t.href :
 
 /** The tools with the developer's switches applied. */
 export function toolGroupsFor(f?: Partial<Features> | null): ToolGroup[] {
-  return TOOL_GROUPS.map((g) => ({ ...g, tools: g.tools.map((t) => (t.feature ? { ...t, ready: !!f?.[t.feature] } : t)) }));
+  return TOOL_GROUPS.map((g) => ({ ...g, tools: g.tools.map((t) => (t.feature ? { ...t, ready: [t.feature].flat().some((k) => !!f?.[k]) } : t)) }));
 }
 
 export function findTool(group: string, tool: string) {

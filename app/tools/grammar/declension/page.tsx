@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function DeclensionPage() {
-  if (!(await getFeatures())["tool-declensions"]) return <ComingSoon name="Declensions — nāma & dhātu" />;
+  const f = await getFeatures();
+  if (!f["tool-nama"] && !f["tool-dhatu"]) return <ComingSoon name="Declensions — nāma & dhātu" />;
   return (
     <>
       <PageHead title="Declensions — nāma & dhātu" intro="Type a nāma or a dhātu. Every form is made by the Madhyama sūtras; click a form to see them." />

@@ -1,3 +1,5 @@
+import { athematic } from "@/lib/grammar/dhatu3";
+import { asirForms, litForms, lunForms } from "@/lib/grammar/dhatu2";
 // Dhātu forms by Madhyama Harināmāmṛta-vyākaraṇa, Ākhyāta (Sūtras 260–330),
 // for the a-stem gaṇas (bhvādi 1, divādi 4, tudādi 6, curādi 10): acyuta (laṭ),
 // bhūteśvara (laṅ), vidhātā (loṭ), vidhi (vidhi-liṅ), kalki (lṛṭ), bāla-kalki (luṭ).
@@ -8,16 +10,19 @@ export type FormCell = { forms: string[]; sutras: number[] };
 export type TenseTable = { key: string; name: string; hnv: string; pada: "para" | "ātma"; cells: FormCell[][]; note?: string };
 export type Conjugation = { root: string; entry: DhatuRow; stem: string; stemSteps: { sutra?: number; change: string }[]; tables: TenseTable[]; notes: string[] };
 
+/** Dhātus missing from the list as separate rows (kṛ of tanādi is joined to svādi kṛñ in the source). */
+export const EXTRA_DHATUS: DhatuRow[] = [{ d: "[ḍu]kṛ[ñ] karaṇe", g: 8, p: "U", i: "aniṭ", k: "sak", e: "to do, make" }];
+
 export const PERSONS = ["Prathama (3rd)", "Madhyama (2nd)", "Uttama (1st)"];
 export const NUMBERS = ["eka", "dvi", "bahu"];
 
 /** "gam[ḷ] gatau" → gam; "[ḍu]kṛ[ñ] karaṇe" → kṛ; idit (ak[i]) noted. */
-export function rootOf(d: string): { root: string; idit: boolean } {
+export function rootOf(d: string): { root: string; idit: boolean; markers: string[] } {
   const head = d.split(/\s+/)[0];
   const markers = [...head.matchAll(/\[([^\]]*)\]/g)].map((m) => m[1]);
   // ṣ- and ṇ- of the Dhātu-pāṭha are s- and n- in use (ṣev → sev, ṇī → nī)
-  const root = head.replace(/\[[^\]]*\]/g, "").replace(/-/g, "").replace(/^ṣ(?![ṭṭh])/, "s").replace(/^ṇ/, "n");
-  return { root, idit: markers.includes("i") };
+  const root = head.replace(/\[[^\]]*\]/g, "").replace(/-/g, "").replace(/^ṣṭh(?!iv)/, "sth").replace(/^ṣṭ(?!y)/, "st").replace(/^ṣ(?![ṭṭh]|vaṣk)/, "s").replace(/^ṇ/, "n");
+  return { root, idit: markers.includes("i"), markers };
 }
 
 const V = "aāiīuūṛṝḷeo";
@@ -202,15 +207,17 @@ const THEMATIC = new Set([1, 4, 6, 10]);
 export const GANA_NAMES: Record<number, string> = { 1: "bhvādi", 2: "adādi", 3: "juhotyādi", 4: "divādi", 5: "svādi", 6: "tudādi", 7: "rudhādi", 8: "tanādi", 9: "kryādi", 10: "curādi" };
 
 export function conjugate(entry: DhatuRow): Conjugation | { error: string; entry: DhatuRow } {
-  const { root, idit } = rootOf(entry.d);
-  if (!THEMATIC.has(entry.g)) return { error: `${GANA_NAMES[entry.g]} (gaṇa ${entry.g}) forms are coming next — only the a-stem gaṇas (1, 4, 6, 10) are ready.`, entry };
-  const ps = presentStem(root, entry.g, idit);
+  const { root, idit, markers } = rootOf(entry.d);
+  const thematic = THEMATIC.has(entry.g);
+  const ps = thematic ? presentStem(root, entry.g, idit) : { stem: root, steps: [{ sutra: { 2: 477, 3: 519, 5: 544, 7: 551, 8: 553, 9: 561 }[entry.g], change: { 2: "no vikaraṇa (śap dropped)", 3: "śap dropped and the dhātu doubled", 5: "śnu (nu) after the dhātu", 7: "śnam (na) inside the dhātu", 8: "u after the dhātu", 9: "śnā (nā) after the dhātu" }[entry.g] ?? "" }] };
   if (!ps) return { error: "This dhātu is not handled yet.", entry };
   const S = ps.stem;
+  // in the other tenses as → bhū, brū → vac (Sūtra 499)
+  const rootA = ({ as: "bhū", brū: "vac" } as Record<string, string>)[root] ?? root;
   const notes: string[] = [];
   const padas: ("para" | "ātma")[] = entry.p === "P" ? ["para"] : entry.p === "A" ? ["ātma"] : ["para", "ātma"];
   if (entry.p === "U") notes.push("Ubhayapadī: parapada when the fruit of the action goes to another, ātmapada when to the doer (Sūtra 285).");
-  const fut = futureStems(root, entry.g, entry.i, S);
+  const fut = futureStems(rootA, entry.g, rootA === root ? entry.i : rootA === "bhū" ? "seṭ" : "aniṭ", S);
   if (!fut.derived) notes.push("The kalki and bāla-kalki stems of this dhātu are given as they are used; their special sūtras come later in the Ākhyāta-prakaraṇa.");
   if (entry.i === "veṭ") notes.push("Veṭ: the future is formed both with and without iṭ.");
   const tables: TenseTable[] = [];
@@ -218,18 +225,25 @@ export function conjugate(entry: DhatuRow): Conjugation | { error: string; entry
   for (const pada of padas) {
     const pd = pada === "para" ? 278 : 279;
     const P = pada === "para";
-    tables.push({ key: "lat", name: "Present", hnv: "acyuta (laṭ)", pada, cells: table(S, P ? LAT_P : LAT_A, [262, pd]) });
-    tables.push({ key: "lan", name: "Imperfect", hnv: "bhūteśvara (laṅ)", pada, cells: table(AUG, P ? LAN_P : LAN_A, [265, 306, pd]) });
-    tables.push({ key: "lot", name: "Imperative", hnv: "vidhātā (loṭ)", pada, cells: table(S, P ? LOT_P : LOT_A, [264, pd]) });
-    tables.push({ key: "lin", name: "Optative", hnv: "vidhi (vidhi-liṅ)", pada, cells: table(S, P ? LIN_P : LIN_A, [263, pd]) });
+    const ath = thematic ? null : athematic(root, entry.g, pada);
+    const pres = (k: string) => ath?.find((x) => x.key === k)?.cells;
+    tables.push({ key: "lat", name: "Present", hnv: "acyuta (laṭ)", pada, cells: pres("lat") ?? table(S, P ? LAT_P : LAT_A, [262, pd]) });
+    tables.push({ key: "lan", name: "Imperfect", hnv: "bhūteśvara (laṅ)", pada, cells: pres("lan") ?? table(AUG, P ? LAN_P : LAN_A, [265, 306, pd]) });
+    tables.push({ key: "lot", name: "Imperative", hnv: "vidhātā (loṭ)", pada, cells: pres("lot") ?? table(S, P ? LOT_P : LOT_A, [264, pd]) });
+    tables.push({ key: "lin", name: "Optative", hnv: "vidhi (vidhi-liṅ)", pada, cells: pres("lin") ?? table(S, P ? LIN_P : LIN_A, [263, pd]) });
     // kalki (lṛṭ): the sya-stem conjugated like the present
     const fc = fut.sya.map((F) => table(F, P ? LAT_P : LAT_A, [270, pd, ...fut.sutras]));
     tables.push({ key: "lrt", name: "Future", hnv: "kalki (lṛṭ)", pada, cells: fc[0].map((r, i) => r.map((c, j) => ({ forms: [...new Set(fc.flatMap((t) => t[i][j].forms))], sutras: c.sutras }))) });
     const ac = fut.sya.map((F) => table(augment(F), P ? LAN_P : LAN_A, [271, 306, pd, ...fut.sutras]));
     tables.push({ key: "lrn", name: "Conditional", hnv: "ajita (lṛṅ)", pada, cells: ac[0].map((r, i) => r.map((c, j) => ({ forms: [...new Set(ac.flatMap((t) => t[i][j].forms))], sutras: c.sutras }))) });
+    const lit = litForms(rootA, entry.g, pada, entry.i, entry.g === 10 ? S : undefined);
+    tables.push({ key: "lit", name: "Perfect", hnv: "adhokṣaja (liṭ)", pada, cells: lit.cells, note: lit.note });
+    const lun = lunForms(rootA, entry.g, pada, entry.i, entry.k, markers, entry.g === 10 ? S : undefined);
+    tables.push({ key: "lun", name: "Aorist", hnv: "bhūteśa (luṅ)", pada, cells: lun.cells, note: `Type: ${lun.type}` });
+    tables.push({ key: "asir", name: "Benedictive", hnv: "kāmapāla (āśīr-liṅ)", pada, cells: asirForms(rootA, entry.g, pada, entry.i, entry.g === 10 ? S : undefined) });
     const tc = fut.ta.map((T) => (P ? LUT_P(T) : LUT_A(T)));
     tables.push({ key: "lut", name: "Periphrastic future", hnv: "bāla-kalki (luṭ)", pada, cells: tc[0].map((r, i) => r.map((c, j) => ({ forms: [...new Set(tc.flatMap((t) => t[i][j].forms))], sutras: [...c.sutras, pd, ...fut.sutras.filter((x) => x !== 108)] }))) });
   }
-  notes.push("Adhokṣaja (liṭ), bhūteśa (luṅ), and kāmapāla (āśīr-liṅ) come in the next stage.");
+  if (rootA !== root) notes.push(`Outside the present system ${root} is replaced by ${rootA} (Sūtra 499).`);
   return { root, entry, stem: S, stemSteps: ps.steps, tables, notes };
 }

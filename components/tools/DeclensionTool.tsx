@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Sanscript from "@indic-transliteration/sanscript";
 import { CASES, ENDINGS, NUMBERS as NUM_N, decline, gendersFor, stemFromForm, type Cell } from "@/lib/grammar/nama";
-import { conjugate, rootOf, GANA_NAMES, PERSONS, type DhatuRow } from "@/lib/grammar/dhatu";
+import { conjugate, rootOf, GANA_NAMES, PERSONS, EXTRA_DHATUS, type DhatuRow } from "@/lib/grammar/dhatu";
 import dhatus from "@/lib/data/static/dhatus.json";
 import sutras from "@/lib/data/static/madhyama-sutras.json";
 
@@ -16,7 +16,7 @@ const toIast = (s: string) => (isDeva(s) ? Sanscript.t(s, "devanagari", "iast") 
 const deva = (s: string) => Sanscript.t(s.replace(/ṁ/g, "ṃ"), "iast", "devanagari");
 const G = { m: "Puruṣottama (masc.)", f: "Lakṣmī (fem.)", n: "Brahma (neut.)" } as const;
 const NAMA_EX = ["rāma", "jñāna", "ramā", "hari", "mati", "guru", "vāri", "madhu", "nadī", "vadhū", "pitṛ", "dātṛ", "mātṛ", "rājan", "ātman", "nāman", "yogin", "bhagavat", "manas", "marut", "vāc", "sarva", "tad", "yad", "kim", "idam", "adas", "yuṣmad", "asmad", "sakhi", "pati", "go", "pathin", "tri", "catur"];
-const DHATU_EX = ["bhū", "gam", "nī", "budh", "labh", "sev", "vad", "div", "tud", "likh", "cur", "katha"];
+const DHATU_EX = ["bhū", "gam", "nī", "budh", "labh", "sev", "vad", "div", "tud", "likh", "cur", "katha", "as", "brū", "i", "han", "duh", "hu", "dā", "su", "rudh", "yuj", "kṛ", "tan", "krī", "jñā"];
 
 function SutraList({ list, head }: { list: number[]; head?: string }) {
   return (
@@ -102,7 +102,7 @@ function Nama({ script }: { script: "iast" | "deva" }) {
 }
 
 function Dhatu({ script }: { script: "iast" | "deva" }) {
-  const rows = dhatus as DhatuRow[];
+  const rows = useMemo(() => [...(dhatus as DhatuRow[]), ...EXTRA_DHATUS], []);
   const [q, setQ] = useState("bhū");
   const [sel, setSel] = useState<number | null>(null);
   const [tense, setTense] = useState("lat");
@@ -111,7 +111,7 @@ function Dhatu({ script }: { script: "iast" | "deva" }) {
   const matches = useMemo(() => {
     if (!key) return [];
     const exact = rows.map((r, i) => ({ r, i, root: rootOf(r.d).root })).filter((x) => x.root === key || x.root === `${key}a` || x.r.d.split(/\s+/)[0].replace(/\[[^\]]*\]/g, "") === key);
-    if (exact.length) return exact;
+    if (exact.length) return exact.sort((x, y) => (y.r.g === 8 && y.root === "kṛ" ? 1 : 0) - (x.r.g === 8 && x.root === "kṛ" ? 1 : 0));
     return rows.map((r, i) => ({ r, i, root: rootOf(r.d).root })).filter((x) => x.root.startsWith(key) || x.r.e.toLowerCase().includes(key)).slice(0, 20);
   }, [key, rows]);
   const chosen = sel ?? (matches.find((m) => [1, 4, 6, 10].includes(m.r.g))?.i ?? matches[0]?.i ?? null);
@@ -158,6 +158,7 @@ function Dhatu({ script }: { script: "iast" | "deva" }) {
           {cur.map((t, ti) => (
             <section key={t.pada}>
               <h3 className="mt-5 font-semibold">{t.pada === "para" ? "Parapada" : "Ātmapada"}</h3>
+              {t.note && <p className="text-sm text-[var(--fg-muted)]">{t.note}</p>}
               <Grid rows={PERSONS} cols={["eka-vacana", "dvi-vacana", "bahu-vacana"]} cells={t.cells} script={script} onPick={(i, j) => setPick([ti * 10 + i, j])} picked={pick && Math.floor(pick[0] / 10) === ti ? [pick[0] % 10, pick[1]] : null} />
               {pick && Math.floor(pick[0] / 10) === ti && <SutraList list={t.cells[pick[0] % 10][pick[1]].sutras} head={`${t.cells[pick[0] % 10][pick[1]].forms.join(" / ")}  (${t.hnv}, ${PERSONS[pick[0] % 10]}, ${["eka", "dvi", "bahu"][pick[1]]}-vacana)`} />}
             </section>

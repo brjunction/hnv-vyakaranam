@@ -32,7 +32,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     blurb: "Rules applied, with their sūtras",
     tools: [
       { slug: "concordance", name: "Sūtra Concordance", blurb: "Every Bṛhat sūtra with Madhyama, Aṣṭādhyāyī and Siddhānta-kaumudī", icon: Network, ready: true },
-      { slug: "sandhi", name: "Sandhi Splitter / Joiner", blurb: "Join two words or split a compound form", icon: Combine },
+      { slug: "sandhi", name: "Sandhi Joiner & Splitter", blurb: "Join or split words, every change with its sūtra", icon: Combine, feature: "tool-sandhi", ownPage: true },
       { slug: "declension", name: "Declensions — nāma & dhātu", blurb: "Every form of a noun or dhātu, with the sūtras applied", icon: TableProperties, feature: "tool-declensions", ownPage: true },
       { slug: "case-identifier", name: "Case Identifier", blurb: "Form → stem, case, number, gender", icon: ScanSearch },
       { slug: "krdanta-taddhita", name: "Kṛdanta / Taddhita", blurb: "Derived forms, step by step", icon: Workflow },

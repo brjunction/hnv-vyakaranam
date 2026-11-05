@@ -47,6 +47,7 @@ add("/songs", { changefreq: "weekly", priority: 0.85 });
 add("/hnv-wiki", { changefreq: "monthly", priority: 0.8, lastmod: fileDate(path.join(ROOT, "public/hnv-wiki.html")) });
 add("/about", { changefreq: "monthly", priority: 0.6 });
 add("/about/contact", { changefreq: "yearly", priority: 0.4 });
+add("/about/sponsor", { changefreq: "yearly", priority: 0.5 });
 add("/more", { changefreq: "daily", priority: 0.7 });
 add("/practice", { changefreq: "weekly", priority: 0.8 });
 for (const g of ["rama-ravana", "lanka-dash", "sandhi-forge", "nama-grid", "rule-sorter", "case-blitz", "varna-order", "sutra-order"]) add(`/practice/games/${g}`, { changefreq: "monthly", priority: g === "rama-ravana" ? 0.7 : 0.6 });

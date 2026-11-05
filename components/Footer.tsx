@@ -40,6 +40,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: "/about/acaryas", label: "Ācārya biographies" },
       { href: "/about/places", label: "Holy places & temples" },
       { href: "/about/acknowledgements", label: "Acknowledgements" },
+      { href: "/about/sponsor", label: "Sponsor this website" },
       { href: "/about/contact", label: "Contact" },
     ],
   },

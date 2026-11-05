@@ -14,6 +14,10 @@ export default function About() {
       <h1 className="text-xl sm:text-2xl font-semibold mb-1">Hari-nāmāmṛta Vyākaraṇa</h1>
       <p className="text-sm text-[var(--fg-muted)] mb-6">About this text and this edition</p>
 
+      <a href="/about/sponsor" className="mb-10 block rounded-2xl border-2 border-[var(--accent)] bg-[var(--bg-2)] p-5 hover:shadow-md">
+        <p className="font-semibold text-[var(--accent)]">♥ Sponsor this website</p>
+        <p className="mt-1 text-sm text-[var(--fg-muted)]">Hosting and the database cost money every month. Help keep this seva online, by UPI / Google Pay.</p>
+      </a>
       <div className="space-y-10 leading-relaxed text-[var(--fg)]">
         <section>
           <h2 className="text-xl font-medium mb-3 text-[var(--color-vermillion)]">

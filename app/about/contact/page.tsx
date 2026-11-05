@@ -34,6 +34,10 @@ export default function Contact() {
             </li>
           </ul>
         </article>
+        <Link href="/about/sponsor" className="mt-6 block rounded-2xl border-2 border-[var(--accent)] p-5 hover:shadow-md">
+          <b className="text-[var(--accent)]">♥ Sponsor this website</b>
+          <span className="mt-1 block text-sm text-[var(--fg-muted)]">Pay by UPI / Google Pay to {PHONE} to help with hosting costs.</span>
+        </Link>
         <p className="mt-10">
           <Link href="/about" className="text-sm text-[var(--fg-muted)] hover:text-[var(--accent)]">← About</Link>
         </p>

@@ -158,18 +158,19 @@ function Dhatu({ script }: { script: "iast" | "deva" }) {
   const matches = useMemo(() => {
     if (!key) return [];
     const exact = rows.map((r, i) => ({ r, i, root: rootOf(r.d).root })).filter((x) => x.root === key || x.root === `${key}a` || x.r.d.split(/\s+/)[0].replace(/\[[^\]]*\]/g, "") === key);
-    if (exact.length) return exact.sort((x, y) => (y.r.g === 8 && y.root === "kṛ" ? 1 : 0) - (x.r.g === 8 && x.root === "kṛ" ? 1 : 0));
+    if (exact.length) return exact.sort((x, y) => (x.root === "kṛ" && x.r.g === 8 ? -1 : y.root === "kṛ" && y.r.g === 8 ? 1 : x.r.g - y.r.g));
     return rows.map((r, i) => ({ r, i, root: rootOf(r.d).root })).filter((x) => x.root.startsWith(key) || x.r.e.toLowerCase().includes(key)).slice(0, 20);
   }, [key, rows]);
-  const chosen = sel ?? (matches.find((m) => [1, 4, 6, 10].includes(m.r.g))?.i ?? matches[0]?.i ?? null);
+  const chosen = sel ?? matches[0]?.i ?? null;
   const c = chosen != null ? conjugate(rows[chosen]) : null;
   const rootKey = chosen != null ? rootOf(rows[chosen].d).root : "";
   const attD = useAttested<{ conj: ConjAttested[] }>("dhatu", rootKey);
   const gana = chosen != null ? rows[chosen].g : 0;
   const prim = attD?.conj.filter((x) => x.kind === "primary") ?? [];
-  const primary = prim.find((x) => x.gana === gana) ?? (prim.length === 1 ? prim[0] : undefined);
+  const primary = prim.find((x) => x.gana === gana) ?? (prim.length === 1 && !prim[0].gana ? prim[0] : undefined);
   const attOf = (key: string, voice: string) => primary?.tenses.find((x) => x.tense === key && x.voice === voice)?.cells;
-  const [kind, setKind] = useState("primary");
+  const [kind0, setKind] = useState("primary");
+  const kind = kind0 !== "primary" && !(attD?.conj ?? []).some((x) => x.kind === kind0) ? "primary" : kind0;
   const derived = (attD?.conj ?? []).filter((x) => x.kind !== "primary");
   const KIND: Record<string, { name: string; sutra: number }> = { causative: { name: "Ṇic (causative)", sutra: 569 }, desiderative: { name: "San (desiderative)", sutra: 578 }, intensive: { name: "Yaṅ (intensive)", sutra: 586 } };
   const TN: Record<string, string> = { lat: "acyuta (laṭ)", lan: "bhūteśvara (laṅ)", lot: "vidhātā (loṭ)", lin: "vidhi (vidhi-liṅ)", lrt: "kalki (lṛṭ)", lrn: "ajita (lṛṅ)", lut: "bāla-kalki (luṭ)", lit: "adhokṣaja (liṭ)", lun: "bhūteśa (luṅ)", asir: "kāmapāla (āśīr-liṅ)", inj: "bhūteśa without at" };

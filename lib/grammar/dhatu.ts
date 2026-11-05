@@ -93,7 +93,7 @@ function presentStem(root: string, g: number, idit: boolean): { stem: string; st
     if (/[^aāiīuūṛṝeo]a$/.test(b) && b.length > 2) b = b.slice(0, -1); // katha → kath (kathādi)
     steps.push({ change: "ṇic (i) after the dhātu (curādi)" });
     if (isVowel(b.slice(-1)) && VRDDHI[b.slice(-1)]) {
-      b = b.slice(0, -1) + VRDDHI[b.slice(-1)];
+      b = (b.slice(0, -1) + VRDDHI[b.slice(-1)]).replace(/ai$/, "āy").replace(/au$/, "āv");
       steps.push({ sutra: 314, change: `final vowel → vṛṣṇīndra before ṇic` });
     } else {
       const m = /^(.*?)([aiuṛ])(kh|gh|ch|jh|ṭh|ḍh|th|dh|ph|bh|[^aāiīuūṛṝeo])$/.exec(b);

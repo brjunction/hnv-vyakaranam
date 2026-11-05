@@ -8,10 +8,13 @@ import { getDb } from "@/lib/db";
 import { adminUsers, type AdminRole } from "@/lib/db/schema";
 import { env, isAuthConfigured, isDbConfigured } from "@/lib/env";
 import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth/constants";
+import { isDeveloperEmail } from "@/lib/auth/developer";
 
-export type SessionUser = { id: number; email: string; name: string; role: AdminRole };
+export type AppRole = AdminRole | "developer";
 
-const RANK: Record<AdminRole, number> = { viewer: 0, contributor: 1, editor: 2, owner: 3 };
+export type SessionUser = { id: number; email: string; name: string; role: AppRole };
+
+const RANK: Record<AppRole, number> = { viewer: 0, contributor: 1, editor: 2, owner: 3, developer: 4 };
 
 function key() {
   if (!env.AUTH_SECRET) throw new Error("AUTH_SECRET is not configured.");
@@ -51,7 +54,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
     if (!Number.isInteger(id)) return null;
     const [user] = await getDb().select().from(adminUsers).where(eq(adminUsers.id, id)).limit(1);
     if (!user || !user.isActive || user.sessionVersion !== payload.sv) return null;
-    return { id: user.id, email: user.email, name: user.name, role: user.role };
+    return { id: user.id, email: user.email, name: user.name, role: isDeveloperEmail(user.email) ? "developer" : user.role };
   } catch {
     return null;
   }
@@ -61,13 +64,13 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
  * Call at the top of every admin page and every server action. Redirects to
  * the login page when signed out; to the dashboard when the role is too low.
  */
-export async function requireUser(minRole: AdminRole = "viewer"): Promise<SessionUser> {
+export async function requireUser(minRole: AppRole = "viewer"): Promise<SessionUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/admin/login");
   if (RANK[user.role] < RANK[minRole]) redirect("/admin?denied=1");
   return user;
 }
 
-export function hasRole(user: SessionUser, minRole: AdminRole) {
+export function hasRole(user: SessionUser, minRole: AppRole) {
   return RANK[user.role] >= RANK[minRole];
 }

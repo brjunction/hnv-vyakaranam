@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/lib/actions/auth";
 
-type Item = { href: string; label: string; icon: LucideIcon; owner?: boolean };
+type Item = { href: string; label: string; icon: LucideIcon; owner?: boolean; developer?: boolean };
 const GROUPS: { label: string; items: Item[] }[] = [
   { label: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard }] },
   {
@@ -39,6 +39,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
       { href: "/admin/users", label: "Admins", icon: Users, owner: true },
       { href: "/admin/tools", label: "Tools", icon: Wrench, owner: true },
       { href: "/admin/account", label: "Account", icon: UserRound },
+      { href: "/admin/developer", label: "Developer", icon: Wrench, developer: true },
     ],
   },
 ];
@@ -64,7 +65,7 @@ function Nav({ role, collapsed, onNavigate }: { role: string; collapsed: boolean
   return (
     <nav className="flex flex-col gap-5">
       {GROUPS.map((g) => {
-        const items = g.items.filter((i) => !i.owner || role === "owner");
+        const items = g.items.filter((i) => (i.developer ? role === "developer" : !i.owner || role === "owner" || role === "developer"));
         if (!items.length) return null;
         return (
           <div key={g.label}>

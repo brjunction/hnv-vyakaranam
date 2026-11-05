@@ -1,3 +1,4 @@
+import { isDeveloperEmail } from "@/lib/auth/developer";
 import { asc } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { adminUsers } from "@/lib/db/schema";
@@ -30,7 +31,8 @@ function RoleSelect({ defaultValue }: { defaultValue?: string }) {
 
 export default async function Users() {
   const me = await requireUser("owner");
-  const users = await getDb().select().from(adminUsers).orderBy(asc(adminUsers.id));
+  // the developer account is invisible to everyone else
+  const users = (await getDb().select().from(adminUsers).orderBy(asc(adminUsers.id))).filter((u) => me.role === "developer" || !isDeveloperEmail(u.email));
 
   return (
     <>

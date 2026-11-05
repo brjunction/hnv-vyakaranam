@@ -225,7 +225,7 @@ function WorkCard({ c, open, onToggle, id, terms }: { c: Card; open: boolean; on
 }
 
 // ---------------------------------------------------------------- page
-export default function DictionaryApp() {
+export default function DictionaryApp({ hnvTermsEnabled = false }: { hnvTermsEnabled?: boolean } = {}) {
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get("q") ?? "");
   const [mode, setMode] = useState<"word" | "meaning">(sp.get("mode") === "meaning" ? "meaning" : "word");
@@ -252,13 +252,13 @@ export default function DictionaryApp() {
     try {
       localStorage.setItem("hnv:dict-hnv-terms", hnvOn ? "1" : "0");
     } catch {}
-    if (!hnvOn) return setHnvTerms(null);
+    if (!hnvOn || !hnvTermsEnabled) return setHnvTerms(null);
     let live = true;
     addDevanagari(buildTermMap()).then((m) => live && setHnvTerms(m));
     return () => {
       live = false;
     };
-  }, [hnvOn]);
+  }, [hnvOn, hnvTermsEnabled]);
   const [note, setNote] = useState("");
   const [failed, setFailed] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
@@ -511,7 +511,7 @@ export default function DictionaryApp() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            {hnvTermsEnabled && (<button
               type="button"
               onClick={() => setHnvOn((v) => !v)}
               aria-pressed={hnvOn}
@@ -519,7 +519,7 @@ export default function DictionaryApp() {
               className={`h-11 rounded-xl border px-3 text-sm shadow-sm ${hnvOn ? "border-[var(--accent)] bg-[var(--accent)] font-medium text-[var(--color-ink)]" : "border-[var(--border)] bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)]"}`}
             >
               HNV terms
-            </button>
+            </button>)}
             <ScopePicker dicts={dicts} scope={scope} setScope={setScope} />
             <div className="inline-flex h-11 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-1 text-sm shadow-sm">
               {(["word", "meaning"] as const).map((m) => (

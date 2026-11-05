@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import DictionaryApp from "@/components/dict/DictionaryApp";
+import { getFeatures } from "@/lib/features";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/tools/dictionary/search" },
@@ -8,10 +9,13 @@ export const metadata: Metadata = {
   description: "Search Monier-Williams and other Sanskrit dictionaries in Devanagari, IAST, ITRANS or plain English letters.",
 };
 
-export default function DictionaryPage() {
+export const revalidate = 3600;
+
+export default async function DictionaryPage() {
+  const f = await getFeatures();
   return (
     <Suspense>
-      <DictionaryApp />
+      <DictionaryApp hnvTermsEnabled={f["dict-hnv-terms"]} />
     </Suspense>
   );
 }
